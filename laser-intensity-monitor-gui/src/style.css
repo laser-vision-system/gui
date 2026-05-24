@@ -1,0 +1,19 @@
+.navTitle {
+    font-size: 20pt;
+    font-weight: 700;
+    color: black;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+
+.navBarLight {
+    background-color: slateblue;
+}
+
+.navBarDark {
+    background-color: darkslateblue;
+}
+
+:root {
+    --bs-body-bg: lightgray;
+
+}
