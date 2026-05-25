@@ -5,7 +5,10 @@
 - Vue.js 3.5.34
 
 # Initialise and Work in the Node.js envrioment 
-In this laser-intensity-monitor-gui directory run this command:
+
+### In the laser-intensity-monitor-gui directory run these commands
+
+To initialise the project and install dependencies, run:
 ```
 npm install
 ```
