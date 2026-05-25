@@ -7,7 +7,7 @@ import settingsActive from '../assets/images/settings-active.svg'
 import settingsInactive from '../assets/images/settings-inactive.svg'
 </script>
 <template>
-    <div class="container-fluid  navBarDark">
+    <div class="container-fluid  navBarLight">
         <div class="row d-flex justify-content-center text-center">
             <div class="col-4">
                 <router-link to="/" @click="setNavElement('Camera Feed')">

@@ -1,6 +1,6 @@
 <template>
     <!--
-    Add toggle Dark Mode button
+    Add toggle Dark Mode button maybe not too sure what to put here
     -->
     <div class="container">
         <div class="row">
@@ -15,6 +15,6 @@ export default {
         return {
 
         }
-    }
+    },
 }
 </script>

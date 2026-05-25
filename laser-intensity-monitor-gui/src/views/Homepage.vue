@@ -1,10 +1,7 @@
-<script setup>
-import cameraFeed from "../components/CameraFeed.vue"
-</script>
 <template>
     <div class="container">
-        <div class="row p-1">
-            <div class="col-3 text-center d-flex justify-content-center">
+        <div class="row p-2 g-3">
+            <div class="col-xl-3 col-12 text-center  ">
                 <table class="table border border-3 border-black">
                     <thead>
                         <tr>
@@ -25,55 +22,110 @@ import cameraFeed from "../components/CameraFeed.vue"
                             <th scope="col">Disconected Cameras</th>
                         </tr>
                         <tr v-for="feed in cameraFeeds" :key="feed.id">
-                            <td v-if="!feed.isConnected">{{ feed.name }}</td>
+                            <td v-if="!feed.isConnected">{{ feed.name }}
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <div class="col-9 p-3">
-                <h3>Cameras Connected</h3>
-                <div class="row d-flex justify-content-start p-3">
-                    <div class="col-3" v-for="feed in cameraFeeds" :key="feed.id">
-                        <div v-if="feed.isConnected">
-                            <div :class="feed.isSelected ? 'card bg-success' : 'card'">
-                                <div class="card-body">
-                                    <h5 class="card-title">Camera: {{ feed.name }}</h5>
-                                    <p>Brightness: {{ feed.brightness }}</p>
+            <div class="col-xl-9 col-12">
+                <div class="row p-2">
+                    <div class="col-12">
+                        <h3>Cameras Connected</h3>
+                        <div class="row d-flex justify-content-start p-3">
+                            <div class="col-3" v-for="(feed, fi) in cameraFeeds" :key="feed.id">
+                                <div v-if="feed.isConnected">
+                                    <div
+                                        :class="feed.isSelected ? 'card selected-camera camera-tab bg-success' : 'card camera-tab bg-success'">
+                                        <div class="card-body" @click="feed.isSelected = !feed.isSelected">
+                                            <h5 class="card-title">Camera: {{ feed.name }}</h5>
+                                            <p class="card-text">Brightness: {{ feed.brightness }}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-9 d-flex justify-content-end">
-                <cameraFeed />
-            </div>
-            <div class="col-3 text-start">
-                <h3>Camera Info</h3>
-                <div v-for="feed in cameraFeeds">
-                    <div v-if="feed.isSelected">
-                        <p>Camera: {{ feed.name }}</p>
-                        <p>Description: {{ feed.description }}</p>
-                        <p>fps: {{ feed.fps }}</p>
-                        <p>Brightness: {{ feed.brightness }}</p>
+                <div class="row">
+                    <div class="col-lg-9 col-12 d-flex justify-content-center">
+                        <div v-if="cameraFeeds.some(feed => feed.isSelected)">
+                            <img src="../assets/images/fake-feed.png" alt="Live Camera Feed" class="feedbox img-fluid">
+                        </div>
+                        <div
+                            v-else-if="!cameraFeeds.some(feed => feed.isSelected) && cameraFeeds.some(feed => feed.isConnected)">
+                            <img src="../assets/images/no-camera-selected.png" alt="No camera selected"
+                                class="feedbox img-fluid">
+                        </div>
+                        <div v-else>
+                            <img src="../assets/images/no-cameras-connected.png" alt="No Cameras Connected"
+                                class="feedbox img-fluid">
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-12 cam-info">
+                        <h3>Camera Info</h3>
+                        <div v-for="feed in cameraFeeds" :key="feed.id">
+                            <div v-if="feed.isSelected">
+                                <p>Camera: {{ feed.name }}</p>
+                                <p>Description: {{ feed.description }}</p>
+                                <p>fps: {{ feed.fps }}</p>
+                                <p>Brightness: {{ feed.brightness }}</p>
+                            </div>
+                        </div>
+                        <div v-if="!cameraFeeds.some(feed => feed.isSelected)">
+                            <p><strong>No camera selected</strong></p>
+                        </div>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </template>
 <script>
+import { computed } from 'vue'
+
 export default {
     data() {
         return {
             cameraFeeds: [
-                { name: "cam00 ", id: '00', description: 'Camera 1 Description', fps: '2', brightness: '0.99', isConnected: true, isSelected: true },
-                { name: "cam01 ", id: '01', description: 'Camera 2 Description', fps: 'N/a', brightness: '0.99', isConnected: false, isSelected: false }
-            ]
+                { name: "cam00 ", id: '00', description: 'Camera 1 Description', fps: 2, brightness: 0.99, isConnected: true, isSelected: false },
+                { name: "cam01 ", id: '01', description: 'Camera 2 Description', fps: null, brightness: 0.99, isConnected: false, isSelected: false }
+            ],
         }
-    }
+    },
+    methods: {
+        saveCameraFeeds() {
+            localStorage.setItem('cameraFeeds', JSON.stringify(this.cameraFeeds))
+        },
+    },
+    mounted() {
+        this.saveCameraFeeds()
+    },
 }
 </script>
+<style>
+.camera-tab {
+    width: 200px;
+}
+
+.selected-camera {
+    border: 0.5rem solid lightsteelblue;
+    box-shadow: 0 0 0.2rem steelblue;
+}
+
+.feedbox {
+    border: 0.5rem solid slateblue;
+    border-radius: 1rem;
+    box-shadow: 0 0 0.45rem mediumslateblue;
+    background-color: lightsteelblue;
+}
+
+.cam-info {
+    border: 0.5rem solid slateblue;
+    border-radius: 1rem;
+    box-shadow: 0 0 0.45rem mediumslateblue;
+    background-color: lightsteelblue;
+    align-items: center;
+    justify-content: center;
+}
+</style>
