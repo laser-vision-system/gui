@@ -1,8 +1,13 @@
 # Laser Intensity Monitor GUI
 
 ## Framework Versions
-- Bootstrap 5.3.8
-- Vue.js 3.5.34
+### Bootstrap 5.3.8
+
+Using only the grid system from Bootstrap to get a responsive layout, Other stlying will be handled via custom CSS.
+
+### Vue.js 3.5.34
+
+Using the Composition API as the primary API as it provides a more flexible and reactive way to manage component state as well as being a lightweight alternative to the Options API.
 
 # Initialise and Work in the Node.js envrioment 
 

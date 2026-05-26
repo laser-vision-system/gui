@@ -1,18 +1,50 @@
+:root {
+    /* Bootstrap Overrides */
+    --bs-body-bg: white;
+    --bs-body-color: #333333;
+    --bs-success: mediumaquamarine;
+    --bs-success-rgb: 102, 205, 170;
+    --bs-border-color: #333333;
+    /* CUSTOM CSS */
+    --nav-bg: slateblue;
+    --nav-title: black;
+    --cam-bg: lightsteelblue;
+
+}
+
+/* Light Mode Table Overrides */
+:root .table {
+    --bs-table-color: black;
+    --bs-table-border-color: #333333;
+}
+
+
+:root.dark {
+    /* Bootstrap Overrides */
+    --bs-body-bg: darkgray;
+    --bs-body-color: white;
+    --bs-success: darkslategrey;
+    --bs-success-rgb: 47, 79, 79;
+    --bs-border-color: white;
+    /* CUSTOM CSS */
+    --nav-bg: darkslateblue;
+    --nav-title: white;
+    --cam-bg: lightslategrey;
+}
+
+/* Dark Mode Table Overrides */
+:root.dark .table {
+    --bs-table-color: white;
+    --bs-table-border-color: #718096;
+}
+
 .navTitle {
     font-size: 20pt;
     font-weight: 700;
-    color: black;
+    color: var(--nav-title);
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
 
-.navBarLight {
-    background-color: slateblue;
-}
-
-.navBarDark {
-    background-color: darkslateblue;
-}
-
-:root {
-    --bs-body-bg: white;
+.navBar {
+    background-color: var(--nav-bg);
 }
