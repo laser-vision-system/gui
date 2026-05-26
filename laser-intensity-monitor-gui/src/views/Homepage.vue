@@ -1,3 +1,28 @@
+<script setup>
+import { ref, onMounted, computed } from 'vue'
+
+const cameraFeeds = ref([
+    { name: "cam00 ", id: '00', description: 'Camera 1 Description', fps: 2, brightness: 0.99, isConnected: true, isSelected: false },
+    { name: "cam01 ", id: '01', description: 'Camera 2 Description', fps: null, brightness: 0.99, isConnected: false, isSelected: false }
+])
+
+const hasSelectedCamera = computed(() => {
+    return cameraFeeds.value.some(feed => feed.isSelected)
+})
+const hasConnectedCamera = computed(() => {
+    return cameraFeeds.value.some(feed => feed.isConnected)
+})
+
+// save camera data to local storage
+function saveCameraFeeds() {
+    localStorage.setItem('cameraFeeds', JSON.stringify(cameraFeeds.value))
+}
+
+onMounted(() => {
+    saveCameraFeeds()
+})
+</script>
+
 <template>
     <div class="container">
         <div class="row p-2 g-3">
@@ -36,7 +61,7 @@
                             <div class="col-3" v-for="(feed, fi) in cameraFeeds" :key="feed.id">
                                 <div v-if="feed.isConnected">
                                     <div
-                                        :class="feed.isSelected ? 'card selected-camera camera-tab bg-success' : 'card camera-tab bg-success'">
+                                        :class="['card', 'camera-tab', 'bg-success', { 'selected-camera': feed.isSelected }]">
                                         <div class="card-body" @click="feed.isSelected = !feed.isSelected">
                                             <h5 class="card-title">Camera: {{ feed.name }}</h5>
                                             <p class="card-text">Brightness: {{ feed.brightness }}</p>
@@ -49,11 +74,10 @@
                 </div>
                 <div class="row">
                     <div class="col-lg-9 col-12 d-flex justify-content-center">
-                        <div v-if="cameraFeeds.some(feed => feed.isSelected)">
+                        <div v-if="hasSelectedCamera">
                             <img src="../assets/images/fake-feed.png" alt="Live Camera Feed" class="feedbox img-fluid">
                         </div>
-                        <div
-                            v-else-if="!cameraFeeds.some(feed => feed.isSelected) && cameraFeeds.some(feed => feed.isConnected)">
+                        <div v-else-if="hasConnectedCamera">
                             <img src="../assets/images/no-camera-selected.png" alt="No camera selected"
                                 class="feedbox img-fluid">
                         </div>
@@ -72,7 +96,7 @@
                                 <p>Brightness: {{ feed.brightness }}</p>
                             </div>
                         </div>
-                        <div v-if="!cameraFeeds.some(feed => feed.isSelected)">
+                        <div v-if="!hasSelectedCamera">
                             <p><strong>No camera selected</strong></p>
                         </div>
                     </div>
@@ -81,29 +105,7 @@
         </div>
     </div>
 </template>
-<script>
-import { computed } from 'vue'
-
-export default {
-    data() {
-        return {
-            cameraFeeds: [
-                { name: "cam00 ", id: '00', description: 'Camera 1 Description', fps: 2, brightness: 0.99, isConnected: true, isSelected: false },
-                { name: "cam01 ", id: '01', description: 'Camera 2 Description', fps: null, brightness: 0.99, isConnected: false, isSelected: false }
-            ],
-        }
-    },
-    methods: {
-        saveCameraFeeds() {
-            localStorage.setItem('cameraFeeds', JSON.stringify(this.cameraFeeds))
-        },
-    },
-    mounted() {
-        this.saveCameraFeeds()
-    },
-}
-</script>
-<style>
+<style scoped>
 .camera-tab {
     width: 200px;
 }

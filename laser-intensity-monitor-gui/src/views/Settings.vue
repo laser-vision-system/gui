@@ -1,3 +1,6 @@
+<script setup>
+
+</script>
 <template>
     <!--
     Add toggle Dark Mode button maybe not too sure what to put here
@@ -9,12 +12,4 @@
         </div>
     </div>
 </template>
-<script>
-export default {
-    data() {
-        return {
-
-        }
-    },
-}
-</script>
+<style scoped></style>
