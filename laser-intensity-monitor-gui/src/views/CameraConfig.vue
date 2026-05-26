@@ -1,8 +1,30 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+// Data
+const localCameraFeeds = ref([])
+const selectedCameraId = ref('')
+const newDescription = ref('')
+const newFPS = ref(null)
+const newBrightness = ref(null)
+// Methods
+function loadCameraFeeds() {
+    const storedCameraFeeds = localStorage.getItem('cameraFeeds');
+    if (storedCameraFeeds) {
+        localCameraFeeds.value = JSON.parse(storedCameraFeeds);
+    } else {
+        localCameraFeeds.value = [];
+    }
+}
+// mounted
+onMounted(() => {
+    loadCameraFeeds();
+});
+</script>
 <template>
     <div class="container">
         <div class="row">
             <div class="col">
-                <form action="post">
+                <form>
                     <div class="form-group">
                         <label for="cameraSelect" class="config-label">Camera Select</label>
                         <select class="form-control" id="cameraSelect" required v-model="selectedCameraId">
@@ -20,7 +42,7 @@
                         <label for="fps" class="config-label">Frame Rate</label>
                         <input type="number" class="form-control" id="fps" v-model="newFPS" required min="1" max="30">
                         <div class="mt-2 text-center">
-                            <button type="submit" class="btn submit-btn">Save Changes</button>
+                            <button class="btn submit-btn">Save Changes</button>
                         </div>
                     </div>
                 </form>
@@ -28,33 +50,7 @@
         </div>
     </div>
 </template>
-<script>
-export default {
-    data() {
-        return {
-            localCameraFeeds: [],
-            selectedCameraId: '',
-            newDescription: '',
-            newFPS: null,
-            newBrightness: null,
-        }
-    },
-    methods: {
-        loadCameraFeeds() {
-            const storedCameraFeeds = localStorage.getItem('cameraFeeds');
-            if (storedCameraFeeds) {
-                this.localCameraFeeds = JSON.parse(storedCameraFeeds);
-            } else {
-                this.localCameraFeeds = [];
-            }
-        }
-    },
-    mounted() {
-        this.loadCameraFeeds();
-    },
-}
-</script>
-<style>
+<style scoped>
 .submit-btn {
     background-color: slateblue;
     border-color: darkslateblue;
