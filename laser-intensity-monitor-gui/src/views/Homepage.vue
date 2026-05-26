@@ -27,7 +27,7 @@ onMounted(() => {
     <div class="container">
         <div class="row p-2 g-3">
             <div class="col-xl-3 col-12 text-center  ">
-                <table class="table border border-3 border-black">
+                <table class="table border border-3">
                     <thead>
                         <tr>
                             <th scope="col">Connected microComputers</th>
@@ -119,14 +119,14 @@ onMounted(() => {
     border: 0.5rem solid slateblue;
     border-radius: 1rem;
     box-shadow: 0 0 0.45rem mediumslateblue;
-    background-color: lightsteelblue;
+    background-color: var(--cam-bg);
 }
 
 .cam-info {
     border: 0.5rem solid slateblue;
     border-radius: 1rem;
     box-shadow: 0 0 0.45rem mediumslateblue;
-    background-color: lightsteelblue;
+    background-color: var(--cam-bg);
     align-items: center;
     justify-content: center;
 }
