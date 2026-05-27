@@ -60,7 +60,7 @@ input:checked+.slider {
 }
 
 input:focus+.slider {
-    box-shadow: 0 0 1px #2196F3;
+    box-shadow: 0 0 1px mediumslateblue;
 }
 
 input:checked+.slider:before {

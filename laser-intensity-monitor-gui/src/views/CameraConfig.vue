@@ -64,7 +64,7 @@ onMounted(() => {
 .config-label {
     font-weight: bold;
     font-size: 16pt;
-    color: black;
+    color: var(--config-title);
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
 </style>
