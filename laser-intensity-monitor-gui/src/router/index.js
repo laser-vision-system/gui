@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHashHistory, createWebHistory } from "vue-router";
 import Homepage from "../views/Homepage.vue";
 import CameraConfig from "../views/CameraConfig.vue";
 import Settings from "../views/Settings.vue";
@@ -8,7 +8,8 @@ const routes = [
   { path: "/settings", component: Settings }
 ];
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  // change back to createWebHistory when deploying on server
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes,
 });
 export default router;

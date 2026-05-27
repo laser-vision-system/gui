@@ -82,7 +82,7 @@ onMounted(() => {
                                 class="feedbox img-fluid">
                         </div>
                         <div v-else>
-                            <img src="../assets/images/no-cameras-connected.png" alt="No Cameras Connected"
+                            <img src="../assets/images/no-camera-connected.png" alt="No Cameras Connected"
                                 class="feedbox img-fluid">
                         </div>
                     </div>
