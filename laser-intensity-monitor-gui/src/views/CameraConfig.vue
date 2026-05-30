@@ -35,12 +35,12 @@ onMounted(() => {
                         </select>
                         <label for="description" class="config-label"
                             placeholder="Enter a description for the camera">Description</label>
-                        <input type="text" class="form-control" id="description" v-model="newDescription" required>
+                        <input type="text" class="form-control" id="description" v-model="newDescription">
                         <label for="brightness" class="config-label">Brightness</label>
-                        <input type="number" class="form-control" id="brightness" v-model="newBrightness" required
-                            min="0" max="1" step="0.01">
+                        <input type="number" class="form-control" id="brightness" v-model="newBrightness" min="0"
+                            max="1" step="0.01">
                         <label for="fps" class="config-label">Frame Rate</label>
-                        <input type="number" class="form-control" id="fps" v-model="newFPS" required min="1" max="30">
+                        <input type="number" class="form-control" id="fps" v-model="newFPS" min="1" max="30">
                         <div class="mt-2 text-center">
                             <button class="btn submit-btn">Save Changes</button>
                         </div>
@@ -54,11 +54,13 @@ onMounted(() => {
 .submit-btn {
     background-color: slateblue;
     border-color: darkslateblue;
+    color: white
 }
 
 .submit-btn:hover {
     background-color: mediumslateblue;
     border-color: slateblue;
+    color: black;
 }
 
 .config-label {

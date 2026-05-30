@@ -2,13 +2,12 @@
     /* Bootstrap Overrides */
     --bs-body-bg: white;
     --bs-body-color: #333333;
-    --bs-success: mediumaquamarine;
     --bs-success-rgb: 123, 104, 238;
     --bs-border-color: #333333;
     /* CUSTOM CSS */
     --nav-bg: slateblue;
     --nav-title: black;
-
+    --config-title: black;
     --cam-bg: aliceblue;
 
 }
@@ -22,7 +21,7 @@
 
 :root.dark {
     /* Bootstrap Overrides */
-    --bs-body-bg: #708090;
+    --bs-body-bg: #778899;
     --bs-body-color: white;
     --bs-success-rgb: 106, 90, 205;
     --bs-border-color: silver;
@@ -40,7 +39,7 @@
 }
 
 .navTitle {
-    font-size: 20pt;
+    font-size: 10pt;
     font-weight: 700;
     color: var(--nav-title);
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
