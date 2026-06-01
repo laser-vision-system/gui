@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 // Data
+const CameraDataApiURL = ref('')
 const localCameraFeeds = ref([])
 const selectedCameraId = ref('')
 const newDescription = ref('')
@@ -16,6 +17,35 @@ function loadCameraFeeds() {
     }
 }
 // mounted
+
+//fetch method for update function
+async function putData() {
+    const SQLApiURL = CameraDataApiURL.value;
+
+    const requestOptions = {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            camera_id: selectedCameraId.value,
+            description: newDescription.value,
+            brightness: newBrightness.value,
+            fps: newFPS.value
+        })
+    };
+
+    try {
+        const response = await fetch(SQLApiURL, requestOptions);
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Success:', data);
+    } catch (error) {
+        console.error('Error updating camera:', error);
+    }
+}
 onMounted(() => {
     loadCameraFeeds();
 });

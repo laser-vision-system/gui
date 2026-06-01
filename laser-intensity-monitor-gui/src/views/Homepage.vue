@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 
+const CameraDataApiURL = ref('') // API URL for camera Data
+
 const cameraFeeds = ref([
     { name: "cam00 ", id: '00', description: 'Camera 1 Description', fps: 2, brightness: 0.99, isConnected: true, isSelected: false },
     { name: "cam01 ", id: '01', description: 'Camera 2 Description', fps: null, brightness: 0.99, isConnected: false, isSelected: false }
@@ -18,28 +20,64 @@ function saveCameraFeeds() {
     localStorage.setItem('cameraFeeds', JSON.stringify(cameraFeeds.value))
 }
 
+// fetch method for Read API call
+async function fetchCameraData() {
+    try {
+        const response = await fetch(CameraDataApiURL.value, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`)
+        }
+
+        const data = await response.json()
+
+        // Map API response fields to your camera feed structure
+        cameraFeeds.value = data.map(camera => ({
+            name: camera.name,
+            id: camera.camera_id,
+            description: camera.description,
+            fps: camera.fps,
+            brightness: camera.brightness,
+            isConnected: camera.isConnected ?? false,
+            isSelected: false
+        }))
+
+        saveCameraFeeds()
+
+    } catch (error) {
+        console.error('Failed to fetch camera data, using defaults:', error)
+        // Falls back to the hardcoded cameraFeeds defined above
+        saveCameraFeeds()
+    }
+}
+
 onMounted(() => {
-    saveCameraFeeds()
+    fetchCameraData()
 })
 </script>
 
 <template>
     <div class="container">
-        <div class="row align-items-stretch g-0 mt-2">
-            <div class="col-lg-9 col-12 d-flex justify-content-center">
-                <div v-if="hasSelectedCamera">
-                    <img src="../assets/images/fake-feed.png" alt="Live Camera Feed" class="feedbox img-fluid">
+        <div class="row align-items-stretch g-0">
+            <div class="col-xl-9 col-12 d-flex  mt-2 feed-row">
+                <div v-if="hasSelectedCamera" class="w-100">
+                    <img src="../assets/images/fake-feed.png" alt="Live Camera Feed" class="feedbox w-100 h-100">
                 </div>
-                <div v-else-if="hasConnectedCamera">
+                <div v-else-if="hasConnectedCamera" class="w-100">
                     <img src="../assets/images/no-camera-selected.png" alt="No camera selected"
-                        class="feedbox img-fluid">
+                        class="feedbox w-100 h-100">
                 </div>
-                <div v-else>
+                <div v-else class="w-100">
                     <img src="../assets/images/no-camera-connected.png" alt="No Cameras Connected"
-                        class="feedbox img-fluid">
+                        class="feedbox w-100 h-100 ">
                 </div>
             </div>
-            <div class="col-lg-3 col-12 cam-info d-flex flex-column mx-d-flex flex-column my-2 p-2">
+            <div class="col-xl-3 col-12 cam-info d-flex flex-column d-flex flex-column p-2 mt-2 feed-row">
                 <h3>Camera Info</h3>
                 <div v-for="feed in cameraFeeds" :key="feed.id">
                     <div v-if="feed.isSelected">
@@ -55,7 +93,7 @@ onMounted(() => {
             </div>
         </div>
         <div class="row p-2 mt-2">
-            <div class="col-xl-9 col-12">
+            <div class="col-lg-9 col-12">
                 <h3 class="cam-title">Cameras Connected</h3>
                 <div class="row d-flex justify-content-start p-3">
                     <div class="col-3" v-for="(feed, fi) in cameraFeeds" :key="feed.id">
@@ -70,7 +108,7 @@ onMounted(() => {
                     </div>
                 </div>
             </div>
-            <div class="col-xl-3 col-12 text-center">
+            <div class="col-lg-3 col-12 text-center">
                 <table class="table border border-2 hardware-info">
                     <thead>
                         <tr>
@@ -119,6 +157,8 @@ onMounted(() => {
     border-radius: 1rem;
     box-shadow: 0 0 0.45rem mediumslateblue;
     background-color: var(--cam-bg);
+    object-fit: contain;
+    max-height: 500px;
 }
 
 .cam-info {
@@ -127,6 +167,11 @@ onMounted(() => {
     box-shadow: 0 0 0.45rem mediumslateblue;
     background-color: var(--cam-bg);
     color: var(--nav-title);
+}
+
+.feed-row {
+    max-width: 640px;
+    margin: 0 auto;
 }
 
 .hardware-info {
