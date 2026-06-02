@@ -1,7 +1,10 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import VideoFeed from '../components/CameraFeed.vue'
+import { useWebSocket } from '../composables/useWebSocket'
 
-const CameraDataApiURL = ref('') // API URL for camera Data
+const CameraDataApiURL = ref('') // API URL for camera config Data
+const WebSocketURL = ref('') // API URL for camera stream Data
 
 const cameraFeeds = ref([
     { name: "cam00 ", id: '00', description: 'Camera 1 Description', fps: 2, brightness: 0.99, isConnected: true, isSelected: false },
