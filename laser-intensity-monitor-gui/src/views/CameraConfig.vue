@@ -18,8 +18,6 @@ const saveState = ref('')
 // --------------------
 //        Methods
 // --------------------
-
-
 //fetch method for read function
 async function fetchCameraData() {
     try {
@@ -33,10 +31,8 @@ async function fetchCameraData() {
         console.error('Error fetching camera data:', error)
     }
 }
-
-
-//fetch method for update function
-async function postData() {
+// fetch method for update for config
+async function postConfigData() {
     saveState.value = '' // reset before each attempt
 
     const checkBlank = (newValue, currentValue) => {
@@ -56,7 +52,6 @@ async function postData() {
             framerate: checkBlank(newFPS.value, CameraFeedData.value?.framerate)
         })
     };
-
     try {
         const response = await fetch(CameraDataApiURL.value, requestOptions);
         if (!response.ok) {
@@ -71,9 +66,33 @@ async function postData() {
             console.log('Success: Saved successfully (No JSON returned)');
         }
         saveState.value = 'success'
+        // update gui after successfull post
+        postConfigTrue()
     } catch (error) {
         console.error('Error updating camera:', error);
         saveState.value = 'error'
+    }
+
+}
+// post gui_update Config bool to true
+async function postConfigTrue() {
+    const requestOptions = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            config: true
+        })
+    };
+    try {
+        const response = await fetch(guiUpdateApiURL.value, requestOptions)
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`)
+        }
+        const data = await response.json()
+    } catch (error) {
+        console.error('Error fetching camera data:', error)
     }
 }
 // --------------------
@@ -83,18 +102,15 @@ watch(newFPS, (val) => {
     if (val < 1) newFPS.value = 1;
     if (val > 30) newFPS.value = 30;
 });
-
 watch(newBrightness, (val) => {
     if (val !== null) {
         if (val < 0) newBrightness.value = 0
         if (val > 1) newBrightness.value = 1
     }
 })
-
 // -------------------------------
 //        onMount and unMount
 // -------------------------------
-
 onMounted(() => {
     fetchCameraData()
 });
@@ -103,7 +119,7 @@ onMounted(() => {
     <div class="container">
         <div class="row">
             <div class="col">
-                <form @submit.prevent="postData">
+                <form @submit.prevent="postConfigData">
                     <div class="form-group">
                         <label for="cameraSelect" class="config-label">Camera Select</label>
                         <select class="form-control" id="cameraSelect" required v-model="selectedCamera">
@@ -113,10 +129,11 @@ onMounted(() => {
                             </option>
                         </select>
                         <label for="brightness" class="config-label">Brightness</label>
-                        <input type="number" class="form-control" id="brightness" v-model="newBrightness" min="0"
-                            max="1" step="0.01">
+                        <input type="number" class="form-control" id="brightness" v-model="newBrightness" min="0.0"
+                            max="1.0" step="0.01">
                         <label for="fps" class="config-label">Frame Rate</label>
-                        <input type="number" class="form-control" id="fps" v-model="newFPS" min="1" max="30">
+                        <input type="number" class="form-control" id="fps" v-model="newFPS" min="1.0" max="30.00"
+                            step="1.0">
                         <div class="mt-2 text-center">
                             <button class="btn submit-btn">Save Changes</button>
                         </div>
@@ -133,18 +150,6 @@ onMounted(() => {
     </div>
 </template>
 <style scoped>
-.submit-btn {
-    background-color: slateblue;
-    border-color: darkslateblue;
-    color: white
-}
-
-.submit-btn:hover {
-    background-color: mediumslateblue;
-    border-color: slateblue;
-    color: black;
-}
-
 .config-label {
     font-weight: bold;
     font-size: 16pt;

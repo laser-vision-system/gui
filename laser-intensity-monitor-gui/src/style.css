@@ -48,3 +48,15 @@
 .navBar {
     background-color: var(--nav-bg);
 }
+
+.submit-btn {
+    background-color: slateblue;
+    border-color: darkslateblue;
+    color: white
+}
+
+.submit-btn:hover {
+    background-color: mediumslateblue;
+    border-color: slateblue;
+    color: black;
+}

@@ -2,7 +2,6 @@
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 //import cameraFeed from '../components/CameraFeed.vue'
 //import { useWebSocket } from '../composables/useWebSocket'
-
 // --------------------
 //        Data
 // --------------------
@@ -10,20 +9,23 @@ import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 // { name: "cam00 ", id: '00', description: 'Camera 1 Description', fps: 2, brightness: 0.99, isConnected: true, isSelected: false },
 // { name: "cam01 ", id: '01', description: 'Camera 2 Description', fps: null, brightness: 0.99, isConnected: false, isSelected: false }
 //const WebSocketURL = ref('') // API URL for camera stream Data
-const CameraDataApiURL = ref('/api/configuration') // API URL for camera config Data
-const CameraFeedApiURL = ref('/api/image') // API URL for camera feed Data
+const cameraDataApiURL = ref('/api/configuration') // API URL for camera config Data
+const cameraFeedApiURL = ref('/api/image') // API URL for camera feed Data
+const cameraInfoApiURL = ref('/api/camera_info') // API URL for camera info
+const guiUpdateApiURL = ref('/api/gui_update') // API URL for gui update setpoint and config
 const cameraFeedsData = ref([{
     id: '00',
     name: 'cam00',
     description: 'Primary Camera',
     fps: null,
     brightness: null,
+    intensity: null,
+    deviation: null,
     isConnected: true,
     isSelected: false
 }]) // is replaced by the camera data when read.
 const liveFeedSrc = ref(null) // dynamic image source
 let pollInterval = null
-
 // --------------------
 //        Computed
 // --------------------
@@ -49,10 +51,10 @@ function selectCamera(feedId) {
         }
     })
 }
-// fetch method for Read API call
-async function fetchCameraData() {
+// fetch method for Read camera config API call
+async function fetchCameraConfig() {
     try {
-        const response = await fetch(CameraDataApiURL.value)
+        const response = await fetch(cameraDataApiURL.value)
 
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`)
@@ -65,7 +67,6 @@ async function fetchCameraData() {
             feed.brightness = data.brightness
             feed.isConnected = true
         })
-
     } catch (error) {
         console.error('Failed to fetch camera configuration:', error)
 
@@ -74,11 +75,56 @@ async function fetchCameraData() {
         })
     }
 }
+// fetch method for camera info
+async function fetchCameraInfo() {
+    try {
+        const response = await fetch(cameraInfoApiURL.value)
 
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`)
+        }
+
+        const data = await response.json()
+
+        cameraFeedsData.value.forEach(feed => {
+            feed.intensity = data.intensity
+            feed.deviation = data.deviation
+        })
+    } catch (error) {
+        console.error('Failed to fetch camera configuration:', error)
+
+        cameraFeedsData.value.forEach(feed => {
+            feed.isConnected = false
+        })
+    }
+}
+// post gui_update Set setpoint bool to true
+async function postSetpointTrue() {
+    const requestOptions = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            setpoint: true
+        })
+    };
+    try {
+        const response = await fetch(guiUpdateApiURL.value, requestOptions)
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`)
+        }
+        const data = await response.json()
+    } catch (error) {
+        console.error('Error fetching camera data:', error)
+    }
+}
+
+// requests camera feed
 async function fetchCameraFeed() {
     if (!hasSelectedCamera.value) return
     // Append timestamp to bust browser image cache on each poll
-    liveFeedSrc.value = `${CameraFeedApiURL.value}?t=${Date.now()}`
+    liveFeedSrc.value = `${cameraFeedApiURL.value}?t=${Date.now()}`
 }
 
 function startPolling() {
@@ -97,7 +143,6 @@ function stopPolling() {
 
     liveFeedSrc.value = null
 }
-
 // --------------------
 //        Watchers
 // --------------------
@@ -116,7 +161,8 @@ watch(
 //        onMount and unMount
 // -------------------------------
 onMounted(async () => {
-    await fetchCameraData()
+    await fetchCameraConfig()
+    await fetchCameraInfo()
     if (hasSelectedCamera.value) startPolling()
 })
 
@@ -125,7 +171,6 @@ onUnmounted(() => {
     stopPolling()
 })
 </script>
-
 <template>
     <div class="container">
         <div class="row align-items-stretch g-0">
@@ -143,18 +188,29 @@ onUnmounted(() => {
                 </div>
             </div>
             <div class="col-xl-3 col-12 cam-info d-flex flex-column d-flex flex-column p-2 mt-2 feed-row">
-                <h3>Camera Info</h3>
-                <div v-for="feed in cameraFeedsData" :key="feed.id">
-                    <div v-if="feed.isSelected">
-                        <p>Camera: {{ feed.name }}</p>
-                        <p>Description: {{ feed.description }}</p>
-                        <p>fps: {{ feed.fps }}</p>
-                        <p>Brightness: {{ feed.brightness }}</p>
+                <div class="row">
+                    <h3>Camera Info</h3>
+                    <div class="col-lg-7 col-9">
+                        <div v-for="feed in cameraFeedsData" :key="feed.id">
+                            <div v-if="feed.isSelected">
+                                <p>Camera: {{ feed.name }}</p>
+                                <p>Description: {{ feed.description }}</p>
+                                <p>Intensity: {{ feed.intensity }}</p>
+                                <p>Deviation: {{ feed.deviation }}</p>
+                                <p>fps: {{ feed.fps }}</p>
+                                <p>Brightness: {{ feed.brightness }}</p>
+                            </div>
+                        </div>
+                        <div v-if="!hasSelectedCamera">
+                            <p><strong>No camera selected</strong></p>
+                        </div>
+                    </div>
+                    <div class="col-lg-5 col-3">
+                        <button class="btn submit-btn" @click="postSetpointTrue">Set Setpoint</button>
                     </div>
                 </div>
-                <div v-if="!hasSelectedCamera">
-                    <p><strong>No camera selected</strong></p>
-                </div>
+
+
             </div>
         </div>
         <div class="row p-2 mt-2">
@@ -182,16 +238,16 @@ onUnmounted(() => {
                     </thead>
                     <tbody>
                         <tr>
-                            <td>Rasberry pie 5 8Gb: ID-00</td>
+                            <td>Raspberry pie 5 8Gb: ID-00</td>
                         </tr>
                         <tr>
-                            <th scope="col">Disconected microComputers</th>
+                            <th scope="col">Disconnected microComputers</th>
                         </tr>
                         <tr>
                             <td>N/a</td>
                         </tr>
                         <tr>
-                            <th scope="col">Disconected Cameras</th>
+                            <th scope="col">Disconnected Cameras</th>
                         </tr>
                         <tr v-for="feed in cameraFeedsData" :key="feed.id">
                             <td v-if="!feed.isConnected">{{ feed.name }}
@@ -203,7 +259,6 @@ onUnmounted(() => {
 
         </div>
     </div>
-
 </template>
 <style scoped>
 .camera-tab {
