@@ -1,37 +1,34 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-// Data
-const CameraDataApiURL = ref('')
+import { ref, onMounted, watch } from 'vue'
+// --------------------
+//        Data
+// --------------------
+const CameraDataApiURL = ref('/api/configuration')
 const localCameraFeeds = ref([])
 const selectedCameraId = ref('')
 const newDescription = ref('')
 const newFPS = ref(null)
 const newBrightness = ref(null)
-// Methods
-function loadCameraFeeds() {
-    const storedCameraFeeds = localStorage.getItem('cameraFeeds');
-    if (storedCameraFeeds) {
-        localCameraFeeds.value = JSON.parse(storedCameraFeeds);
-    } else {
-        localCameraFeeds.value = [];
-    }
-}
-// mounted
+// --------------------
+//        Computed
+// --------------------
+
+// --------------------
+//        Methods
+// --------------------
 
 //fetch method for update function
-async function putData() {
+async function postData() {
     const SQLApiURL = CameraDataApiURL.value;
 
     const requestOptions = {
-        method: 'PUT',
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            camera_id: selectedCameraId.value,
-            description: newDescription.value,
             brightness: newBrightness.value,
-            fps: newFPS.value
+            framerate: newFPS.value
         })
     };
 
@@ -46,8 +43,19 @@ async function putData() {
         console.error('Error updating camera:', error);
     }
 }
+// --------------------
+//        Watchers
+// --------------------
+watch(newFPS, (val) => {
+    if (val < 1) newFPS.value = 1;
+    if (val > 30) newFPS.value = 30;
+});
+
+// -------------------------------
+//        onMount and unMount
+// -------------------------------
+
 onMounted(() => {
-    loadCameraFeeds();
 });
 </script>
 <template>
