@@ -106,7 +106,8 @@ async function postSetpointTrue() {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            setpoint: true
+            setpoint: true,
+            config: false
         })
     };
     try {
