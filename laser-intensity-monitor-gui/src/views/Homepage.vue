@@ -9,7 +9,7 @@ import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 // { name: "cam00 ", id: '00', description: 'Camera 1 Description', fps: 2, brightness: 0.99, isConnected: true, isSelected: false },
 // { name: "cam01 ", id: '01', description: 'Camera 2 Description', fps: null, brightness: 0.99, isConnected: false, isSelected: false }
 //const WebSocketURL = ref('') // API URL for camera stream Data
-const cameraDataApiURL = ref('/api/configuration') // API URL for camera config Data
+const cameraConfigApiURL = ref('/api/configuration') // API URL for camera config Data
 const cameraFeedApiURL = ref('/api/image') // API URL for camera feed Data
 const cameraInfoApiURL = ref('/api/camera_info') // API URL for camera info
 const guiUpdateApiURL = ref('/api/gui_update') // API URL for gui update setpoint and config
@@ -19,6 +19,8 @@ const cameraFeedsData = ref([{
     description: 'Primary Camera',
     fps: null,
     brightness: null,
+    contrast: null,
+    saturation: null,
     intensity: null,
     deviation: null,
     isConnected: true,
@@ -55,7 +57,7 @@ function selectCamera(feedId) {
 // fetch method for Read camera config API call
 async function fetchCameraConfig() {
     try {
-        const response = await fetch(cameraDataApiURL.value)
+        const response = await fetch(cameraConfigApiURL.value)
 
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`)
@@ -66,6 +68,8 @@ async function fetchCameraConfig() {
         cameraFeedsData.value.forEach(feed => {
             feed.fps = data.framerate
             feed.brightness = data.brightness
+            feed.contrast = data.contrast
+            feed.saturation = data.saturation
             feed.isConnected = true
         })
     } catch (error) {
@@ -206,6 +210,7 @@ onUnmounted(() => {
                                 <p>Deviation: {{ feed.deviation }}</p>
                                 <p>fps: {{ feed.fps }}</p>
                                 <p>Brightness: {{ feed.brightness }}</p>
+
                             </div>
                         </div>
                         <div v-if="!hasSelectedCamera">
