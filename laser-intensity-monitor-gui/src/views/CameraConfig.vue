@@ -37,8 +37,8 @@ async function postConfigData() {
     saveState.value = '' // reset before each attempt
 
     const checkBlank = (newValue, currentValue) => {
-        if (newValue === '' || newValue === null) {
-            return currentValue;
+        if (newValue === '' || newValue === null || newValue === 0) {
+            return parseFloat(currentValue);
         }
         return parseFloat(newValue);
     };
