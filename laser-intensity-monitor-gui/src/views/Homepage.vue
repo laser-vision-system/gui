@@ -23,7 +23,7 @@ const cameraFeedsData = ref([{
     saturation: null,
     intensity: null,
     deviation: null,
-    isConnected: true,
+    isConnected: false,
     isSelected: false
 }]) // is replaced by the camera data when read.
 const setpointState = ref(false)
@@ -143,7 +143,7 @@ function startPolling() {
     pollInterval = setInterval(() => {
         fetchCameraFeed()
         fetchCameraInfo()
-    }, 1000 / (cameraFeedsData.value.find(f => f.isSelected)?.fps))
+    }, 1000 / (cameraFeedsData.value.find(f => f.isSelected)?.fps ?? 2))
 }
 
 function stopPolling() {
@@ -198,10 +198,10 @@ onUnmounted(() => {
                         class="feedbox w-100 h-100 ">
                 </div>
             </div>
-            <div class="col-xl-3 col-12 cam-info d-flex flex-column d-flex flex-column p-2 mt-2 feed-row">
+            <div class="col-xl-3 col-12 cam-info d-flex flex-column p-2 mt-2 feed-row">
                 <div class="row">
                     <h3>Camera Info</h3>
-                    <div class="col-lg-7 col-9">
+                    <div class="col-lg-7 col-9 ">
                         <div v-for="feed in cameraFeedsData" :key="feed.id">
                             <div v-if="feed.isSelected">
                                 <p>Camera: {{ feed.name }}</p>

@@ -110,8 +110,8 @@ watch(newFPS, (val) => {
 });
 watch(newBrightness, (val) => {
     if (val !== null) {
-        if (val < 0) newBrightness.value = 0
-        if (val > 256) newBrightness.value = 255
+        if (val <= 0) newBrightness.value = 0
+        if (val >= 255) newBrightness.value = 255
     }
 })
 watch(newHue, (val) => {
@@ -122,8 +122,8 @@ watch(newHue, (val) => {
 })
 watch(newSaturation, (val) => {
     if (val !== null) {
-        if (val < 0) newSaturation.value = 0
-        if (val > 256) newSaturation.value = 255
+        if (val <= 0) newSaturation.value = 0
+        if (val >= 255) newSaturation.value = 255
     }
 })
 // -------------------------------
@@ -152,8 +152,8 @@ onMounted(() => {
                         <label for="hue" class="config-label">Hue</label>
                         <input type="number" class="form-control" id="hue" v-model="newHue" min="-40" max="40"
                             step="1.00">
-                        <label for="brightness" class="config-label">Saturation</label>
-                        <input type="number" class="form-control" id="brightness" v-model="newSaturation" min="0.0"
+                        <label for="saturation" class="config-label">Saturation</label>
+                        <input type="number" class="form-control" id="saturation" v-model="newSaturation" min="0.0"
                             max="255.0" step="1.00">
                         <label for="fps" class="config-label">Frame Rate</label>
                         <input type="number" class="form-control" id="fps" v-model="newFPS" min="1.0" max="30.00"
