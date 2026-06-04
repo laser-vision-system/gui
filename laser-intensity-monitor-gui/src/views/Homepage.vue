@@ -19,7 +19,7 @@ const cameraFeedsData = ref([{
     description: 'Primary Camera',
     fps: null,
     brightness: null,
-    contrast: null,
+    hue: null,
     saturation: null,
     intensity: null,
     deviation: null,
@@ -68,7 +68,7 @@ async function fetchCameraConfig() {
         cameraFeedsData.value.forEach(feed => {
             feed.fps = data.framerate
             feed.brightness = data.brightness
-            feed.contrast = data.contrast
+            feed.hue = data.hue
             feed.saturation = data.saturation
             feed.isConnected = true
         })
@@ -210,6 +210,8 @@ onUnmounted(() => {
                                 <p>Deviation: {{ feed.deviation }}</p>
                                 <p>fps: {{ feed.fps }}</p>
                                 <p>Brightness: {{ feed.brightness }}</p>
+                                <p>Hue: {{ feed.hue }}</p>
+                                <p>Saturation: {{ feed.saturation }}</p>
 
                             </div>
                         </div>
