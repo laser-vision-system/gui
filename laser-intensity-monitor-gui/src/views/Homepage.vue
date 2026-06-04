@@ -24,6 +24,7 @@ const cameraFeedsData = ref([{
     isConnected: true,
     isSelected: false
 }]) // is replaced by the camera data when read.
+const setpointState = ref(false)
 const liveFeedSrc = ref(null) // dynamic image source
 let pollInterval = null
 // --------------------
@@ -115,7 +116,11 @@ async function postSetpointTrue() {
         if (!response.ok) {
             throw new Error(`HTTP error: ${response.status}`)
         }
-        const data = await response.json()
+        const data = await response.text()
+        setpointState.value = true
+        setTimeout(() => {
+            setpointState.value = false;
+        }, 5000);
     } catch (error) {
         console.error('Error fetching camera data:', error)
     }
@@ -133,7 +138,8 @@ function startPolling() {
     fetchCameraFeed() // fetch immediately, then start interval
     pollInterval = setInterval(() => {
         fetchCameraFeed()
-    }, 1000 / (cameraFeedsData.value.find(f => f.isSelected)?.fps ?? 2))
+        fetchCameraInfo()
+    }, 1000 / (cameraFeedsData.value.find(f => f.isSelected)?.fps))
 }
 
 function stopPolling() {
@@ -208,6 +214,7 @@ onUnmounted(() => {
                     </div>
                     <div class="col-lg-5 col-3">
                         <button class="btn submit-btn" @click="postSetpointTrue">Set Setpoint</button>
+                        <p v-if="setpointState">Setpoint Successful</p>
                     </div>
                 </div>
 
