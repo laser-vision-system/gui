@@ -3,8 +3,9 @@ import { ref, onMounted, watch } from 'vue'
 // --------------------
 //        Data
 // --------------------
-const CameraDataApiURL = ref('/api/configuration')
-const CameraFeedData = ref([])
+const cameraConfigApiURL = ref('/api/configuration')
+const guiUpdateApiURL = ref('/api/gui_update')
+const cameraFeedData = ref([])
 const selectedCamera = ref('')
 // Api post values
 const newFPS = ref(null)
@@ -19,9 +20,9 @@ const saveState = ref('')
 //        Methods
 // --------------------
 //fetch method for read function
-async function fetchCameraData() {
+async function fetchCameraConfig() {
     try {
-        const response = await fetch(CameraDataApiURL.value)
+        const response = await fetch(cameraConfigApiURL.value)
         if (!response.ok) {
             throw new Error(`HTTP error: ${response.status}`)
         }
@@ -39,7 +40,7 @@ async function postConfigData() {
         if (newValue === '' || newValue === null) {
             return currentValue;
         }
-        return Number(newValue);
+        return parseFloat(newValue);
     };
     const requestOptions = {
         method: 'POST',
@@ -48,12 +49,12 @@ async function postConfigData() {
         },
         body: JSON.stringify({
             // if the new function are blank or empty use the data got by the read funciton
-            brightness: checkBlank(newBrightness.value, CameraFeedData.value?.brightness),
-            framerate: checkBlank(newFPS.value, CameraFeedData.value?.framerate)
+            brightness: checkBlank(newBrightness.value, cameraFeedData.value?.brightness),
+            framerate: checkBlank(newFPS.value, cameraFeedData.value?.framerate)
         })
     };
     try {
-        const response = await fetch(CameraDataApiURL.value, requestOptions);
+        const response = await fetch(cameraConfigApiURL.value, requestOptions);
         if (!response.ok) {
             throw new Error(`HTTP error: ${response.status}`);
         }
@@ -82,6 +83,7 @@ async function postConfigTrue() {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+            setpoint: false,
             config: true
         })
     };
@@ -112,7 +114,7 @@ watch(newBrightness, (val) => {
 //        onMount and unMount
 // -------------------------------
 onMounted(() => {
-    fetchCameraData()
+    fetchCameraConfig()
 });
 </script>
 <template>
