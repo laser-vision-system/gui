@@ -10,6 +10,8 @@ const selectedCamera = ref('')
 // Api post values
 const newFPS = ref(null)
 const newBrightness = ref(null)
+const newContrast = ref(null)
+const newSaturation = ref(null)
 // for save message e.g. success | error
 const saveState = ref('')
 // --------------------
@@ -50,7 +52,9 @@ async function postConfigData() {
         body: JSON.stringify({
             // if the new function are blank or empty use the data got by the read funciton
             brightness: checkBlank(newBrightness.value, cameraFeedData.value?.brightness),
-            framerate: checkBlank(newFPS.value, cameraFeedData.value?.framerate)
+            framerate: checkBlank(newFPS.value, cameraFeedData.value?.framerate),
+            contrast: checkBlank(newContrast.value, cameraFeedData.value?.contrast),
+            saturation: checkBlank(newSaturation.value, cameraFeedData.value?.saturation)
         })
     };
     try {
@@ -107,7 +111,19 @@ watch(newFPS, (val) => {
 watch(newBrightness, (val) => {
     if (val !== null) {
         if (val < 0) newBrightness.value = 0
-        if (val > 1) newBrightness.value = 1
+        if (val > 256) newBrightness.value = 255
+    }
+})
+watch(newContrast, (val) => {
+    if (val !== null) {
+        if (val < 0) newBrightness.value = 0
+        if (val > 256) newBrightness.value = 255
+    }
+})
+watch(newSaturation, (val) => {
+    if (val !== null) {
+        if (val < 0) newBrightness.value = 0
+        if (val > 256) newBrightness.value = 255
     }
 })
 // -------------------------------
@@ -132,7 +148,13 @@ onMounted(() => {
                         </select>
                         <label for="brightness" class="config-label">Brightness</label>
                         <input type="number" class="form-control" id="brightness" v-model="newBrightness" min="0.0"
-                            max="1.0" step="0.01">
+                            max="255.0" step="1.00">
+                        <label for="contrast" class="config-label">Contrast</label>
+                        <input type="number" class="form-control" id="contrast" v-model="newContrast" min="0.0"
+                            max="255.0" step="1.00">
+                        <label for="brightness" class="config-label">Saturation</label>
+                        <input type="number" class="form-control" id="brightness" v-model="newSaturation" min="0.0"
+                            max="255.0" step="1.00">
                         <label for="fps" class="config-label">Frame Rate</label>
                         <input type="number" class="form-control" id="fps" v-model="newFPS" min="1.0" max="30.00"
                             step="1.0">
