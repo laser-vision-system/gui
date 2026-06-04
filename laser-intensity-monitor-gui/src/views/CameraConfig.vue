@@ -27,7 +27,7 @@ async function fetchCameraConfig() {
             throw new Error(`HTTP error: ${response.status}`)
         }
         const data = await response.json()
-        CameraFeedData.value = data
+        cameraFeedData.value = data
     } catch (error) {
         console.error('Error fetching camera data:', error)
     }
