@@ -42,11 +42,10 @@ import settingsInactive from '../assets/images/settings-inactive.svg'
     </div>
 </template>
 <script>
-
 export default {
     data() { return { activeNavElement: 'Camera Feed' } },
     methods: {
         setNavElement(navElement) { this.activeNavElement = navElement; },
-    },
+    }
 }
 </script>
