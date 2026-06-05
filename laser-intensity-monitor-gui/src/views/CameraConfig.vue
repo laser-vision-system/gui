@@ -21,6 +21,20 @@ const saveState = ref('')
 // --------------------
 //        Methods
 // --------------------
+// check for blank and returns a float
+function checkBlankFloat(newValue, currentValue) {
+    if (newValue === '' || newValue === null) {
+        return parseFloat(currentValue);
+    }
+    return parseFloat(newValue);
+}
+// check for blank and returns a int
+function checkBlankInt(newValue, currentValue) {
+    if (newValue === '' || newValue === null) {
+        return Number(currentValue);
+    }
+    return Number(newValue);
+}
 //fetch method for read function
 async function fetchCameraConfig() {
     try {
@@ -37,13 +51,6 @@ async function fetchCameraConfig() {
 // fetch method for update for config
 async function postConfigData() {
     saveState.value = '' // reset before each attempt
-
-    const checkBlank = (newValue, currentValue) => {
-        if (newValue === '' || newValue === null || newValue === 0) {
-            return parseFloat(currentValue);
-        }
-        return parseFloat(newValue);
-    };
     const requestOptions = {
         method: 'POST',
         headers: {
@@ -51,10 +58,10 @@ async function postConfigData() {
         },
         body: JSON.stringify({
             // if the new function are blank or empty use the data got by the read funciton
-            brightness: checkBlank(newBrightness.value, cameraFeedData.value?.brightness),
-            framerate: checkBlank(newFPS.value, cameraFeedData.value?.framerate),
-            hue: checkBlank(newHue.value, cameraFeedData.value?.hue),
-            saturation: checkBlank(newSaturation.value, cameraFeedData.value?.saturation)
+            brightness: checkBlankInt(newBrightness.value, cameraFeedData.value?.brightness),
+            framerate: checkBlankFloat(newFPS.value, cameraFeedData.value?.framerate),
+            hue: checkBlankInt(newHue.value, cameraFeedData.value?.hue),
+            saturation: checkBlankInt(newSaturation.value, cameraFeedData.value?.saturation)
         })
     };
     try {
@@ -104,28 +111,28 @@ async function postConfigTrue() {
 // --------------------
 //        Watchers
 // --------------------
-watch(newFPS, (val) => {
-    if (val < 1) newFPS.value = 1;
-    if (val > 30) newFPS.value = 30;
-});
-watch(newBrightness, (val) => {
-    if (val !== null) {
-        if (val <= 0) newBrightness.value = 0
-        if (val >= 255) newBrightness.value = 255
-    }
-})
-watch(newHue, (val) => {
-    if (val !== null) {
-        if (val <= -40) newHue.value = -40
-        if (val >= 40) newHue.value = 40
-    }
-})
-watch(newSaturation, (val) => {
-    if (val !== null) {
-        if (val <= 0) newSaturation.value = 0
-        if (val >= 255) newSaturation.value = 255
-    }
-})
+// watch(newFPS, (val) => {
+//     if (val < 1) newFPS.value = 1;
+//     if (val > 30) newFPS.value = 30;
+// });
+// watch(newBrightness, (val) => {
+//     if (val !== null) {
+//         if (val <= 0) newBrightness.value = 0
+//         if (val >= 255) newBrightness.value = 255
+//     }
+// })
+// watch(newHue, (val) => {
+//     if (val !== null) {
+//         if (val <= -40) newHue.value = -40
+//         if (val >= 40) newHue.value = 40
+//     }
+// })
+// watch(newSaturation, (val) => {
+//     if (val !== null) {
+//         if (val <= 0) newSaturation.value = 0
+//         if (val >= 255) newSaturation.value = 255
+//     }
+// })
 // -------------------------------
 //        onMount and unMount
 // -------------------------------
@@ -147,14 +154,13 @@ onMounted(() => {
                             </option>
                         </select>
                         <label for="brightness" class="config-label">Brightness</label>
-                        <input type="number" class="form-control" id="brightness" v-model="newBrightness" min="0.0"
-                            max="255.0" step="1.00">
+                        <input type="number" class="form-control" id="brightness" v-model="newBrightness" min="0"
+                            max="255" step="1">
                         <label for="hue" class="config-label">Hue</label>
-                        <input type="number" class="form-control" id="hue" v-model="newHue" min="-40" max="40"
-                            step="1.00">
+                        <input type="number" class="form-control" id="hue" v-model="newHue" min="-40" max="40" step="1">
                         <label for="saturation" class="config-label">Saturation</label>
-                        <input type="number" class="form-control" id="saturation" v-model="newSaturation" min="0.0"
-                            max="255.0" step="1.00">
+                        <input type="number" class="form-control" id="saturation" v-model="newSaturation" min="0"
+                            max="255" step="1">
                         <label for="fps" class="config-label">Frame Rate</label>
                         <input type="number" class="form-control" id="fps" v-model="newFPS" min="1.0" max="30.00"
                             step="1.0">
