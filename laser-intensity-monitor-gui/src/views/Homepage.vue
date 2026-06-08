@@ -24,7 +24,7 @@ const cameraFeedsData = ref([{
     intensity: null,
     deviation: null,
     isConnected: false,
-    isSelected: true
+    isSelected: false
 }]) // is replaced by the camera data when read.
 const setpointState = ref(false)
 const liveFeedSrc = ref(null) // dynamic image source
@@ -206,8 +206,8 @@ onUnmounted(() => {
                             <div v-if="feed.isSelected">
                                 <p>Camera: {{ feed.name }}</p>
                                 <p>Description: {{ feed.description }}</p>
-                                <p>Intensity: {{ feed.intensity.toFixed(3) }}</p>
-                                <p>Deviation: {{ feed.deviation.toFixed(3) }}</p>
+                                <p>Intensity: {{ (feed.intensity ?? 0).toFixed(4) }}</p>
+                                <p>Deviation: {{ (feed.deviation ?? 0).toFixed(4) }}</p>
                                 <p>fps: {{ feed.fps }}</p>
                                 <p>Brightness: {{ feed.brightness }}</p>
                                 <p>Hue: {{ feed.hue }}</p>
