@@ -1,78 +1,177 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-// Data
-const CameraDataApiURL = ref('')
-const localCameraFeeds = ref([])
-const selectedCameraId = ref('')
-const newDescription = ref('')
+import { ref, onMounted, watch } from 'vue'
+// --------------------
+//        Data
+// --------------------
+const cameraConfigApiURL = ref('/api/configuration')
+const guiUpdateApiURL = ref('/api/gui_update')
+const cameraFeedData = ref([])
+const selectedCamera = ref('')
+// Api post values
 const newFPS = ref(null)
 const newBrightness = ref(null)
-// Methods
-function loadCameraFeeds() {
-    const storedCameraFeeds = localStorage.getItem('cameraFeeds');
-    if (storedCameraFeeds) {
-        localCameraFeeds.value = JSON.parse(storedCameraFeeds);
-    } else {
-        localCameraFeeds.value = [];
+const newHue = ref(null)
+const newSaturation = ref(null)
+// for save message e.g. success | error
+const saveState = ref('')
+// --------------------
+//        Computed
+// --------------------
+
+// --------------------
+//        Methods
+// --------------------
+// check for blank and returns a float
+function checkBlankFloat(newValue, currentValue) {
+    if (newValue === '' || newValue === null) {
+        return parseFloat(currentValue);
+    }
+    return parseFloat(newValue);
+}
+// check for blank and returns a int
+function checkBlankInt(newValue, currentValue) {
+    if (newValue === '' || newValue === null) {
+        return Number(currentValue);
+    }
+    return Number(newValue);
+}
+//fetch method for read function
+async function fetchCameraConfig() {
+    try {
+        const response = await fetch(cameraConfigApiURL.value)
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`)
+        }
+        const data = await response.json()
+        cameraFeedData.value = data
+    } catch (error) {
+        console.error('Error fetching camera data:', error)
     }
 }
-// mounted
-
-//fetch method for update function
-async function putData() {
-    const SQLApiURL = CameraDataApiURL.value;
-
+// fetch method for update for config
+async function postConfigData() {
+    saveState.value = '' // reset before each attempt
     const requestOptions = {
-        method: 'PUT',
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            camera_id: selectedCameraId.value,
-            description: newDescription.value,
-            brightness: newBrightness.value,
-            fps: newFPS.value
+            // if the new function are blank or empty use the data got by the read funciton
+            brightness: checkBlankInt(newBrightness.value, cameraFeedData.value?.brightness),
+            framerate: checkBlankFloat(newFPS.value, cameraFeedData.value?.framerate),
+            hue: checkBlankInt(newHue.value, cameraFeedData.value?.hue),
+            saturation: checkBlankInt(newSaturation.value, cameraFeedData.value?.saturation)
         })
     };
-
     try {
-        const response = await fetch(SQLApiURL, requestOptions);
+        const response = await fetch(cameraConfigApiURL.value, requestOptions);
         if (!response.ok) {
             throw new Error(`HTTP error: ${response.status}`);
         }
-        const data = await response.json();
-        console.log('Success:', data);
+
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+            const data = await response.json();
+            console.log('Success:', data);
+        } else {
+            console.log('Success: Saved successfully (No JSON returned)');
+        }
+        saveState.value = 'success'
+        // update gui after successfull post
+        postConfigTrue()
     } catch (error) {
         console.error('Error updating camera:', error);
+        saveState.value = 'error'
+    }
+
+}
+// post gui_update Config bool to true
+async function postConfigTrue() {
+    const requestOptions = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            setpoint: false,
+            config: true
+        })
+    };
+    try {
+        const response = await fetch(guiUpdateApiURL.value, requestOptions)
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`)
+        }
+        const data = await response.json()
+    } catch (error) {
+        console.error('Error fetching camera data:', error)
     }
 }
+// --------------------
+//        Watchers
+// --------------------
+// watch(newFPS, (val) => {
+//     if (val < 1) newFPS.value = 1;
+//     if (val > 30) newFPS.value = 30;
+// });
+// watch(newBrightness, (val) => {
+//     if (val !== null) {
+//         if (val <= 0) newBrightness.value = 0
+//         if (val >= 255) newBrightness.value = 255
+//     }
+// })
+// watch(newHue, (val) => {
+//     if (val !== null) {
+//         if (val <= -40) newHue.value = -40
+//         if (val >= 40) newHue.value = 40
+//     }
+// })
+// watch(newSaturation, (val) => {
+//     if (val !== null) {
+//         if (val <= 0) newSaturation.value = 0
+//         if (val >= 255) newSaturation.value = 255
+//     }
+// })
+// -------------------------------
+//        onMount and unMount
+// -------------------------------
 onMounted(() => {
-    loadCameraFeeds();
+    fetchCameraConfig()
 });
 </script>
 <template>
     <div class="container">
         <div class="row">
             <div class="col">
-                <form>
+                <form @submit.prevent="postConfigData">
                     <div class="form-group">
                         <label for="cameraSelect" class="config-label">Camera Select</label>
-                        <select class="form-control" id="cameraSelect" required v-model="selectedCameraId">
+                        <select class="form-control" id="cameraSelect" required v-model="selectedCamera">
                             <option value="" disabled selected>Please select a camera</option>
-                            <option v-for="feed in localCameraFeeds" :key="feed.id" :value="feed.id">
-                                {{ feed.name }}: {{ feed.description }}
+                            <option>
+                                Main Camera
                             </option>
                         </select>
-                        <label for="description" class="config-label"
-                            placeholder="Enter a description for the camera">Description</label>
-                        <input type="text" class="form-control" id="description" v-model="newDescription">
                         <label for="brightness" class="config-label">Brightness</label>
                         <input type="number" class="form-control" id="brightness" v-model="newBrightness" min="0"
-                            max="1" step="0.01">
+                            max="255" step="1">
+                        <label for="hue" class="config-label">Hue</label>
+                        <input type="number" class="form-control" id="hue" v-model="newHue" min="-40" max="40" step="1">
+                        <label for="saturation" class="config-label">Saturation</label>
+                        <input type="number" class="form-control" id="saturation" v-model="newSaturation" min="0"
+                            max="255" step="1">
                         <label for="fps" class="config-label">Frame Rate</label>
-                        <input type="number" class="form-control" id="fps" v-model="newFPS" min="1" max="30">
+                        <input type="number" class="form-control" id="fps" v-model="newFPS" min="1.0" max="30.00"
+                            step="1.0">
                         <div class="mt-2 text-center">
                             <button class="btn submit-btn">Save Changes</button>
+                        </div>
+                        <div v-if="saveState === 'success'" class="text-center p-1">
+                            <p>Settings saved successfully.</p>
+                        </div>
+                        <div v-if="saveState === 'error'" class="text-center p-1">
+                            <p>Failed to save settings. Please try again.</p>
                         </div>
                     </div>
                 </form>
@@ -81,18 +180,6 @@ onMounted(() => {
     </div>
 </template>
 <style scoped>
-.submit-btn {
-    background-color: slateblue;
-    border-color: darkslateblue;
-    color: white
-}
-
-.submit-btn:hover {
-    background-color: mediumslateblue;
-    border-color: slateblue;
-    color: black;
-}
-
 .config-label {
     font-weight: bold;
     font-size: 16pt;
