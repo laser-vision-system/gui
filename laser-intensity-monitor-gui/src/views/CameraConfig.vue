@@ -3,13 +3,19 @@ import { ref, onMounted, watch } from 'vue'
 // --------------------
 //        Data
 // --------------------
+
 const cameraConfigApiURL = ref('/api/configuration')
 const guiUpdateApiURL = ref('/api/gui_update')
 const cameraFeedData = ref([])
 const selectedCamera = ref('')
+// --------------------
+//     Sample Data
+// --------------------
+import sampleCameraData from '../assets/data/sampleCameraData.json'
 // Api post values
 const newFPS = ref(null)
 const newBrightness = ref(null)
+const newContrast = ref(null)
 const newHue = ref(null)
 const newSaturation = ref(null)
 // for save message e.g. success | error
@@ -21,20 +27,15 @@ const saveState = ref('')
 // --------------------
 //        Methods
 // --------------------
-// check for blank and returns a float
-function checkBlankFloat(newValue, currentValue) {
+// merge these two methods into one and do the parsing at postcameraConfig method
+// check for empty value if empty returns the current value if not returns the newValue from form.
+function checkBlank(newValue, currentValue) {
     if (newValue === '' || newValue === null) {
-        return parseFloat(currentValue);
+        return currentValue;
     }
-    return parseFloat(newValue);
+    return newValue;
 }
-// check for blank and returns a int
-function checkBlankInt(newValue, currentValue) {
-    if (newValue === '' || newValue === null) {
-        return Number(currentValue);
-    }
-    return Number(newValue);
-}
+
 //fetch method for read function
 async function fetchCameraConfig() {
     try {
@@ -58,10 +59,10 @@ async function postConfigData() {
         },
         body: JSON.stringify({
             // if the new function are blank or empty use the data got by the read funciton
-            brightness: checkBlankInt(newBrightness.value, cameraFeedData.value?.brightness),
-            framerate: checkBlankFloat(newFPS.value, cameraFeedData.value?.framerate),
-            hue: checkBlankInt(newHue.value, cameraFeedData.value?.hue),
-            saturation: checkBlankInt(newSaturation.value, cameraFeedData.value?.saturation)
+            brightness: parseInt(checkBlank(newBrightness.value, cameraFeedData.value?.brightness)),
+            framerate: parseFloat(checkBlank(newFPS.value, cameraFeedData.value?.framerate)),
+            hue: parseInt(checkBlank(newHue.value, cameraFeedData.value?.hue)),
+            saturation: parseInt(checkBlank(newSaturation.value, cameraFeedData.value?.saturation))
         })
     };
     try {
@@ -84,8 +85,8 @@ async function postConfigData() {
         console.error('Error updating camera:', error);
         saveState.value = 'error'
     }
-
 }
+
 // post gui_update Config bool to true
 async function postConfigTrue() {
     const requestOptions = {
@@ -108,6 +109,11 @@ async function postConfigTrue() {
         console.error('Error fetching camera data:', error)
     }
 }
+// control filter function for selected camera
+function controlFilter(controlName) {
+  return selectedCamera.value?.controls?.find(c => c.control === controlName) ?? null
+}
+
 // --------------------
 //        Watchers
 // --------------------
@@ -145,25 +151,58 @@ onMounted(() => {
         <div class="row">
             <div class="col">
                 <form @submit.prevent="postConfigData">
-                    <div class="form-group">
+                    <div class="form">
                         <label for="cameraSelect" class="config-label">Camera Select</label>
                         <select class="form-control" id="cameraSelect" required v-model="selectedCamera">
                             <option value="" disabled selected>Please select a camera</option>
-                            <option>
-                                Main Camera
+                            <option v-for="cam in sampleCameraData.cameras" :key="cam.id" :value="cam">
+                                {{cam.name}}
                             </option>
                         </select>
-                        <label for="brightness" class="config-label">Brightness</label>
-                        <input type="number" class="form-control" id="brightness" v-model="newBrightness" min="0"
-                            max="255" step="1">
-                        <label for="hue" class="config-label">Hue</label>
-                        <input type="number" class="form-control" id="hue" v-model="newHue" min="-40" max="40" step="1">
-                        <label for="saturation" class="config-label">Saturation</label>
-                        <input type="number" class="form-control" id="saturation" v-model="newSaturation" min="0"
-                            max="255" step="1">
-                        <label for="fps" class="config-label">Frame Rate</label>
-                        <input type="number" class="form-control" id="fps" v-model="newFPS" min="1.0" max="30.00"
-                            step="1.0">
+                        <div v-if="controlFilter('Brightness')">
+                            <label for="brightness" class="config-label">Brightness</label>
+                            <div class="form-element">
+                                <input type="range" class="slider-input" id="brightness" v-model="newBrightness" min="-64"
+                                max="64" step="1" :placeholder="selectedCamera.controls">
+                                <input type="number" class="number-input" id="brightness" v-model="newBrightness" min="-64"
+                                max="64" step="1" placeholder="0">
+                            </div>
+                        </div>
+                        <div v-if="controlFilter('Contrast')">
+                            <label for="contrast" class="config-label">Contrast</label>
+                            <div class="form-element">
+                                <input type="range" class="slider-input" id="contast" v-model="newContrast" min="0"
+                                max="64" step="1" placeholder="32">
+                                <input type="number" class="number-input" id="contrast" v-model="newContrast" min="0" max="64" step="1" placeholder="32">
+                            </div>
+                        </div>
+                        <div v-if="controlFilter('Hue')">
+                            <label for="hue" class="config-label">Hue</label>
+                            <div class="form-element">
+                                <input type="range" class="slider-input" id="hue" v-model="newHue" min="-40"
+                                max="40" step="1" placeholder="0">
+                                <input type="number" class="number-input" id="hue" v-model="newHue" min="-40" max="40" step="1" placeholder="0">
+                            </div>
+                        </div>
+                        <div v-if="controlFilter('Saturation')">
+                            <label for="saturation" class="config-label">Saturation</label>
+                            <div class="form-element">
+                                <input type="range" class="slider-input" id="saturation" v-model="newSaturation" min="0"
+                                max="128" step="1" placeholder="64">
+                                <input type="number" class="number-input" id="saturation" v-model="newSaturation" min="0"
+                                    max="128" step="1" placeholder="64">
+                            </div>
+                        </div>
+                        <div v-if="selectedCamera.fps">
+                            <label for="fps" class="config-label">Frame Rate</label>
+                            <div class="form-element">
+                                <input type="range" class="slider-input" id="fps" v-model="newFPS" min="1.0"
+                                max="30.00" step="1.0" placeholder="1.0">
+                                <input type="number" class="number-input" id="fps" v-model="newFPS" min="1.0" max="30.00"
+                                    step="1.0" placeholder="1.0">
+                            </div>
+                        </div>
+
                         <div class="mt-2 text-center">
                             <button class="btn submit-btn">Save Changes</button>
                         </div>
@@ -185,5 +224,45 @@ onMounted(() => {
     font-size: 16pt;
     color: var(--config-title);
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+.submit-btn {
+    background-color: var(--nav-bg);
+    border-color: darkslateblue;
+    color: white
+}
+
+.submit-btn:hover {
+    background-color: var(--button-hover);
+    border-color: slateblue;
+    color: black;
+}
+.number-input{
+    flex: 0 0 4em;
+    width: 4em;
+    padding: 0.25em;
+    border-radius: 0.5em;
+    border: 3px solid var(--nav-bg);
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+}
+.slider-input{
+    flex: 1 1 auto;
+    width: 100%;
+    accent-color: var(--nav-bg);
+    border-radius: 2em;
+}
+.slider-input:hover{
+    accent-color: var(--button-hover);
+}
+.form-element{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1em;
+}
+.form{
+    display: flex;
+    flex-direction: column;
+    padding: 0.5em;
 }
 </style>

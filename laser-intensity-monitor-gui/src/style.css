@@ -9,6 +9,7 @@
     --nav-title: black;
     --config-title: black;
     --cam-bg: aliceblue;
+    --button-hover: mediumslateblue;
 
 }
 
@@ -30,6 +31,7 @@
     --nav-title: white;
     --config-title: white;
     --cam-bg: SlateGray;
+    --button-hover: slateblue;
 }
 
 /* Dark Mode Table Overrides */
@@ -47,16 +49,4 @@
 
 .navBar {
     background-color: var(--nav-bg);
-}
-
-.submit-btn {
-    background-color: slateblue;
-    border-color: darkslateblue;
-    color: white
-}
-
-.submit-btn:hover {
-    background-color: mediumslateblue;
-    border-color: slateblue;
-    color: black;
 }
