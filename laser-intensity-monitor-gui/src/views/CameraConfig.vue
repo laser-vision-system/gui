@@ -121,24 +121,6 @@ function controlFilter(controlName) {
 //     if (val < 1) newFPS.value = 1;
 //     if (val > 30) newFPS.value = 30;
 // });
-// watch(newBrightness, (val) => {
-//     if (val !== null) {
-//         if (val <= 0) newBrightness.value = 0
-//         if (val >= 255) newBrightness.value = 255
-//     }
-// })
-// watch(newHue, (val) => {
-//     if (val !== null) {
-//         if (val <= -40) newHue.value = -40
-//         if (val >= 40) newHue.value = 40
-//     }
-// })
-// watch(newSaturation, (val) => {
-//     if (val !== null) {
-//         if (val <= 0) newSaturation.value = 0
-//         if (val >= 255) newSaturation.value = 255
-//     }
-// })
 // -------------------------------
 //        onMount and unMount
 // -------------------------------
@@ -153,7 +135,7 @@ onMounted(() => {
                 <form @submit.prevent="postConfigData">
                     <div class="form">
                         <label for="cameraSelect" class="config-label">Camera Select</label>
-                        <select class="form-control" id="cameraSelect" required v-model="selectedCamera">
+                        <select class="" id="cameraSelect" required v-model="selectedCamera">
                             <option value="" disabled selected>Please select a camera</option>
                             <option v-for="cam in sampleCameraData.cameras" :key="cam.id" :value="cam">
                                 {{cam.name}}
@@ -259,6 +241,13 @@ onMounted(() => {
     flex-direction: row;
     align-items: center;
     gap: 1em;
+}
+select {
+    padding: 0.5em;
+    
+}
+option:hover{
+    background-color: var(--button-hover);
 }
 .form{
     display: flex;
