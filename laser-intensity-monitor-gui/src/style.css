@@ -2,7 +2,7 @@
     /* Bootstrap Overrides */
     --bs-body-bg: white;
     --bs-body-color: #333333;
-    --bs-success-rgb: 123, 104, 238;
+    /*--bs-success-rgb: 123, 104, 238;*/
     --bs-border-color: #333333;
     /* CUSTOM CSS */
     --nav-bg: slateblue;
@@ -23,7 +23,7 @@
     /* Bootstrap Overrides */
     --bs-body-bg: #778899;
     --bs-body-color: white;
-    --bs-success-rgb: 106, 90, 205;
+    /*--bs-success-rgb: 106, 90, 205;*/
     --bs-border-color: silver;
     /* CUSTOM CSS */
     --nav-bg: darkslateblue;
@@ -47,6 +47,19 @@
 
 .navBar {
     background-color: var(--nav-bg);
+}
+
+.alert-warning {
+    --bs-alert-bg: var(--bs-warning);
+    --bs-alert-border-color: var(--bs-warning);
+    --bs-alert-color: var(--bs-dark);
+    --bs-alert-link-color: var(--bs-dark);
+}
+.alert-danger {
+    --bs-alert-bg: var(--bs-danger);
+    --bs-alert-border-color: var(--bs-danger);
+    --bs-alert-color: var(--bs-white);
+    --bs-alert-link-color: var(--bs-white);
 }
 
 .submit-btn {
