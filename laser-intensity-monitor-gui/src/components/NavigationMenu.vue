@@ -5,7 +5,6 @@ import cameraConfigActive from '../assets/images/camera-config-active.svg'
 import cameraConfigInactive from '../assets/images/camera-config-inactive.svg'
 import settingsActive from '../assets/images/settings-active.svg'
 import settingsInactive from '../assets/images/settings-inactive.svg'
-
 import { useRoute } from 'vue-router';
 
 function isRoute(navElement) {

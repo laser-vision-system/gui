@@ -1,9 +1,24 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { useWebSocket } from '../composables/useWebSocket'
+// --------------------
+//   WebSocket
+// --------------------
+// Point this at your server's websocket endpoint
+const {
+  status,
+  error,
+  cameras,
+  imageSrc,
+  analysis,
+  connect,
+  disconnect,
+  viewCamera,
+  stopViewingCamera,
+} = useWebSocket('ws://localhost:8080/ws')
 // --------------------
 //        Data
 // --------------------
-
 const cameraConfigApiURL = ref('/api/configuration')
 const guiUpdateApiURL = ref('/api/gui_update')
 const cameraFeedData = ref([])
@@ -27,7 +42,6 @@ const saveState = ref('')
 // --------------------
 //        Methods
 // --------------------
-// merge these two methods into one and do the parsing at postcameraConfig method
 // check for empty value if empty returns the current value if not returns the newValue from form.
 function checkBlank(newValue, currentValue) {
     if (newValue === '' || newValue === null) {
@@ -114,6 +128,10 @@ function controlFilter(controlName) {
   return selectedCamera.value?.controls?.find(c => c.control === controlName) ?? null
 }
 
+// set all control values to the defualt settings
+function setDefault(controlName) {
+  selectedCamera.value.controls.controlName.value = selectedCamera.value.controls.controlName.default
+}
 // --------------------
 //        Watchers
 // --------------------
@@ -244,7 +262,6 @@ onMounted(() => {
 }
 select {
     padding: 0.5em;
-    
 }
 option:hover{
     background-color: var(--button-hover);
