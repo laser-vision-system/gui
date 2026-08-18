@@ -37,7 +37,7 @@ export function useWebSocket(url) {
       error.value = null
       listCameras()
     }
-
+    // check if the recived data is the image feed (blob) or json message, and handle appropriately
     socket.onmessage = (event) => {
       if (event.data instanceof Blob) {
         handleImageFrame(event.data)
@@ -88,7 +88,17 @@ export function useWebSocket(url) {
       case 'ListOfCameras':
         cameras.value = message.data.cameras
         break
-      // camera disconnect
+      // Camera Connect  (a new camera has come online)
+      case 'CameraConnected': {
+        const { conn_id, camera_id, camera_name } = message.data
+        const key = `${conn_id},${camera_id}`
+        cameras.value = {
+          ...cameras.value,
+          [key]: [camera_name, true],
+        }
+        break
+      }
+      // Camera Disconnect
       case 'CameraDisconnected': {
         const { conn_id, camera_id } = message.data
         const key = `${conn_id},${camera_id}`
@@ -101,6 +111,20 @@ export function useWebSocket(url) {
         }
         break
       }
+      // Forget Camera
+      case 'ForgetCamera': {
+        const { conn_id, camera_id, confirm } = message.data
+        if (confirm) {
+          const key = `${conn_id},${camera_id}`
+          const updated = { ...cameras.value }
+          delete updated[key]
+          cameras.value = updated
+          if (activeCamera.value?.connId === conn_id && activeCamera.value?.cameraId === camera_id) {
+            clearActiveFeed()
+          }
+        }
+        break
+      }
       // Control configuration (reading and writing)
       case 'Configuration':
         controlConfig.value = message.data
@@ -108,6 +132,11 @@ export function useWebSocket(url) {
       // GUI Image Analysis (reading the deviation and intensity)
       case 'GUIImageAnalysis':
         analysis.value = message.data
+        break
+      // server-reported error
+      case 'ErrorMSG':
+        error.value = message.data
+        console.error('Server error:', message.data.code, message.data.message)
         break
       // warn if case is not met.
       default:
@@ -148,7 +177,7 @@ export function useWebSocket(url) {
       clearActiveFeed()
     }
     activeCamera.value = { connId, cameraId }
-    send('StartViewingCamera', { conn_id: connId, camera_id: cameraId })
+    send('GUIStartViewingCamera', { conn_id: connId, camera_id: cameraId })
   }
 
   // stop viewing camera
@@ -179,6 +208,13 @@ export function useWebSocket(url) {
     send('GUISetpoint', { conn_id: connId, camera_id: cameraId })
   }
 
+  // Forget Camera Function
+  function forgetCamera(connId, cameraId) {
+    send('ForgetCamera', { conn_id: connId, camera_id: cameraId, confirm: true })
+  }
+
+
+
   onUnmounted(() => {
     disconnect()
   })
@@ -186,7 +222,9 @@ export function useWebSocket(url) {
   return {
     // state
     status,
+    // error
     error,
+    // data
     cameras,
     imageSrc,
     analysis,
@@ -203,5 +241,6 @@ export function useWebSocket(url) {
     viewCameraConfig,
     updateConfiguration,
     setpoint,
+    forgetCamera,
   }
 }
