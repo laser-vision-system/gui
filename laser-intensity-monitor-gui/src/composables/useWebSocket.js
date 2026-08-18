@@ -4,13 +4,15 @@ export function useWebSocket(url) {
   const status = ref('DISCONNECTED')   // 'CONNECTING' | 'CONNECTED' | 'DISCONNECTED' | 'ERROR'
   const error = ref(null)
 
-  // camera list
+  // camera list:
   const cameras = ref({})
   // active camera feed
   const imageSrc = ref('')
-  // image analysis for active camera
+  // Image Analysis for active camera
   const analysis = ref(null)
-  // active camera / selected camera
+  // Control Configuration
+  const controlConfig = ref(null)
+  // Active Camera / selected camera
   const activeCamera = ref(null)
 
   let socket = null
@@ -35,7 +37,7 @@ export function useWebSocket(url) {
       error.value = null
       listCameras()
     }
-
+    // check if the recived data is the image feed (blob) or json message, and handle appropriately
     socket.onmessage = (event) => {
       if (event.data instanceof Blob) {
         handleImageFrame(event.data)
@@ -65,7 +67,7 @@ export function useWebSocket(url) {
   }
 
   function handleImageFrame(blob) {
-    if(currentObjectUrl) {
+    if (currentObjectUrl) {
       URL.revokeObjectURL(currentObjectUrl)
     }
     currentObjectUrl = URL.createObjectURL(blob)
@@ -86,7 +88,17 @@ export function useWebSocket(url) {
       case 'ListOfCameras':
         cameras.value = message.data.cameras
         break
-      // camera disconnect
+      // Camera Connect  (a new camera has come online)
+      case 'CameraConnected': {
+        const { conn_id, camera_id, camera_name } = message.data
+        const key = `${conn_id},${camera_id}`
+        cameras.value = {
+          ...cameras.value,
+          [key]: [camera_name, true],
+        }
+        break
+      }
+      // Camera Disconnect
       case 'CameraDisconnected': {
         const { conn_id, camera_id } = message.data
         const key = `${conn_id},${camera_id}`
@@ -99,6 +111,20 @@ export function useWebSocket(url) {
         }
         break
       }
+      // Forget Camera
+      case 'ForgetCamera': {
+        const { conn_id, camera_id, confirm } = message.data
+        if (confirm) {
+          const key = `${conn_id},${camera_id}`
+          const updated = { ...cameras.value }
+          delete updated[key]
+          cameras.value = updated
+          if (activeCamera.value?.connId === conn_id && activeCamera.value?.cameraId === camera_id) {
+            clearActiveFeed()
+          }
+        }
+        break
+      }
       // Control configuration (reading and writing)
       case 'Configuration':
         controlConfig.value = message.data
@@ -106,6 +132,11 @@ export function useWebSocket(url) {
       // GUI Image Analysis (reading the deviation and intensity)
       case 'GUIImageAnalysis':
         analysis.value = message.data
+        break
+      // server-reported error
+      case 'ErrorMSG':
+        error.value = message.data
+        console.error('Server error:', message.data.code, message.data.message)
         break
       // warn if case is not met.
       default:
@@ -146,7 +177,7 @@ export function useWebSocket(url) {
       clearActiveFeed()
     }
     activeCamera.value = { connId, cameraId }
-    send('StartViewingCamera', { conn_id: connId, camera_id: cameraId })
+    send('GUIStartViewingCamera', { conn_id: connId, camera_id: cameraId })
   }
 
   // stop viewing camera
@@ -157,24 +188,59 @@ export function useWebSocket(url) {
     }
   }
 
+  // view camera config
+  function viewCameraConfig(connId, cameraId) {
+    send('ViewCameraConfig', { conn_id: connId, camera_id: cameraId })
+  }
+
+  // update camera control configuration
+  function updateConfiguration(connId, cameraId, configuration) {
+    send('Configuration', {
+      conn_id: connId,
+      camera_id: cameraId,
+      configuration:
+        typeof configuration === 'string' ? configuration : JSON.stringify(configuration),
+    })
+  }
+
+  // Setpoint function
+  function setpoint(connId, cameraId) {
+    send('GUISetpoint', { conn_id: connId, camera_id: cameraId })
+  }
+
+  // Forget Camera Function
+  function forgetCamera(connId, cameraId) {
+    send('ForgetCamera', { conn_id: connId, camera_id: cameraId, confirm: true })
+  }
+
+
+
   onUnmounted(() => {
     disconnect()
   })
 
-  return { 
-    status, 
-    error, 
+  return {
+    // state
+    status,
+    // error
+    error,
+    // data
     cameras,
-    imageSrc, 
+    imageSrc,
     analysis,
+    controlConfig,
     activeCamera,
     // connection
-    connect, 
-    disconnect, 
+    connect,
+    disconnect,
     // commands
     listCameras,
     setCameraName,
     viewCamera,
-    stopViewingCamera
+    stopViewingCamera,
+    viewCameraConfig,
+    updateConfiguration,
+    setpoint,
+    forgetCamera,
   }
 }
