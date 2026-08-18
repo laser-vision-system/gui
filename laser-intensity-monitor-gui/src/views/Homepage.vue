@@ -1,7 +1,22 @@
 <script setup>
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 //import cameraFeed from '../components/CameraFeed.vue'
-//import { useWebSocket } from '../composables/useWebSocket'
+import { useWebSocket } from '../composables/useWebSocket'
+// --------------------
+//   WebSocket
+// --------------------
+// Point this at your server's websocket endpoint
+const {
+  status,
+  error,
+  cameras,
+  imageSrc,
+  analysis,
+  connect,
+  disconnect,
+  viewCamera,
+  stopViewingCamera,
+} = useWebSocket('ws://localhost:8080/ws')
 // --------------------
 //        Data
 // --------------------
@@ -37,8 +52,7 @@ const alerts = ref([
     { id: 5, message: '[MODERATE] Camera 5 --- Deviation of 0.49', type: 'warning' },
     { id: 6, message: '[HIGH] Camera 6 --- Deviation of 0.49', type: 'danger' }
 ])
-const isAlertExpanded = ref(false)
-const MAX_VISIBLE = 3
+const alertsExpanded = ref(true)
 // --------------------
 //        Computed
 // --------------------
@@ -52,11 +66,8 @@ const selectedCamera = computed(() =>
     cameraFeedsData.value.find(feed => feed.isSelected) ?? null
 )
 // alert system
-const visibleAlerts = computed(() => {
-    return isAlertExpanded.value ? alerts.value : alerts.value.slice(0, MAX_VISIBLE)
-})
-const hiddenAlertCount = computed(() => {
-    return Math.max(0, alerts.value.length - MAX_VISIBLE)
+const toggleAlerts = computed(() => {
+    alertsExpanded.value = !alertsExpanded.value
 })
 // --------------------
 //        Methods
@@ -200,6 +211,7 @@ watch(
 //        onMount and unMount
 // -------------------------------
 onMounted(async () => {
+    connect('ws://localhost:8080/ws')
     await fetchCameraConfig()
     await fetchCameraInfo()
     if (hasSelectedCamera.value) startPolling()
@@ -214,19 +226,64 @@ onUnmounted(() => {
     <div class="container">
         <div class="row p-2 mt-2 mb-4">
                 <h3 class="cam-title">Alerts: 
-                    <span class="badge bg-secondary">{{ alerts.length }}</span>
+                    <button class="btn submit-btn" @click="toggleAlerts">
+                        {{ alertsExpanded ? 'Collapse All' : 'Show All (' + alerts.length + ')' }}
+                    </button>
                 </h3>
                 <div class="container mt-2">
-                    <div v-for="alert in visibleAlerts" :key="alert.id" 
-                        :class="['alert', `alert-${alert.type}`, 'fade', 'show']" role="alert">
-                        {{ alert.message }}
-                    </div>
-                    <div v-if="hiddenAlertCount > 0 || isAlertExpanded" class="text-center mt-2">
-                        <button class="btn submit-btn" @click="isAlertExpanded = !isAlertExpanded">
-                            {{ isAlertExpanded ? 'Show Less' : `Show All Alerts (${hiddenAlertCount})` }}
-                        </button>
+                    <div v-if="alerts.length > 0" class="text-center mt-2">
+                        <div v-show="alertsExpanded">
+                            <div v-for="alert in alerts" :key="alert.id"
+                                :class="['alert', `alert-${alert.type}`, 'fade', 'show']" role="alert">
+                                {{ alert.message }}
+                            </div>
+                        </div>
                     </div>
                 </div>
+        </div>
+        <div class="row p-2 mt-2">
+            <div class="col-lg-9 col-12">
+                <h3 class="cam-title">Connected Cameras & Deviation:</h3>
+                <div class="row d-flex justify-content-start p-3">
+                    <div class="col-3 pb-1" v-for="feed in sampleData" :key="feed.id">
+                            <div :class="['card', 'camera-tab', getCardColour(feed.deviation), { 'selected-camera': feed.isSelected }]">
+                                <div v-if="feed.isConnected">
+                                    <div class="card-body" @click="selectCamera(feed.id)">
+                                        <h5 class="card-title">{{ feed.id }}</h5>
+                                        <p class="card-text">{{ (feed.deviation ?? 0).toFixed(4) }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-12 mt-5 text-center">
+                <table class="table border border-2 hardware-info">
+                    <thead>
+                        <tr>
+                            <th scope="col">Connected microComputers</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Raspberry pie 5 8Gb: ID-00</td>
+                        </tr>
+                        <tr>
+                            <th scope="col">Disconnected microComputers</th>
+                        </tr>
+                        <tr>
+                            <td>N/a</td>
+                        </tr>
+                        <tr>
+                            <th scope="col">Disconnected Cameras</th>
+                        </tr>
+                        <tr v-for="feed in sampleData" :key="feed.id">
+                            <td v-if="!feed.isConnected">{{ feed.name }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
         <div class="row align-items-stretch g-0">
             <div class="col-xl-9 col-12 d-flex  mt-2 feed-row">
@@ -269,51 +326,6 @@ onUnmounted(() => {
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="row p-2 mt-2">
-            <div class="col-lg-9 col-12">
-                <h3 class="cam-title">Cameras Connected:</h3>
-                <div class="row d-flex justify-content-start p-3">
-                    <div class="col-3 pb-1" v-for="feed in sampleData" :key="feed.id">
-                        <div v-if="feed.isConnected">
-                            <div :class="['card', 'camera-tab', getCardColour(feed.deviation), { 'selected-camera': feed.isSelected }]">
-                                <div class="card-body" @click="selectCamera(feed.id)">
-                                    <h5 class="card-title">{{ feed.id }}</h5>
-                                    <p class="card-text">{{ (feed.deviation ?? 0).toFixed(4) }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-12 text-center">
-                <table class="table border border-2 hardware-info">
-                    <thead>
-                        <tr>
-                            <th scope="col">Connected microComputers</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Raspberry pie 5 8Gb: ID-00</td>
-                        </tr>
-                        <tr>
-                            <th scope="col">Disconnected microComputers</th>
-                        </tr>
-                        <tr>
-                            <td>N/a</td>
-                        </tr>
-                        <tr>
-                            <th scope="col">Disconnected Cameras</th>
-                        </tr>
-                        <tr v-for="feed in sampleData" :key="feed.id">
-                            <td v-if="!feed.isConnected">{{ feed.name }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
         </div>
     </div>
 </template>
