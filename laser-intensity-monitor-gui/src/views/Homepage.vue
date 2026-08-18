@@ -20,8 +20,10 @@ const {
 // --------------------
 //        Data
 // --------------------
-import sampleCameraData from '../assets/data/sampleCameraData.json'
-const sampleData = ref(sampleCameraData.cameras)
+import sampleImageAnalysis from '../assets/data/sampleImageAnalysis.json'
+import sampleCameraList from '../assets/data/sampleCameraList.json'
+import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.json'
+const sampleData = ref(sampleCameraList.cameras)
 //const WebSocketURL = ref('') // API URL for camera stream Data
 const cameraConfigApiURL = ref('/api/configuration') // API URL for camera config Data
 const cameraFeedApiURL = ref('/api/image') // API URL for camera feed Data

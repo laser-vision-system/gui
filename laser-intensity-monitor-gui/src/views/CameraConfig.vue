@@ -26,7 +26,8 @@ const selectedCamera = ref('')
 // --------------------
 //     Sample Data
 // --------------------
-import sampleCameraData from '../assets/data/sampleCameraData.json'
+import sampleCameraList from '../assets/data/sampleCameraList.json'
+import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.json'
 // Api post values
 const newFPS = ref(null)
 const newBrightness = ref(null)
