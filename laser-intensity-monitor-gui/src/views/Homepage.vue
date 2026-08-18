@@ -20,8 +20,10 @@ const {
 // --------------------
 //        Data
 // --------------------
-import sampleCameraData from '../assets/data/sampleCameraData.json'
-const sampleData = ref(sampleCameraData.cameras)
+import sampleImageAnalysis from '../assets/data/sampleImageAnalysis.json'
+import sampleCameraList from '../assets/data/sampleCameraList.json'
+import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.json'
+const sampleData = ref(sampleCameraList.cameras)
 //const WebSocketURL = ref('') // API URL for camera stream Data
 const cameraConfigApiURL = ref('/api/configuration') // API URL for camera config Data
 const cameraFeedApiURL = ref('/api/image') // API URL for camera feed Data
@@ -225,7 +227,7 @@ onUnmounted(() => {
 <template>
     <div class="container">
         <div class="row p-2 mt-2 mb-4">
-                <h3 class="cam-title">Alerts: 
+                <h3 class="cam-title">Alerts:
                     <button class="btn submit-btn" @click="toggleAlerts">
                         {{ alertsExpanded ? 'Collapse All' : 'Show All (' + alerts.length + ')' }}
                     </button>
