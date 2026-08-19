@@ -1,27 +1,35 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useWebSocket } from '../composables/useWebSocket'
+
 // --------------------
 //   WebSocket
 // --------------------
 // Point this at your server's websocket endpoint
+// All REST-ful api methods and variables have been commented out but not deleted as a redundancy
 const {
   status,
-  error,
-  cameras,
+  cameraList: wsCameraList,
   imageSrc,
-  analysis,
+  controlConfig,
   connect,
-  disconnect,
   viewCamera,
   stopViewingCamera,
+  setCameraName,
+  viewCameraConfig,
+  updateConfiguration,
 } = useWebSocket('ws://localhost:8080/ws')
+
+//  Check if the websocket is connected
+const isLive = computed(() => status.value === 'CONNECTED')
+
+
 // --------------------
 //        Data
 // --------------------
-const cameraConfigApiURL = ref('/api/configuration')
-const guiUpdateApiURL = ref('/api/gui_update')
-const cameraFeedData = ref([])
+//const cameraConfigApiURL = ref('/api/configuration')
+//const guiUpdateApiURL = ref('/api/gui_update')
+const cameraFeedData = ref([]) // Live image stream from websocket
 
 const selectedCamera = ref('') // chosen from camera list
 const selectedConfig = ref(null) // matches choice from camera list using the conn_id and camera_id
@@ -51,17 +59,90 @@ const saveState = ref('')
 // --------------------
 //        Computed
 // --------------------
-
+//filter out the cameras that are not active
+const activeCameras = computed(() => {
+  const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : sampleCameraList.cameras
+  return source.filter((cam) => cam.state === 'Active')
+})
 // --------------------
 //        Methods
 // --------------------
+
+// Rename Selected camera
+function renameCamera() {
+  if (!selectedCamera.value || !newName.value) return
+  if (isLive.value) {
+    setCameraName(selectedCamera.value.conn_id, selectedCamera.value.camera_id, newName.value)
+  } else {
+    selectedCamera.value.name = newName.value
+  }
+}
+
 // check for empty value if empty returns the current value if not returns the newValue from form.
 function checkBlank(newValue, currentValue) {
-    if (newValue === '' || newValue === null) {
+    if (newValue === '' || newValue === null || newValue === undefined || Number.isNaN(newValue)) {
         return currentValue;
     }
     return newValue;
 }
+
+// build camera control payload does not include the fps (we will figure that out later)
+function buildControlsPayload() {
+  if (!selectedConfig.value) return null
+  const original = selectedConfig.value.configuration
+  const payload = {}
+
+  const integerControls = {
+    Brightness: newBrightness,
+    Contrast: newContrast,
+    Hue: newHue,
+    Saturation: newSaturation,
+    Gamma: newGamma,
+    Gain: newGain,
+    ExposureAbsolute: newExposureAbsolute,
+  }
+  for (const [name, valueRef] of Object.entries(integerControls)) {
+    if (!original[name]) continue // camera doesn't support this control
+    const current = original[name].IntegerRange.value.ConValueIntegerpayload[name] = {
+      IntegerRange: {...original[name].IntegerRange, value: { ConValueInteger: checkBlank(valueRef.value, current) },},
+    }
+  }
+
+  if (original.AutoExposure) {
+    const current = original.AutoExposure.Menu.value.ConValueMenupayload.AutoExposure = {
+      Menu: {...original.AutoExposure.Menu, value: { ConValueMenu: checkBlank(newAutoExposure.value, current) },},
+    }
+  }
+
+  return payload
+}
+
+// Save the changes made to the camera controls
+function saveChanges() {
+  if (!selectedCamera.value || !selectedConfig.value) return
+  const controlsPayload = buildControlsPayload()
+  saveState.value = ''
+
+  if (isLive.value) {
+    try {
+      // fps is left out as api is not using it yet.
+      updateConfiguration(selectedCamera.value.conn_id, selectedCamera.value.camera_id, controlsPayload)
+      saveState.value = 'success'
+    } catch (e) {
+      console.error('Error updating camera:', e)
+      saveState.value = 'error'
+    }
+  } else {
+    // Offline/sample mode: the sample data does model fps, so keep tracking it locally.
+    selectedConfig.value = {
+      ...selectedConfig.value, fps: checkBlank(newFPS.value, selectedConfig.value.fps),
+      configuration: { ...selectedConfig.value.configuration, ...controlsPayload },
+    }
+    saveState.value = 'success'
+  }
+}
+
+
 
 //fetch method for read function
 // async function fetchCameraConfig() {
@@ -137,6 +218,11 @@ function checkBlank(newValue, currentValue) {
 //     }
 // }
 
+
+
+// ------------------------------
+//        Sample data Methods
+// ------------------------------
 // function to find the configuration that matches the selected cameras conn_id and camera_id
 function findConfig(conn_id, camera_id) {
   return (
@@ -149,7 +235,7 @@ function findConfig(conn_id, camera_id) {
 function controlFilter(controlName) {
   return selectedConfig.value?.configuration?.[controlName] ?? null
 }
-// Load current values from the matched config must be used after
+// Load current values from the matched config must be used after select config is set
 function loadCameraValues() {
   if (!selectedConfig.value) {
     newFPS.value = null
@@ -226,6 +312,8 @@ function resetControlConfig() {
     targetRef.value = def
   }
 }
+
+
 // --------------------
 //        Watchers
 // --------------------
@@ -233,32 +321,66 @@ function resetControlConfig() {
 //     if (val < 1) newFPS.value = 1;
 //     if (val > 30) newFPS.value = 30;
 // });
-watch(selectedCamera, (cam) => {
-    if (cam) {
-        selectedConfig.value = findConfig(cam.conn_id, cam.camera_id)
-    } else {
-        selectedConfig.value = null
+watch(selectedCamera, (cam, oldCam) => {
+  saveState.value = ''
+  selectedConfig.value = null
+
+  if (!cam) {
+    if (isLive.value && oldCam) {
+      stopViewingCamera(oldCam.conn_id, oldCam.camera_id)
     }
     loadCameraValues()
+    return
+  }
+
+  newName.value = cam.name
+
+  if (isLive.value) {
+    viewCamera(cam.conn_id, cam.camera_id)
+    viewCameraConfig(cam.conn_id, cam.camera_id)
+    // selectedConfig gets filled in by the controlConfig watcher below once the server replies
+  } else {
+    selectedConfig.value = findConfig(cam.conn_id, cam.camera_id)
+    loadCameraValues()
+  }
 })
+
+// watch to apply the server's Configuration reply once it matches the currently selected camera
+watch(controlConfig, (config) => {
+  if (!isLive.value || !config || !selectedCamera.value) return
+  if (config.conn_id === selectedCamera.value.conn_id && config.camera_id === selectedCamera.value.camera_id) {
+    selectedConfig.value = config
+    loadCameraValues()
+  }
+})
+
+
 // -------------------------------
 //        onMount and unMount
 // -------------------------------
 onMounted(() => {
     //fetchCameraConfig()
+    connect()
 });
+
 </script>
 <template>
     <div class="container">
         <div class="row">
             <div class="col">
+            <!-- for testing remove in final product -->
+                <div class="text-center mb-2 p-1">
+                    <span v-if="isLive" class="badge bg-success">Live: Connected to server</span>
+                    <span v-else class="badge bg-secondary">Offline: Showing sample data for local testing</span>
+                </div>
+            <!-- for testing remove in final product -->
                 <form @submit.prevent="">
                     <div class="form">
                         <label for="cameraSelect" class="config-label">Camera Select</label>
                         <div class="form-element">
                             <select class="w-100" id="cameraSelect" required v-model="selectedCamera">
                                 <option value="" disabled selected>Please select a camera</option>
-                                <option v-for="cam in sampleCameraList.cameras" :key="`${cam.conn_id}-${cam.camera_id}`" :value="cam">
+                                <option v-for="cam in activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`" :value="cam">
                                     [ {{cam.conn_id}} - {{cam.camera_id}} ] : {{cam.name}}
                                 </option>
                             </select>
@@ -267,7 +389,7 @@ onMounted(() => {
                             <label for="rename" class="config-label">Rename Camera</label>
                             <div class="form-element">
                                 <input type="text" id="rename" class="w-100" v-model="newName">
-                                <button type="button" class="btn submit-btn" @click="">Rename</button>
+                                <button type="button" class="btn submit-btn" @click="renameCamera">Rename</button>
                             </div>
                         </div>
                         <div v-if="controlFilter('Brightness')">
@@ -392,8 +514,8 @@ onMounted(() => {
                             </div>
                         </div>
 
-                        <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3">
-                            <button class="btn submit-btn">Save Changes</button>
+                        <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
+                            <button class="btn submit-btn" @click="saveChanges">Save Changes</button>
                             <button class="btn submit-btn" @click="resetControlConfig(), setDefaultFPS()">Reset Camera Config</button>
                         </div>
                         <div v-if="saveState === 'success'" class="text-center p-1">
@@ -409,16 +531,17 @@ onMounted(() => {
     </div>
     <div class="container">
         <div class=" col-12 d-flex mt-2 feed-row">
-            <div v-if="selectedConfig" class="w-100">
-                <img src="../assets/images/fake-feed.png" alt="Live Camera Feed" class="feedbox w-100 h-100">
+            <div v-if="isLive && imageSrc && selectedCamera" class="w-100">
+                <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
             </div>
-            <div v-else-if="!selectedConfig" class="w-100">
-                <img src="../assets/images/no-camera-selected.png" alt="No camera selected"
-                    class="feedbox w-100 h-100">
+            <div v-else-if="selectedConfig" class="w-100">
+                <img src="../assets/images/fake-feed.png" alt="Sample Camera Feed" class="feedbox w-100 h-100">
+            </div>
+            <div v-else-if="!selectedCamera" class="w-100">
+                <img src="../assets/images/no-camera-selected.png" alt="No camera selected" class="feedbox w-100 h-100">
             </div>
             <div v-else class="w-100">
-                <img src="../assets/images/no-camera-connected.png" alt="No Cameras Connected"
-                    class="feedbox w-100 h-100 ">
+                <img src="../assets/images/no-camera-connected.png" alt="No Cameras Connected" class="feedbox w-100 h-100 ">
             </div>
         </div>
     </div>

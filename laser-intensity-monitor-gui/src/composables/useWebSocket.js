@@ -1,11 +1,13 @@
-import { ref, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 
 export function useWebSocket(url) {
   const status = ref('DISCONNECTED')   // 'CONNECTING' | 'CONNECTED' | 'DISCONNECTED' | 'ERROR'
   const error = ref(null)
 
-  // camera list:
+  // cameras hashmap:
   const cameras = ref({})
+  // camera list java data object
+  const cameraList = computed(() => Object.values(cameras.value))
   // active camera feed
   const imageSrc = ref('')
   // Image Analysis for active camera
@@ -73,6 +75,30 @@ export function useWebSocket(url) {
     currentObjectUrl = URL.createObjectURL(blob)
     imageSrc.value = currentObjectUrl
   }
+  // normalise hash map to java object array
+  function normaliseCameraMap(raw) {
+    const normalised = {}
+    if (!raw) return normalised
+
+    if (Array.isArray(raw)) {
+      for (const [key, val] of raw) {
+        const [conn_id, camera_id] = Array.isArray(key) ? key : [key.conn_id, key.camera_id]
+        const [name, state] = val
+        normalised[`${conn_id},${camera_id}`] = { conn_id, camera_id, name, state }
+      }
+      return normalised
+    }
+
+    for (const [key, val] of Object.entries(raw)) {
+      const match = String(key).match(/(-?\d+)\D+(-?\d+)/)
+      const conn_id = match ? Number(match[1]) : key
+      const camera_id = match ? Number(match[2]) : null
+      const [name, state] = val
+      normalised[`${conn_id},${camera_id}`] = { conn_id, camera_id, name, state }
+    }
+    return normalised
+  }
+
 
   function handleJsonMessage(raw) {
     let message
@@ -226,6 +252,7 @@ export function useWebSocket(url) {
     error,
     // data
     cameras,
+    cameraList,
     imageSrc,
     analysis,
     controlConfig,
