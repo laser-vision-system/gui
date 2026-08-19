@@ -288,7 +288,7 @@ onUnmounted(() => {
 <template>
     <div class="container">
         <div class="row p-2 mt-2 mb-4">
-                <h3 class="cam-title">Alerts: 
+                <h3 class="cam-title">Alerts:
                     <button class="btn submit-btn" @click="toggleAlerts">
                         {{ alertsExpanded ? 'Collapse All' : 'Show All (' + activeDeviationAlerts.length + ')' }}
                     </button>
