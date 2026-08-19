@@ -1,12 +1,12 @@
 <script setup>
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 //import cameraFeed from '../components/CameraFeed.vue'
-import { useWebSocket } from '../composables/useWebSocket'
+//import { useWebSocket } from '../composables/useWebSocket'
 // --------------------
 //   WebSocket
 // --------------------
 // Point this at your server's websocket endpoint
-const {
+/* const {
   status,
   error,
   cameras,
@@ -16,14 +16,16 @@ const {
   disconnect,
   viewCamera,
   stopViewingCamera,
-} = useWebSocket('ws://localhost:8080/ws')
+} = useWebSocket('ws://localhost:8080/ws') */
 // --------------------
 //        Data
 // --------------------
-import sampleImageAnalysis from '../assets/data/sampleImageAnalysis.json'
 import sampleCameraList from '../assets/data/sampleCameraList.json'
+import sampleImageAnalysis from '../assets/data/sampleImageAnalysis.json'
 import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.json'
-const sampleData = ref(sampleCameraList.cameras)
+const sampleCameras = ref(sampleCameraList.cameras)
+const sampleAnalysis = ref(sampleImageAnalysis.GUIImageAnalysis)
+const sampleCameraConfigData = ref(sampleCameraConfiguration.configurations)
 //const WebSocketURL = ref('') // API URL for camera stream Data
 const cameraConfigApiURL = ref('/api/configuration') // API URL for camera config Data
 const cameraFeedApiURL = ref('/api/image') // API URL for camera feed Data
@@ -54,10 +56,62 @@ const alerts = ref([
     { id: 5, message: '[MODERATE] Camera 5 --- Deviation of 0.49', type: 'warning' },
     { id: 6, message: '[HIGH] Camera 6 --- Deviation of 0.49', type: 'danger' }
 ])
+const selectedCameraId = ref(null)
 const alertsExpanded = ref(true)
 // --------------------
 //        Computed
 // --------------------
+const deviationAlerts = computed(() => {
+    return sampleAnalysis.value.map(analysis => {
+        let alertMsg = ''
+        let alertType = ''
+
+        if (analysis.deviation >= 0 && analysis.deviation <= 0.3) {
+            alertMsg = `[LOW] Camera ${analysis.camera_id} --- Deviation of ${analysis.deviation}`
+            alertType = 'success'
+        } else if (analysis.deviation > 0.3 && analysis.deviation <= 0.7) {
+            alertMsg = `[MODERATE] Camera ${analysis.camera_id} --- Deviation of ${analysis.deviation}`
+            alertType = 'warning'
+        } else if (analysis.deviation > 0.7 && analysis.deviation <= 1) {
+            alertMsg = `[HIGH] Camera ${analysis.camera_id} --- Deviation of ${analysis.deviation}`
+            alertType = 'danger'
+        }
+        return {
+            ...analysis,
+            alertMsg,
+            alertType
+        }
+    })
+})
+const activeDeviationAlerts = computed(() => {
+    const priority = { danger: 1, warning: 2 }
+
+    return deviationAlerts.value
+        .filter(alert => alert.alertType === 'danger' || alert.alertType === 'warning')
+        .sort((a, b) => {
+            if (priority[a.alertType] !== priority[b.alertType]) {
+                return priority[a.alertType] - priority[b.alertType]
+            }
+            return b.deviation - a.deviation
+        })
+})
+const mergedCameraData = computed(() => {
+    const result = []
+
+    for (const camera of sampleCameraList.cameras) {
+        const matchingData = sampleImageAnalysis.GUIImageAnalysis.find(
+            analysis => analysis.conn_id === camera.conn_id && analysis.camera_id === camera.camera_id
+        )
+
+        result.push({
+            ...camera,
+            intensity: matchingData ? matchingData.intensity : 0,
+            deviation: matchingData ? matchingData.deviation : 0,
+            isSelected: selectedCameraId.value === camera.camera_id
+        })
+    }
+    return result
+})
 const hasSelectedCamera = computed(() => {
     return cameraFeedsData.value.some(feed => feed.isSelected)
 })
@@ -76,13 +130,20 @@ const toggleAlerts = computed(() => {
 // --------------------
 // Select a camera by ID
 function selectCamera(feedId) {
-    sampleData.value.forEach(feed => {
-        if (feed.id === feedId) {
+    mergedCameraData.value.forEach(feed => {
+        if (feed.camera_id === feedId) {
             feed.isSelected = !feed.isSelected  // toggle the clicked camera
         } else {
             feed.isSelected = false  // deselect all others
         }
     })
+}
+const toggleCameraSelection = (cameraId) => {
+    if (selectedCameraId.value === cameraId) {
+        selectedCameraId.value = null
+    } else {
+        selectedCameraId.value = cameraId
+    }
 }
 // fetch method for Read camera config API call
 async function fetchCameraConfig() {
@@ -95,7 +156,7 @@ async function fetchCameraConfig() {
 
         const data = await response.json()
 
-        cameraFeedsData.value.forEach(feed => {
+        sampleCameras.value.forEach(feed => {
             feed.fps = data.framerate
             feed.brightness = data.brightness
             feed.hue = data.hue
@@ -121,7 +182,7 @@ async function fetchCameraInfo() {
 
         const data = await response.json()
 
-        sampleCameraData.value.forEach(feed => {
+        sampleCameras.value.forEach(feed => {
             feed.intensity = data.intensity
             feed.deviation = data.deviation
         })
@@ -213,9 +274,9 @@ watch(
 //        onMount and unMount
 // -------------------------------
 onMounted(async () => {
-    connect('ws://localhost:8080/ws')
-    await fetchCameraConfig()
-    await fetchCameraInfo()
+    // connect('ws://localhost:8080/ws')
+    // await fetchCameraConfig()
+    // await fetchCameraInfo()
     if (hasSelectedCamera.value) startPolling()
 })
 
@@ -229,15 +290,15 @@ onUnmounted(() => {
         <div class="row p-2 mt-2 mb-4">
                 <h3 class="cam-title">Alerts:
                     <button class="btn submit-btn" @click="toggleAlerts">
-                        {{ alertsExpanded ? 'Collapse All' : 'Show All (' + alerts.length + ')' }}
+                        {{ alertsExpanded ? 'Collapse All' : 'Show All (' + activeDeviationAlerts.length + ')' }}
                     </button>
                 </h3>
                 <div class="container mt-2">
-                    <div v-if="alerts.length > 0" class="text-center mt-2">
+                    <div v-if="activeDeviationAlerts.length > 0" class="text-center mt-2">
                         <div v-show="alertsExpanded">
-                            <div v-for="alert in alerts" :key="alert.id"
-                                :class="['alert', `alert-${alert.type}`, 'fade', 'show']" role="alert">
-                                {{ alert.message }}
+                            <div v-for="alert in activeDeviationAlerts" :key="alert.camera_id"
+                                :class="['alert mb-1', `alert-${alert.alertType}`, 'fade', 'show']" role="alert">
+                                {{ alert.alertMsg }}
                             </div>
                         </div>
                     </div>
@@ -247,15 +308,15 @@ onUnmounted(() => {
             <div class="col-lg-9 col-12">
                 <h3 class="cam-title">Connected Cameras & Deviation:</h3>
                 <div class="row d-flex justify-content-start p-3">
-                    <div class="col-3 pb-1" v-for="feed in sampleData" :key="feed.id">
-                            <div :class="['card', 'camera-tab', getCardColour(feed.deviation), { 'selected-camera': feed.isSelected }]">
-                                <div v-if="feed.isConnected">
-                                    <div class="card-body" @click="selectCamera(feed.id)">
-                                        <h5 class="card-title">{{ feed.id }}</h5>
-                                        <p class="card-text">{{ (feed.deviation ?? 0).toFixed(4) }}</p>
-                                    </div>
+                    <div class="col-3 pb-1" v-for="cam in mergedCameraData" :key="cam.camera_id">
+                        <div v-if="cam.state === 'Active'">
+                            <div :class="['card', 'camera-tab', getCardColour(cam.deviation), { 'selected-camera': cam.isSelected }]">
+                                <div class="card-body" @click="toggleCameraSelection(cam.camera_id)">
+                                    <h5 class="card-title">Cam {{ cam.camera_id }}</h5>
+                                        <p class="card-text">{{ cam.deviation }}</p>
                                 </div>
                             </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -263,7 +324,7 @@ onUnmounted(() => {
                 <table class="table border border-2 hardware-info">
                     <thead>
                         <tr>
-                            <th scope="col">Connected microComputers</th>
+                            <th scope="col" class="table-dark">Connected microComputers</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -271,24 +332,24 @@ onUnmounted(() => {
                             <td>Raspberry pie 5 8Gb: ID-00</td>
                         </tr>
                         <tr>
-                            <th scope="col">Disconnected microComputers</th>
+                            <th scope="col" class="table-dark">Disconnected microComputers</th>
                         </tr>
                         <tr>
                             <td>N/a</td>
                         </tr>
                         <tr>
-                            <th scope="col">Disconnected Cameras</th>
+                            <th scope="col" class="table-dark">Disconnected Cameras</th>
                         </tr>
-                        <tr v-for="feed in sampleData" :key="feed.id">
-                            <td v-if="!feed.isConnected">{{ feed.name }}
+                        <tr v-for="cam in sampleCameras" :key="cam.camera_id">
+                            <td v-if="cam.state === 'Disconnected'">{{ cam.name }}
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
-        <div class="row align-items-stretch g-0">
-            <div class="col-xl-9 col-12 d-flex  mt-2 feed-row">
+        <div class="row align-items-stretch g-0 mb-5">
+            <div class="col-xl-9 col-12 d-flex mt-2 feed-row">
                 <div v-if="hasSelectedCamera" class="w-100">
                     <img :src="liveFeedSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
                 </div>
@@ -305,21 +366,16 @@ onUnmounted(() => {
                 <div class="row">
                     <h3>Camera Info</h3>
                     <div class="col-lg-7 col-9 ">
-                        <div v-for="feed in sampleData" :key="feed.id">
-                            <div v-if="feed.isSelected">
-                                <p>Camera: {{ feed.id }}</p>
-                                <p>Description: {{ feed.name }}</p>
-                                <p>Intensity: {{ (feed.intensity ?? 0).toFixed(4) }}</p>
-                                <p>Deviation: {{ (feed.deviation ?? 0).toFixed(4) }}</p>
-                                <p>fps: {{ feed.fps }}</p>
-                                <p>Brightness: {{ feed.brightness }}</p>
-                                <p>Hue: {{ feed.hue }}</p>
-                                <p>Saturation: {{ feed.saturation }}</p>
-
-                            </div>
+                        <div v-for="cam in mergedCameraData" :key="cam.camera_id">
+                                <div v-if="cam.isSelected">
+                                    <p>Camera: {{ cam.camera_id }}</p>
+                                    <p>Description: {{ cam.name }}</p>
+                                    <p>Intensity: {{ cam.intensity }}</p>
+                                    <p>Deviation: {{ cam.deviation }}</p>
+                                </div>
                         </div>
                         <div v-if="!hasSelectedCamera">
-                            <p><strong>No camera selected</strong></p>
+                            <p><strong>No camera feed connection</strong></p>
                         </div>
                     </div>
                     <div class="col-lg-5 col-3">
@@ -358,6 +414,10 @@ onUnmounted(() => {
     box-shadow: 0 0 0.45rem mediumslateblue;
     background-color: var(--cam-bg);
     color: var(--nav-title);
+}
+
+.highlight-row {
+    box-shadow: inset 0 0 0 2px #ffeeba;
 }
 
 .feed-row {
