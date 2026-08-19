@@ -23,7 +23,6 @@ const {
 //  Check if the websocket is connected
 const isLive = computed(() => status.value === 'CONNECTED')
 
-
 // --------------------
 //        Data
 // --------------------
@@ -56,6 +55,7 @@ const newExposureAbsolute = ref(null)
 const newAutoExposure = ref(null)
 // for save message e.g. success | error
 const saveState = ref('')
+
 // --------------------
 //        Computed
 // --------------------
@@ -64,6 +64,7 @@ const activeCameras = computed(() => {
   const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : sampleCameraList.cameras
   return source.filter((cam) => cam.state === 'Active')
 })
+
 // --------------------
 //        Methods
 // --------------------
@@ -219,7 +220,6 @@ function saveChanges() {
 // }
 
 
-
 // ------------------------------
 //        Sample data Methods
 // ------------------------------
@@ -313,14 +313,9 @@ function resetControlConfig() {
   }
 }
 
-
 // --------------------
 //        Watchers
 // --------------------
-// watch(newFPS, (val) => {
-//     if (val < 1) newFPS.value = 1;
-//     if (val > 30) newFPS.value = 30;
-// });
 watch(selectedCamera, (cam, oldCam) => {
   saveState.value = ''
   selectedConfig.value = null
@@ -354,7 +349,6 @@ watch(controlConfig, (config) => {
   }
 })
 
-
 // -------------------------------
 //        onMount and unMount
 // -------------------------------
@@ -362,7 +356,6 @@ onMounted(() => {
     //fetchCameraConfig()
     connect()
 });
-
 </script>
 <template>
     <div class="container">
