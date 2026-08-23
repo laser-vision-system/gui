@@ -523,7 +523,7 @@
       }
     },
     {
-      "conn_id" : 1,
+      "conn_id" : 2,
       "camera_id": 5,
       "fps" : 5,
       "configuration" : {
@@ -625,7 +625,7 @@
       }
     },
     {
-      "conn_id" : 1,
+      "conn_id" : 2,
       "camera_id": 6,
       "fps" : 5,
       "configuration" : {
@@ -727,7 +727,7 @@
       }
     },
     {
-      "conn_id" : 1,
+      "conn_id" : 2,
       "camera_id": 7,
       "fps" : 5,
       "configuration" : {
@@ -818,7 +818,7 @@
       }
     },
     {
-      "conn_id" : 1,
+      "conn_id" : 2,
       "camera_id": 8,
       "fps" : 5,
       "configuration" : {

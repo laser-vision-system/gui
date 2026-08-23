@@ -31,25 +31,25 @@
       "state": "Active"
     },
     {
-      "conn_id": 1,
+      "conn_id": 2,
       "camera_id": 5,
       "name": "OV7725 USB Camera: Missing Gamma",
       "state": "Active"
     },
     {
-      "conn_id": 1,
+      "conn_id": 2,
       "camera_id": 6,
       "name": "OV7725 USB Camera: Missing Gain",
       "state": "Active"
     },
     {
-      "conn_id": 1,
+      "conn_id": 2,
       "camera_id": 7,
       "name": "OV7725 USB Camera: Missing AutoExposure",
       "state": "Disconnected"
     },
     {
-      "conn_id": 1,
+      "conn_id": 2,
       "camera_id": 8,
       "name": "OV7725 USB Camera: Missing ExposureAbsolute",
       "state": "Disconnected"

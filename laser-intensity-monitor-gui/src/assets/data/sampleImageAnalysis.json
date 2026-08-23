@@ -31,25 +31,25 @@
       "deviation": 0.58
     },
     {
-      "conn_id": 1,
+      "conn_id": 2,
       "camera_id": 5,
       "intensity": 0.10,
       "deviation": 0.90
     },
     {
-      "conn_id": 1,
+      "conn_id": 2,
       "camera_id": 6,
       "intensity": 0.99,
       "deviation": 0.01
     },
     {
-      "conn_id": 1,
+      "conn_id": 2,
       "camera_id": 7,
       "intensity": 0.00,
       "deviation": 0.00
     },
     {
-      "conn_id": 1,
+      "conn_id": 2,
       "camera_id": 8,
       "intensity": 0.00,
       "deviation": 0.00
