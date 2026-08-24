@@ -29,6 +29,7 @@ const isLive = computed(() => status.value === 'CONNECTED')
 //const cameraConfigApiURL = ref('/api/configuration')
 //const guiUpdateApiURL = ref('/api/gui_update')
 const cameraFeedData = ref([]) // Live image stream from websocket
+const selectedMicroComputer = ref('') // selected m comp
 
 const selectedCamera = ref('') // chosen from camera list
 const selectedConfig = ref(null) // matches choice from camera list using the conn_id and camera_id
@@ -39,9 +40,14 @@ const selectedConfig = ref(null) // matches choice from camera list using the co
 import sampleCameraList from '../assets/data/sampleCameraList.json'
 // mirrors the Configuration or control config value from websocket
 import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.json'
+// list of micro computers
+import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json'
 // -------------------------
 //     V model vairables
 // -------------------------
+// Form section toggles
+// MicroComputer Configurables
+const newMicroComputerName = ref(null)
 // Camera Configuration values
 const newName = ref(null)
 const newFPS = ref(null)
@@ -59,16 +65,36 @@ const saveState = ref('')
 // --------------------
 //        Computed
 // --------------------
+// filter micro Computer list for active computers
+// the wsCameraList needs to be changed to the wsMicroComputer list when it becomes aviable
+const activeMicroComputers = computed(() => {
+  const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : sampleMicroComputerList.microComputers
+  return source.filter((com) => com.state === 'Active')
+})
 //filter out the cameras that are not active
 const activeCameras = computed(() => {
   const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : sampleCameraList.cameras
-  return source.filter((cam) => cam.state === 'Active')
+  const active = source.filter((cam) => cam.state === 'Active')
+  // if no option is selecetd or the all option is selected.
+  if (!selectedMicroComputer.value || selectedMicroComputer.value === 'all') {
+    return active
+  }
+  return active.filter((cam) => cam.conn_id === selectedMicroComputer.value)
 })
 
 // --------------------
 //        Methods
 // --------------------
 
+// rename Selected micro computer
+function renameMicroComputer() {
+  if (!selectedMicroComputer || !newMicroComputerName.value) return
+  if (isLive.value) {
+    // set micro computer name fucntion
+  } else {
+    selectedMicroComputer.value.name = newMicroComputerName.value
+  }
+}
 // Rename Selected camera
 function renameCamera() {
   if (!selectedCamera.value || !newName.value) return
@@ -355,7 +381,9 @@ watch(controlConfig, (config) => {
 onMounted(() => {
     //fetchCameraConfig()
     connect()
+
 });
+
 </script>
 <template>
     <div class="container">
@@ -369,7 +397,17 @@ onMounted(() => {
             <!-- for testing remove in final product -->
                 <form @submit.prevent="">
                     <div class="form">
-                        <label for="cameraSelect" class="config-label">Camera Select</label>
+                    <label for="microCompSelect" class="config-label">Select micro-Computer</label>
+                    <div class="form-element">
+                        <select class="w-100" id="microCompSelect" required v-model="selectedMicroComputer">
+                            <option value="" disabled selected>Please select a micro-computer</option>
+                            <option value="all">Select All micro-Computers</option>
+                            <option v-for="com in activeMicroComputers" :key="`${com.conn_id}`" :value="com.conn_id">
+                                [ {{com.conn_id}} ] : {{com.name}}
+                            </option>
+                        </select>
+                    </div>
+                        <label for="cameraSelect" class="config-label">Select Camera</label>
                         <div class="form-element">
                             <select class="w-100" id="cameraSelect" required v-model="selectedCamera">
                                 <option value="" disabled selected>Please select a camera</option>
@@ -488,7 +526,7 @@ onMounted(() => {
                             <label for="exposure-range" class="config-label">Exposure (Absolute)</label>
                             <div class="form-element">
                                 <input type="range" class="slider-input" id="exposure-range" v-model.number="newExposureAbsolute"
-                                    :min="controlFilter('ExposureAbsolute').IntegerRange.min"
+                                :min="controlFilter('ExposureAbsolute').IntegerRange.min"
                                     :max="controlFilter('ExposureAbsolute').IntegerRange.max"
                                     :step="controlFilter('ExposureAbsolute').IntegerRange.step">
                                 <input type="number" class="number-input" id="exposure-number" v-model.number="newExposureAbsolute"
@@ -520,21 +558,21 @@ onMounted(() => {
                     </div>
                 </form>
             </div>
-        </div>
-    </div>
-    <div class="container">
-        <div class=" col-12 d-flex mt-2 feed-row">
-            <div v-if="isLive && imageSrc && selectedCamera" class="w-100">
-                <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
-            </div>
-            <div v-else-if="selectedConfig" class="w-100">
-                <img src="../assets/images/fake-feed.png" alt="Sample Camera Feed" class="feedbox w-100 h-100">
-            </div>
-            <div v-else-if="!selectedCamera" class="w-100">
-                <img src="../assets/images/no-camera-selected.png" alt="No camera selected" class="feedbox w-100 h-100">
-            </div>
-            <div v-else class="w-100">
-                <img src="../assets/images/no-camera-connected.png" alt="No Cameras Connected" class="feedbox w-100 h-100 ">
+            <div class="col-12">
+                <div class=" col-12 d-flex mt-2 feed-row">
+                    <div v-if="isLive && imageSrc && selectedCamera" class="w-100">
+                        <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
+                    </div>
+                    <div v-else-if="selectedConfig" class="w-100">
+                        <img src="../assets/images/fake-feed.png" alt="Sample Camera Feed" class="feedbox w-100 h-100">
+                    </div>
+                    <div v-else-if="!selectedCamera" class="w-100">
+                        <img src="../assets/images/no-camera-selected.png" alt="No camera selected" class="feedbox w-100 h-100">
+                    </div>
+                    <div v-else class="w-100">
+                        <img src="../assets/images/no-camera-connected.png" alt="No Cameras Connected" class="feedbox w-100 h-100 ">
+                    </div>
+                </div>
             </div>
         </div>
     </div>

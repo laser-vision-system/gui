@@ -524,7 +524,7 @@
     },
     {
       "conn_id" : 2,
-      "camera_id": 5,
+      "camera_id": 0,
       "fps" : 5,
       "configuration" : {
         "Brightness": {
@@ -626,7 +626,7 @@
     },
     {
       "conn_id" : 2,
-      "camera_id": 6,
+      "camera_id": 1,
       "fps" : 5,
       "configuration" : {
         "Brightness": {
@@ -728,7 +728,7 @@
     },
     {
       "conn_id" : 2,
-      "camera_id": 7,
+      "camera_id": 2,
       "fps" : 5,
       "configuration" : {
         "Brightness": {
@@ -819,7 +819,7 @@
     },
     {
       "conn_id" : 2,
-      "camera_id": 8,
+      "camera_id": 3,
       "fps" : 5,
       "configuration" : {
         "Brightness": {
