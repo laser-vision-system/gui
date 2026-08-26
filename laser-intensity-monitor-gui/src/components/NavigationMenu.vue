@@ -29,8 +29,8 @@ function isRoute(navElement) {
             </div>
 
             <div class="col-4 d-flex flex-column align-items-center justify-content-center">
-                <router-link to="/camera-config">
-                    <img :src="isRoute('/camera-config') ? cameraConfigActive : cameraConfigInactive"
+                <router-link to="/device-settings">
+                    <img :src="isRoute('/device-settings') ? cameraConfigActive : cameraConfigInactive"
                         alt="Camera Configuration Icon" width="64px" height="64px">
                 </router-link>
                 <span class="navTitle px-3 pt-1" v-if="activeNavElement === 'Camera Config'">
