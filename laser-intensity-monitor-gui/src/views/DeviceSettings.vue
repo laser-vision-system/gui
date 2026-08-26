@@ -50,7 +50,11 @@ import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json
 const newMicroComputerName = ref(null)
 // Camera Configuration values
 const newName = ref(null)
+// Diviation configration
+const newCriticalThreshold = ref(null)
+const newWarningThreshold = ref(null)
 const newFPS = ref(null)
+// camera controls
 const newBrightness = ref(null)
 const newContrast = ref(null)
 const newHue = ref(null)
@@ -59,9 +63,6 @@ const newGamma = ref(null)
 const newGain = ref(null)
 const newExposureAbsolute = ref(null)
 const newAutoExposure = ref(null)
-// Diviation configration
-const criticalThreshold = ref(null)
-const warningThreshold = ref(null)
 // for save message e.g. success | error
 const saveState = ref('')
 
@@ -368,8 +369,10 @@ watch(selectedCamera, (cam, oldCam) => {
     loadCameraValues()
     return
   }
-
+  // load camera list values
   newName.value = cam.name
+  newCriticalThreshold.value = cam.critical_threshold * 100
+  newWarningThreshold.value = cam.warning_threshold * 100
 
   if (isLive.value) {
     viewCamera(cam.conn_id, cam.camera_id)
@@ -397,14 +400,14 @@ watch(selectedMicroComputer, () => {
   }
 })
 
-watch(warningThreshold, (newValue) => {
-  if (newValue <= criticalThreshold.value) {
-    criticalThreshold.value = newValue - 1
+watch(newWarningThreshold, (newValue) => {
+  if (newValue <= newCriticalThreshold.value) {
+    newCriticalThreshold.value = newValue - 1
   }
 })
-watch(criticalThreshold, (newValue) => {
-  if (newValue >= warningThreshold.value) {
-    warningThreshold.value = newValue + 2
+watch(newCriticalThreshold, (newValue) => {
+  if (newValue >= newWarningThreshold.value) {
+    newWarningThreshold.value = newValue + 2
   }
 })
 // -------------------------------
@@ -430,7 +433,8 @@ onMounted(() => {
                 <form @submit.prevent="">
                     <div class="form">
                         <div class="pb-3">
-                            <label for="microCompSelect" class="config-label"><h2>Select µ-Computer</h2></label>
+                            <h2 class="config-title">µ-Computer Configuration</h2>
+                            <label for="microCompSelect" class="config-label"><h3 class="config-label">Select µ-Computer</h3></label>
                             <div class="form-element">
                                 <select class="w-100" id="microCompSelect" required v-model="selectedMicroComputer">
                                     <option value="" disabled selected>Please select a µ-computer</option>
@@ -450,8 +454,8 @@ onMounted(() => {
                             </div>
                             <hr class="line-break">
                         </div>
-
-                        <label for="cameraSelect" class="config-label"><h3>Select Camera</h3></label>
+                        <h2 class="config-title">Camera Configuration</h2>
+                        <label for="cameraSelect" class="config-label"><h3 class="config-label">Select Camera</h3></label>
                         <div class="form-element">
                             <select class="w-100" id="cameraSelect" required v-model="selectedCamera">
                                 <option value="" disabled selected>Please select a camera</option>
@@ -468,7 +472,7 @@ onMounted(() => {
                             </div>
                         </div>
                         <hr class="line-break" v-if="selectedCamera">
-                        <h4 class="pt-3 pb-2" v-if="selectedCamera">Camera Controls</h4>
+                        <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">Camera Controls</h4>
                         <div v-if="controlFilter('Brightness')">
                             <label for="brightness-range" class="config-label">Brightness</label>
                             <div class="form-element">
@@ -583,7 +587,7 @@ onMounted(() => {
                             </div>
                         </div>
                         <hr class="line-break" v-if="selectedCamera">
-                        <h4 class="pt-3 pb-2" v-if="selectedCamera">Refresh Rate</h4>
+                        <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">Refresh Rate</h4>
                         <div v-if="selectedConfig">
                             <label for="fps-range" class="config-label">Frame Rate</label>
                             <div class="form-element">
@@ -593,20 +597,20 @@ onMounted(() => {
                             </div>
                         </div>
                         <hr class="line-break" v-if="selectedCamera">
-                        <h4 class="pt-3 pb-2" v-if="selectedCamera">Deviation Thresholds</h4>
+                        <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">Deviation Thresholds</h4>
                         <div v-if="selectedConfig">
                             <label for="fps-range" class="config-label">Warning Threshold</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="warning-range" v-model.number="warningThreshold" min="2" max="100" step="1">
-                                <input type="number" class="number-input" id= "warning-number" v-model.number="warningThreshold" min="2" max="100" step="1">
+                                <input type="range" class="slider-input" id="warning-range" v-model.number="newWarningThreshold" min="2" max="100" step="1">
+                                <input type="number" class="number-input" id= "warning-number" v-model.number="newWarningThreshold" min="2" max="100" step="1">
                                 <button type="button" class="btn submit-btn">Reset</button>
                             </div>
                         </div>
                         <div v-if="selectedConfig">
                             <label for="fps-range" class="config-label">Critical Threshold</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="critical-range" v-model.number="criticalThreshold" min="1" max="99" step="1">
-                                <input type="number" class="number-input" id= "critical-number" v-model.number="criticalThreshold" min="1" max="99" step="1">
+                                <input type="range" class="slider-input" id="critical-range" v-model.number="newCriticalThreshold" min="1" max="99" step="1">
+                                <input type="number" class="number-input" id= "critical-number" v-model.number="newCriticalThreshold" min="1" max="99" step="1">
                                 <button type="button" class="btn submit-btn">Reset</button>
                             </div>
                         </div>
@@ -646,6 +650,18 @@ onMounted(() => {
 .config-label {
     font-weight: 500;
     font-size: 16pt;
+    color: var(--config-title);
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+.config-title {
+    font-weight: 600;
+    font-size: 20pt;
+    color: var(--config-title);
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+.config-subtitle {
+    font-weight: 600;
+    font-size: 18pt;
     color: var(--config-title);
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
