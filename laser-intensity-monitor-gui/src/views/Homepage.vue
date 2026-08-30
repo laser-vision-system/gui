@@ -23,9 +23,11 @@ import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 import sampleCameraList from '../assets/data/sampleCameraList.json'
 import sampleImageAnalysis from '../assets/data/sampleImageAnalysis.json'
 import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.json'
+import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json'
 const sampleCameras = ref(sampleCameraList.cameras)
 const sampleAnalysis = ref(sampleImageAnalysis.GUIImageAnalysis)
 const sampleCameraConfigData = ref(sampleCameraConfiguration.configurations)
+const sampleMicroComputers = ref(sampleMicroComputerList.microComputers)
 //const WebSocketURL = ref('') // API URL for camera stream Data
 const cameraConfigApiURL = ref('/api/configuration') // API URL for camera config Data
 const cameraFeedApiURL = ref('/api/image') // API URL for camera feed Data
@@ -47,17 +49,8 @@ const cameraFeedsData = ref([{
 const setpointState = ref(false)
 const liveFeedSrc = ref(null) // dynamic image source
 let pollInterval = null
-// alert system variables
-const alerts = ref([
-    { id: 1, message: '[MODERATE] Camera 1 --- Deviation of 0.49', type: 'warning' },
-    { id: 2, message: '[MODERATE] Camera 2 --- Deviation of 0.49', type: 'warning' },
-    { id: 3, message: '[MODERATE] Camera 3 --- Deviation of 0.49', type: 'warning' },
-    { id: 5, message: '[HIGH] Camera 4 --- Deviation of 0.49', type: 'danger' },
-    { id: 5, message: '[MODERATE] Camera 5 --- Deviation of 0.49', type: 'warning' },
-    { id: 6, message: '[HIGH] Camera 6 --- Deviation of 0.49', type: 'danger' }
-])
 const selectedCameraId = ref(null)
-const alertsExpanded = ref(true)
+const alertsExpanded = ref(true) // alert system variable
 // --------------------
 //        Computed
 // --------------------
@@ -67,13 +60,13 @@ const deviationAlerts = computed(() => {
         let alertType = ''
 
         if (analysis.deviation >= 0 && analysis.deviation <= 0.3) {
-            alertMsg = `[LOW] Camera ${analysis.camera_id} --- Deviation of ${analysis.deviation}`
+            alertMsg = `[LOW] Camera ${analysis.camera_id} --- Deviation of ${Math.round(analysis.deviation * 100)}%`
             alertType = 'success'
         } else if (analysis.deviation > 0.3 && analysis.deviation <= 0.7) {
-            alertMsg = `[MODERATE] Camera ${analysis.camera_id} --- Deviation of ${analysis.deviation}`
+            alertMsg = `[MODERATE] Camera ${analysis.camera_id} --- Deviation of ${Math.round(analysis.deviation * 100)}%`
             alertType = 'warning'
         } else if (analysis.deviation > 0.7 && analysis.deviation <= 1) {
-            alertMsg = `[HIGH] Camera ${analysis.camera_id} --- Deviation of ${analysis.deviation}`
+            alertMsg = `[HIGH] Camera ${analysis.camera_id} --- Deviation of ${Math.round(analysis.deviation * 100)}%`
             alertType = 'danger'
         }
         return {
@@ -102,15 +95,45 @@ const mergedCameraData = computed(() => {
         const matchingData = sampleImageAnalysis.GUIImageAnalysis.find(
             analysis => analysis.conn_id === camera.conn_id && analysis.camera_id === camera.camera_id
         )
+        const matchingComData = sampleMicroComputerList.microComputers.find(
+            connection => connection.conn_id === camera.conn_id
+        )
 
         result.push({
             ...camera,
+            microComName: matchingComData ? matchingComData.name : null,
+            microComState: matchingComData ? matchingComData.state : null,
             intensity: matchingData ? matchingData.intensity : 0,
             deviation: matchingData ? matchingData.deviation : 0,
             isSelected: selectedCameraId.value === camera.camera_id
         })
     }
     return result
+})
+const activeMergedData = computed(() => {
+    const sections = {}
+
+    mergedCameraData.value.forEach(camera => {
+        const id = camera.conn_id
+
+        // initialise sections if they don't exist yet
+        if (!sections[id]) {
+            sections[id] = {
+                conn_id: id,
+                microComName: camera.microComName,
+                microComState: camera.microComState,
+                activeCameras: [],
+            }
+        }
+
+        // evaluate for active cameras only if Pi is active
+        if (sections[id].microComState === 'Active') {
+            if (camera.state === 'Active') {
+                sections[id].activeCameras.push(camera)
+            }
+        }
+    })
+    return sections
 })
 const hasSelectedCamera = computed(() => {
     return cameraFeedsData.value.some(feed => feed.isSelected)
@@ -307,13 +330,20 @@ onUnmounted(() => {
         <div class="row p-2 mt-2">
             <div class="col-lg-9 col-12">
                 <h3 class="cam-title">Connected Cameras & Deviation:</h3>
-                <div class="row d-flex justify-content-start p-3">
-                    <div class="col-3 pb-1" v-for="cam in mergedCameraData" :key="cam.camera_id">
-                        <div v-if="cam.state === 'Active'">
-                            <div :class="['card', 'camera-tab', getCardColour(cam.deviation), { 'selected-camera': cam.isSelected }]">
-                                <div class="card-body" @click="toggleCameraSelection(cam.camera_id)">
-                                    <h5 class="card-title">Cam {{ cam.camera_id }}</h5>
-                                        <p class="card-text">{{ cam.deviation }}</p>
+                <div class="col-lg-9 col-12">
+                    <div v-for="(section, conn_id) in activeMergedData" :key="conn_id">
+                        <h4 class="microCom-title">{{ section.microComName }}
+                            <span class="badge bg-secondary">
+                                {{ section.microComState }}
+                            </span>
+                        </h4>
+                        <div class="row d-flex justify-content-start p-3">
+                            <div class="col-3 pb-3" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
+                                <div :class="['card', 'camera-tab', getCardColour(cam.deviation), { 'selected-camera': cam.isSelected }]">
+                                    <div class="card-body" @click="toggleCameraSelection(cam.camera_id)">
+                                        <h5 class="card-title">Camera {{ cam.camera_id }}</h5>
+                                            <p class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -389,7 +419,9 @@ onUnmounted(() => {
 </template>
 <style scoped>
 .camera-tab {
-    width: 200px;
+    max-width: 240px;
+    min-height: 80px;
+    font-size: 0.85rem;
     color: var(--nav-title);
 }
 
@@ -430,6 +462,13 @@ onUnmounted(() => {
     overflow: hidden;
     border-collapse: separate;
     border-spacing: 0;
+}
+
+.microCom-title {
+    margin-top: 1.5rem;
+    color: var(--nav-title);
+    padding-left: 1rem;
+    font-size: medium;
 }
 
 .cam-title {
