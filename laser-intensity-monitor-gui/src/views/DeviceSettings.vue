@@ -48,6 +48,7 @@ import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json
 // Form section toggles
 // MicroComputer Configurables
 const newMicroComputerName = ref(null)
+const newVisionProcessing = ref(null)
 // Camera Configuration values
 const newName = ref(null)
 // Diviation configration
@@ -108,6 +109,16 @@ function renameMicroComputer() {
     // set micro computer name fucntion
   } else {
     selectedMicroComputer.value.name = newMicroComputerName.value
+  }
+}
+// Select Vision processing method.
+//  the method for saving/ submiting the selected vision processing method
+function submitVisionProcessing() {
+  if (!selectedMicroComputer || !newVisionProcessing.value) return
+  if (isLive.value) {
+    // TODO: API function for submiting the chosen vision processing
+  } else {
+    selectedMicroComputer.value.Menu.value.ConValueMenu = newVisionProcessing.value
   }
 }
 // Rename Selected camera
@@ -184,7 +195,7 @@ function saveChanges() {
   }
 }
 
-
+//
 
 //fetch method for read function
 // async function fetchCameraConfig() {
@@ -396,7 +407,9 @@ watch(controlConfig, (config) => {
 watch(selectedMicroComputer, () => {
   clearSelectedCamera()
   if (selectedMicroComputer.value !== 'all') {
+    // load micro computer data on selection
     newMicroComputerName.value = selectedMicroComputer.value.name
+    newVisionProcessing.value = selectedMicroComputer.value.Menu.value.ConValueMenu
   }
 })
 
@@ -445,13 +458,26 @@ onMounted(() => {
                                 </select>
                             </div>
 
-                            <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all' ">
+                            <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all'">
                                 <label for="rename" class="config-label">Rename µ-Computer</label>
                                 <div class="form-element">
                                     <input type="text" id="rename" class="w-100" v-model="newMicroComputerName">
                                     <button type="button" class="btn submit-btn" @click="renameMicroComputer">Rename</button>
                                 </div>
                             </div>
+                            <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all'">
+                                <label for="vision-process" class="config-label">Select Vision Processing Method</label>
+                                <div class="form-element">
+                                    <select class="menu-input" id="vision-process" v-model.number="newVisionProcessing">
+                                        <option v-for="item in selectedMicroComputer.Menu.items" :key="item.id" :value="item.id">
+                                            {{item.item.Name}}
+                                        </option>
+                                    </select>
+                                    <button type="button" class="btn submit-btn" @click="">Select</button>
+
+                                </div>
+                            </div>
+
                             <hr class="line-break">
                         </div>
                         <h2 class="config-title">Camera Configuration</h2>
@@ -561,11 +587,7 @@ onMounted(() => {
                             <label for="autoExposure" class="config-label">Auto Exposure</label>
                             <div class="form-element">
                                 <select class="menu-input" id="autoExposure" v-model.number="newAutoExposure">
-                                    <option
-                                        v-for="item in controlFilter('AutoExposure').Menu.items"
-                                        :key="item.id"
-                                        :value="item.id"
-                                    >
+                                    <option v-for="item in controlFilter('AutoExposure').Menu.items" :key="item.id" :value="item.id">
                                         {{ item.item.Name }}
                                     </option>
                                 </select>
@@ -586,6 +608,16 @@ onMounted(() => {
                                 <button type="button" class="btn submit-btn" @click="setDefault('ExposureAbsolute')">Reset</button>
                             </div>
                         </div>
+                        <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
+                            <button class="btn submit-btn" @click="saveChanges">Save Camera Controls</button>
+                            <button class="btn submit-btn" @click="resetControlConfig()">Reset Camera Controls</button>
+                        </div>
+                        <div v-if="saveState === 'success'" class="text-center p-1">
+                            <p>Settings saved successfully.</p>
+                        </div>
+                        <div v-if="saveState === 'error'" class="text-center p-1">
+                            <p>Failed to save settings. Please try again.</p>
+                        </div>
                         <hr class="line-break" v-if="selectedCamera">
                         <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">Refresh Rate</h4>
                         <div v-if="selectedConfig">
@@ -594,6 +626,9 @@ onMounted(() => {
                                 <input type="range" class="slider-input" id="fps-range" v-model.number="newFPS" min="1" max="5" step="1">
                                 <input type="number" class="number-input" id="fps-number" v-model.number="newFPS" min="1" max="5" step="1">
                                 <button type="button" class="btn submit-btn" @click="setDefaultFPS()">Reset</button>
+                            </div>
+                            <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
+                                <button class="btn submit-btn" @click="">Save Frame Rate</button>
                             </div>
                         </div>
                         <hr class="line-break" v-if="selectedCamera">
@@ -615,16 +650,10 @@ onMounted(() => {
                             </div>
                         </div>
                         <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
-                            <button class="btn submit-btn" @click="saveChanges">Save Changes</button>
-                            <button class="btn submit-btn" @click="resetControlConfig(), setDefaultFPS()">Reset Configuration</button>
-                        </div>
-                        <div v-if="saveState === 'success'" class="text-center p-1">
-                            <p>Settings saved successfully.</p>
-                        </div>
-                        <div v-if="saveState === 'error'" class="text-center p-1">
-                            <p>Failed to save settings. Please try again.</p>
+                            <button class="btn submit-btn" @click="">Save Deviation Threshold</button>
                         </div>
                     </div>
+                    <hr class="line-break" v-if="selectedCamera">
                 </form>
             </div>
             <div class="col-12">
