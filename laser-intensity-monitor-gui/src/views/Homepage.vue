@@ -354,18 +354,17 @@ onUnmounted(() => {
                     </div>
                 </div>
         </div>
-        <div class="row p-2 mt-2">
-            <div class="col-lg-9 col-12">
+        <div class="row mx-0 mt-2 align-items-start">
+            <div class="col-lg-8 col-12 ps-0">
                 <h3 class="cam-title">Connections:</h3>
-                <div class="col-lg-9 col-12">
                     <div v-for="(section, conn_id) in activeMergedData" :key="conn_id">
                         <h4 class="microCom-title">{{ section.microComName }}
                             <span class="badge bg-secondary">
                                 {{ section.microComState }}
                             </span>
                         </h4>
-                        <div class="row d-flex justify-content-start p-3">
-                            <div class="col-3 pb-3" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
+                        <div class="row d-flex justify-content-start p-2 g-2">
+                            <div class="col-4 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
                                 <div :class="['card', 'camera-tab', getCardColour(cam.deviation), { 'selected-camera': cam.isSelected }]">
                                     <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
                                         <h5 class="card-title">Camera {{ cam.camera_id }}</h5>
@@ -375,9 +374,8 @@ onUnmounted(() => {
                             </div>
                         </div>
                     </div>
-                </div>
             </div>
-            <div class="col-lg-3 col-12 mt-5 text-center">
+            <div class="col-lg-4 col-12 mt-lg-5 pe-0 text-center">
                 <table class="table border border-2 hardware-info">
                     <tbody>
                         <tr>
@@ -396,37 +394,41 @@ onUnmounted(() => {
                 </table>
             </div>
         </div>
-        <div class="row align-items-stretch g-0 mb-5">
-            <div class="col-xl-9 col-12 d-flex mt-2 feed-row">
-                <div v-if="hasSelectedCamera" class="w-100">
-                    <img :src="liveFeedSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
-                </div>
-                <div v-else-if="hasConnectedCamera" class="w-100">
-                    <img src="../assets/images/no-camera-selected.png" alt="No camera selected"
-                        class="feedbox w-100 h-100">
-                </div>
-                <div v-else class="w-100">
-                    <img src="../assets/images/no-camera-connected.png" alt="No Cameras Connected"
-                        class="feedbox w-100 h-100 ">
+        <div class="row mx-0 align-items-stretch mb-5 mt-4">
+            <div class="col-lg-8 col-12 d-flex ps-0 mt-2">
+                <div class="feed-wrapper w-100 h-100">
+                    <div v-if="hasSelectedCamera" class="w-100 h-100">
+                        <img :src="liveFeedSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
+                    </div>
+                    <div v-else-if="hasConnectedCamera" class="w-100 h-100">
+                        <img src="../assets/images/no-camera-selected.png" alt="No camera selected"
+                            class="feedbox w-100 h-100">
+                    </div>
+                    <div v-else class="w-100 h-100">
+                        <img src="../assets/images/no-camera-connected.png" alt="No Cameras Connected"
+                            class="feedbox w-100 h-100 ">
+                    </div>
                 </div>
             </div>
-            <div class="col-xl-3 col-12 cam-info d-flex flex-column p-2 mt-2 feed-row">
-                <div class="row">
-                    <h3>Camera Info</h3>
-                    <div class="col-lg-7 col-9 ">
-                        <div v-for="cam in mergedCameraData" :key="cam.camera_id">
-                                <div v-if="cam.isSelected">
-                                    <p>Camera: {{ cam.camera_id }}</p>
-                                    <p>Description: {{ cam.name }}</p>
-                                    <p>Intensity: {{ cam.intensity }}</p>
-                                    <p>Deviation: {{ cam.deviation }}</p>
-                                </div>
-                        </div>
-                        <div v-if="!hasSelectedCamera">
-                            <p><strong>No camera feed connection</strong></p>
+            <div class="col-lg-4 col-12 cam-info d-flex flex-column p-3 pe-0 mt-2">
+                <div class="row h-100 mx-0 align-content-between">
+                    <div class="col-12 px-0">
+                        <h3 class="mb-3">Camera Info</h3>
+                        <div class="col-lg-7 col-9">
+                            <div v-for="cam in mergedCameraData" :key="cam.camera_id">
+                                    <div v-if="cam.isSelected">
+                                        <p>Camera: {{ cam.camera_id }}</p>
+                                        <p>Description: {{ cam.name }}</p>
+                                        <p>Intensity: {{ cam.intensity }}</p>
+                                        <p>Deviation: {{ cam.deviation }}</p>
+                                    </div>
+                            </div>
+                            <div v-if="!hasSelectedCamera">
+                                <p><strong>No camera feed connection</strong></p>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-lg-5 col-3">
+                    <div class="col-12 px-0">
                         <button class="btn submit-btn" @click="postSetpointTrue">Set Setpoint</button>
                         <p v-if="setpointState">Setpoint Successful</p>
                     </div>
@@ -437,10 +439,16 @@ onUnmounted(() => {
 </template>
 <style scoped>
 .camera-tab {
-    max-width: 240px;
     min-height: 80px;
-    font-size: 0.85rem;
+    overflow-y: auto;
+    container-type: inline-size;
     color: var(--camera-tab-text);
+}
+
+.camera-tab .card-title {
+    font-size: 15cqw;
+    white-space: normal;
+    word-break: break-word;
 }
 
 .selected-camera {
@@ -455,7 +463,13 @@ onUnmounted(() => {
     box-shadow: 0 0 0.45rem mediumslateblue;
     background-color: var(--cam-bg);
     object-fit: contain;
-    max-height: 500px;
+    max-height: 480px;
+}
+
+.feed-wrapper {
+    max-width: 640px;
+    max-height: 480px;
+    margin: 0 auto;
 }
 
 .cam-info {
@@ -464,15 +478,11 @@ onUnmounted(() => {
     box-shadow: 0 0 0.45rem mediumslateblue;
     background-color: var(--cam-bg);
     color: var(--nav-title);
+    max-height: 480px;
 }
 
 .highlight-row {
     box-shadow: inset 0 0 0 2px #ffeeba;
-}
-
-.feed-row {
-    max-width: 640px;
-    margin: 0 auto;
 }
 
 .hardware-info {
