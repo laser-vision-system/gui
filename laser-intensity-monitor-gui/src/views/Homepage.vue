@@ -76,7 +76,7 @@ const deviationAlerts = computed(() => {
         }
     })
 })
-const activeDeviationAlerts = computed(() => {
+const sortedDeviationAlerts = computed(() => {
     const priority = { danger: 1, warning: 2 }
 
     return deviationAlerts.value
@@ -87,6 +87,25 @@ const activeDeviationAlerts = computed(() => {
             }
             return b.deviation - a.deviation
         })
+})
+const disconnectionAlerts = computed(() => {
+    return mergedCameraData.value
+    .filter(connection => connection.microComState === 'Disconnected' || connection.state === 'Disconnected')
+    .map(disconnection => {
+        let alertMsg = ''
+        let alertType = 'info'
+
+        if (disconnection.microComState == 'Disconnected') {
+            alertMsg = `[DISCONNECTION] ${disconnection.microComName} has disconnected.`
+        } else if (disconnection.state == 'Disconnected') {
+            alertMsg = `[DISCONNECTION] ${disconnection.name} has disconnected.`
+        }
+        return {
+            ...disconnection,
+            alertMsg,
+            alertType
+        }
+    })
 })
 const mergedCameraData = computed(() => {
     const result = []
@@ -105,7 +124,7 @@ const mergedCameraData = computed(() => {
             microComState: matchingComData ? matchingComData.state : null,
             intensity: matchingData ? matchingData.intensity : 0,
             deviation: matchingData ? matchingData.deviation : 0,
-            isSelected: selectedCameraId.value === camera.camera_id
+            isSelected: selectedCameraId.value === `${camera.conn_id}-${camera.camera_id}`
         })
     }
     return result
@@ -313,13 +332,21 @@ onUnmounted(() => {
         <div class="row p-2 mt-2 mb-4">
                 <h3 class="cam-title">Alerts:
                     <button class="btn submit-btn" @click="toggleAlerts">
-                        {{ alertsExpanded ? 'Collapse All' : 'Show All (' + activeDeviationAlerts.length + ')' }}
+                        {{ alertsExpanded ? 'Collapse All' : 'Show All (' + (sortedDeviationAlerts.length + disconnectionAlerts.length) + ')' }}
                     </button>
                 </h3>
                 <div class="container mt-2">
-                    <div v-if="activeDeviationAlerts.length > 0" class="text-center mt-2">
+                    <div v-if="sortedDeviationAlerts.length > 0" class="text-center mt-2">
                         <div v-show="alertsExpanded">
-                            <div v-for="alert in activeDeviationAlerts" :key="alert.camera_id"
+                            <div v-for="alert in sortedDeviationAlerts" :key="alert.camera_id"
+                                :class="['alert mb-1', `alert-${alert.alertType}`, 'fade', 'show']" role="alert">
+                                {{ alert.alertMsg }}
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="disconnectionAlerts.length > 0" class="text-center mt-4">
+                        <div v-show="alertsExpanded">
+                            <div v-for="alert in disconnectionAlerts" :key="`${alert.conn_id}-${alert.camera_id}`"
                                 :class="['alert mb-1', `alert-${alert.alertType}`, 'fade', 'show']" role="alert">
                                 {{ alert.alertMsg }}
                             </div>
@@ -329,7 +356,7 @@ onUnmounted(() => {
         </div>
         <div class="row p-2 mt-2">
             <div class="col-lg-9 col-12">
-                <h3 class="cam-title">Connected Cameras & Deviation:</h3>
+                <h3 class="cam-title">Connections:</h3>
                 <div class="col-lg-9 col-12">
                     <div v-for="(section, conn_id) in activeMergedData" :key="conn_id">
                         <h4 class="microCom-title">{{ section.microComName }}
@@ -340,7 +367,7 @@ onUnmounted(() => {
                         <div class="row d-flex justify-content-start p-3">
                             <div class="col-3 pb-3" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
                                 <div :class="['card', 'camera-tab', getCardColour(cam.deviation), { 'selected-camera': cam.isSelected }]">
-                                    <div class="card-body" @click="toggleCameraSelection(cam.camera_id)">
+                                    <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
                                         <h5 class="card-title">Camera {{ cam.camera_id }}</h5>
                                             <p class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
                                     </div>
@@ -352,27 +379,18 @@ onUnmounted(() => {
             </div>
             <div class="col-lg-3 col-12 mt-5 text-center">
                 <table class="table border border-2 hardware-info">
-                    <thead>
-                        <tr>
-                            <th scope="col" class="table-dark">Connected microComputers</th>
-                        </tr>
-                    </thead>
                     <tbody>
-                        <tr>
-                            <td>Raspberry pie 5 8Gb: ID-00</td>
-                        </tr>
                         <tr>
                             <th scope="col" class="table-dark">Disconnected microComputers</th>
                         </tr>
                         <tr>
-                            <td>N/a</td>
+                            <td>N/A</td>
                         </tr>
                         <tr>
                             <th scope="col" class="table-dark">Disconnected Cameras</th>
                         </tr>
-                        <tr v-for="cam in sampleCameras" :key="cam.camera_id">
-                            <td v-if="cam.state === 'Disconnected'">{{ cam.name }}
-                            </td>
+                        <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
+                            <td v-if="cam.state === 'Disconnected'">{{ cam.name }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -422,7 +440,7 @@ onUnmounted(() => {
     max-width: 240px;
     min-height: 80px;
     font-size: 0.85rem;
-    color: var(--nav-title);
+    color: var(--camera-tab-text);
 }
 
 .selected-camera {
