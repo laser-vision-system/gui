@@ -2,6 +2,21 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useWebSocket } from '../composables/useWebSocket'
 
+
+// -------------------------
+//   Confrimation pop up
+// -------------------------
+import ConfirmationBox from '../components/ConfirmationBox.vue'
+const showRenameMicroCompConfrim = ref(false)
+const showSelectVisionProcessingConfrim = ref(false)
+const showRenameCameraConfrim = ref(false)
+const showSaveAllControlsConfrim = ref(false)
+const showResetAllControlsConfrim = ref(false)
+const showSaveFrameRateConfrim = ref(false)
+const showResetFrameRateConfrim = ref(false)
+const showSaveThresholdsConfrim = ref(false)
+const showResetThresholdsConfrim = ref(false)
+
 // --------------------
 //   WebSocket
 // --------------------
@@ -48,9 +63,14 @@ import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json
 // Form section toggles
 // MicroComputer Configurables
 const newMicroComputerName = ref(null)
+const newVisionProcessing = ref(null)
 // Camera Configuration values
 const newName = ref(null)
+// Diviation configration
+const newCriticalThreshold = ref(null)
+const newWarningThreshold = ref(null)
 const newFPS = ref(null)
+// camera controls
 const newBrightness = ref(null)
 const newContrast = ref(null)
 const newHue = ref(null)
@@ -59,9 +79,6 @@ const newGamma = ref(null)
 const newGain = ref(null)
 const newExposureAbsolute = ref(null)
 const newAutoExposure = ref(null)
-// Diviation configration
-const criticalThreshold = ref(null)
-const warningThreshold = ref(null)
 // for save message e.g. success | error
 const saveState = ref('')
 
@@ -109,6 +126,16 @@ function renameMicroComputer() {
     selectedMicroComputer.value.name = newMicroComputerName.value
   }
 }
+// Select Vision processing method.
+//  the method for saving/ submiting the selected vision processing method
+function submitVisionProcessing() {
+  if (!selectedMicroComputer || !newVisionProcessing.value) return
+  if (isLive.value) {
+    // TODO: API function for submiting the chosen vision processing
+  } else {
+    selectedMicroComputer.value.Menu.value.ConValueMenu = newVisionProcessing.value
+  }
+}
 // Rename Selected camera
 function renameCamera() {
   if (!selectedCamera.value || !newName.value) return
@@ -144,13 +171,15 @@ function buildControlsPayload() {
   }
   for (const [name, valueRef] of Object.entries(integerControls)) {
     if (!original[name]) continue // camera doesn't support this control
-    const current = original[name].IntegerRange.value.ConValueIntegerpayload[name] = {
+    const current = original[name].IntegerRange.value.ConValueInteger
+    payload[name] = {
       IntegerRange: {...original[name].IntegerRange, value: { ConValueInteger: checkBlank(valueRef.value, current) },},
     }
   }
 
   if (original.AutoExposure) {
-    const current = original.AutoExposure.Menu.value.ConValueMenupayload.AutoExposure = {
+    const current = original.AutoExposure.Menu.value.ConValueMenu
+    payload.AutoExposure = {
       Menu: {...original.AutoExposure.Menu, value: { ConValueMenu: checkBlank(newAutoExposure.value, current) },},
     }
   }
@@ -183,7 +212,7 @@ function saveChanges() {
   }
 }
 
-
+//
 
 //fetch method for read function
 // async function fetchCameraConfig() {
@@ -353,7 +382,32 @@ function resetControlConfig() {
     targetRef.value = def
   }
 }
+// set the threashold values to defualt
+function resetCriticalThreshold() {
+  if (!selectedCamera.value) return
+  if (isLive.value) {
+    // add APi function when avaible
+  } else {
+    newCriticalThreshold.value = 80
+  }
 
+}
+function resetWarningThreshold() {
+  if (!selectedCamera.value) return
+  if (isLive.value) {
+    // add APi function when avaible
+  } else {
+    newWarningThreshold.value = 95
+  }
+}
+function resetAllThresholds() {
+  resetCriticalThreshold()
+  resetWarningThreshold()
+}
+// save thresholds
+function saveThresholds() {
+
+}
 // --------------------
 //        Watchers
 // --------------------
@@ -368,8 +422,10 @@ watch(selectedCamera, (cam, oldCam) => {
     loadCameraValues()
     return
   }
-
+  // load camera list values
   newName.value = cam.name
+  newCriticalThreshold.value = cam.critical_threshold * 100
+  newWarningThreshold.value = cam.warning_threshold * 100
 
   if (isLive.value) {
     viewCamera(cam.conn_id, cam.camera_id)
@@ -393,18 +449,20 @@ watch(controlConfig, (config) => {
 watch(selectedMicroComputer, () => {
   clearSelectedCamera()
   if (selectedMicroComputer.value !== 'all') {
+    // load micro computer data on selection
     newMicroComputerName.value = selectedMicroComputer.value.name
+    newVisionProcessing.value = selectedMicroComputer.value.Menu.value.ConValueMenu
   }
 })
 
-watch(warningThreshold, (newValue) => {
-  if (newValue <= criticalThreshold.value) {
-    criticalThreshold.value = newValue - 1
+watch(newWarningThreshold, (newValue) => {
+  if (newValue <= newCriticalThreshold.value) {
+    newCriticalThreshold.value = newValue - 1
   }
 })
-watch(criticalThreshold, (newValue) => {
-  if (newValue >= warningThreshold.value) {
-    warningThreshold.value = newValue + 2
+watch(newCriticalThreshold, (newValue) => {
+  if (newValue >= newWarningThreshold.value) {
+    newWarningThreshold.value = newValue + 2
   }
 })
 // -------------------------------
@@ -415,6 +473,9 @@ onMounted(() => {
     connect()
 
 });
+
+
+console.log(saveState)
 
 </script>
 <template>
@@ -430,7 +491,8 @@ onMounted(() => {
                 <form @submit.prevent="">
                     <div class="form">
                         <div class="pb-3">
-                            <label for="microCompSelect" class="config-label"><h2>Select µ-Computer</h2></label>
+                            <h2 class="config-title">µ-Computer Configuration</h2>
+                            <label for="microCompSelect" class="config-label"><h3 class="config-label">Select µ-Computer</h3></label>
                             <div class="form-element">
                                 <select class="w-100" id="microCompSelect" required v-model="selectedMicroComputer">
                                     <option value="" disabled selected>Please select a µ-computer</option>
@@ -441,17 +503,30 @@ onMounted(() => {
                                 </select>
                             </div>
 
-                            <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all' ">
+                            <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all'">
                                 <label for="rename" class="config-label">Rename µ-Computer</label>
                                 <div class="form-element">
                                     <input type="text" id="rename" class="w-100" v-model="newMicroComputerName">
-                                    <button type="button" class="btn submit-btn" @click="renameMicroComputer">Rename</button>
+                                    <button type="button" class="btn submit-btn" @click="showRenameMicroCompConfrim = true">Rename</button>
+                                    <ConfirmationBox v-model="showRenameMicroCompConfrim" :message="'Rename the selected micro-computer to ' + newMicroComputerName + '?'" :onConfirmFunction="renameMicroComputer"/>
+                                </div>
+                            </div>
+                            <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all'">
+                                <label for="vision-process" class="config-label">Select Vision Processing Method</label>
+                                <div class="form-element">
+                                    <select class="menu-input" id="vision-process" v-model.number="newVisionProcessing">
+                                        <option v-for="item in selectedMicroComputer.Menu.items" :key="item.id" :value="item.id">
+                                            {{item.item.Name}}
+                                        </option>
+                                    </select>
+                                    <button type="button" class="btn submit-btn" @click="showSelectVisionProcessingConfrim = true">Select</button>
+                                    <ConfirmationBox v-model="showSelectVisionProcessingConfrim" message="Please click Confrim to chanage the Vision Processing Method"/>
                                 </div>
                             </div>
                             <hr class="line-break">
                         </div>
-
-                        <label for="cameraSelect" class="config-label"><h3>Select Camera</h3></label>
+                        <h2 class="config-title">Camera Configuration</h2>
+                        <label for="cameraSelect" class="config-label"><h3 class="config-label">Select Camera</h3></label>
                         <div class="form-element">
                             <select class="w-100" id="cameraSelect" required v-model="selectedCamera">
                                 <option value="" disabled selected>Please select a camera</option>
@@ -464,11 +539,12 @@ onMounted(() => {
                             <label for="rename" class="config-label">Rename Camera</label>
                             <div class="form-element">
                                 <input type="text" id="rename" class="w-100" v-model="newName">
-                                <button type="button" class="btn submit-btn" @click="renameCamera">Rename</button>
+                                <button type="button" class="btn submit-btn" @click="showRenameCameraConfrim = true">Rename</button>
+                                <ConfirmationBox v-model="showRenameCameraConfrim" :message="'Rename the selected camera to ' + newName + '?'" :onConfirmFunction="renameCamera"/>
                             </div>
                         </div>
                         <hr class="line-break" v-if="selectedCamera">
-                        <h4 class="pt-3 pb-2" v-if="selectedCamera">Camera Controls</h4>
+                        <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">Camera Controls</h4>
                         <div v-if="controlFilter('Brightness')">
                             <label for="brightness-range" class="config-label">Brightness</label>
                             <div class="form-element">
@@ -557,11 +633,7 @@ onMounted(() => {
                             <label for="autoExposure" class="config-label">Auto Exposure</label>
                             <div class="form-element">
                                 <select class="menu-input" id="autoExposure" v-model.number="newAutoExposure">
-                                    <option
-                                        v-for="item in controlFilter('AutoExposure').Menu.items"
-                                        :key="item.id"
-                                        :value="item.id"
-                                    >
+                                    <option v-for="item in controlFilter('AutoExposure').Menu.items" :key="item.id" :value="item.id">
                                         {{ item.item.Name }}
                                     </option>
                                 </select>
@@ -582,37 +654,11 @@ onMounted(() => {
                                 <button type="button" class="btn submit-btn" @click="setDefault('ExposureAbsolute')">Reset</button>
                             </div>
                         </div>
-                        <hr class="line-break" v-if="selectedCamera">
-                        <h4 class="pt-3 pb-2" v-if="selectedCamera">Refresh Rate</h4>
-                        <div v-if="selectedConfig">
-                            <label for="fps-range" class="config-label">Frame Rate</label>
-                            <div class="form-element">
-                                <input type="range" class="slider-input" id="fps-range" v-model.number="newFPS" min="1" max="5" step="1">
-                                <input type="number" class="number-input" id="fps-number" v-model.number="newFPS" min="1" max="5" step="1">
-                                <button type="button" class="btn submit-btn" @click="setDefaultFPS()">Reset</button>
-                            </div>
-                        </div>
-                        <hr class="line-break" v-if="selectedCamera">
-                        <h4 class="pt-3 pb-2" v-if="selectedCamera">Deviation Thresholds</h4>
-                        <div v-if="selectedConfig">
-                            <label for="fps-range" class="config-label">Warning Threshold</label>
-                            <div class="form-element">
-                                <input type="range" class="slider-input" id="warning-range" v-model.number="warningThreshold" min="2" max="100" step="1">
-                                <input type="number" class="number-input" id= "warning-number" v-model.number="warningThreshold" min="2" max="100" step="1">
-                                <button type="button" class="btn submit-btn">Reset</button>
-                            </div>
-                        </div>
-                        <div v-if="selectedConfig">
-                            <label for="fps-range" class="config-label">Critical Threshold</label>
-                            <div class="form-element">
-                                <input type="range" class="slider-input" id="critical-range" v-model.number="criticalThreshold" min="1" max="99" step="1">
-                                <input type="number" class="number-input" id= "critical-number" v-model.number="criticalThreshold" min="1" max="99" step="1">
-                                <button type="button" class="btn submit-btn">Reset</button>
-                            </div>
-                        </div>
                         <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
-                            <button class="btn submit-btn" @click="saveChanges">Save Changes</button>
-                            <button class="btn submit-btn" @click="resetControlConfig(), setDefaultFPS()">Reset Configuration</button>
+                            <button class="btn submit-btn" @click="showSaveAllControlsConfrim = true">Save Camera Controls</button>
+                            <ConfirmationBox v-model="showSaveAllControlsConfrim" message="Would you like to save all camera controls?" :onConfirmFunction="saveChanges"/>
+                            <button class="btn submit-btn" @click="showResetAllControlsConfrim = true">Reset Camera Controls</button>
+                            <ConfirmationBox v-model="showResetAllControlsConfrim" message="Would you like to reset all camera controls?" :onConfirmFunction="resetControlConfig"/>
                         </div>
                         <div v-if="saveState === 'success'" class="text-center p-1">
                             <p>Settings saved successfully.</p>
@@ -620,7 +666,47 @@ onMounted(() => {
                         <div v-if="saveState === 'error'" class="text-center p-1">
                             <p>Failed to save settings. Please try again.</p>
                         </div>
+                        <hr class="line-break" v-if="selectedCamera">
+                        <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">Refresh Rate</h4>
+                        <div v-if="selectedConfig">
+                            <label for="fps-range" class="config-label">Frame Rate</label>
+                            <div class="form-element">
+                                <input type="range" class="slider-input" id="fps-range" v-model.number="newFPS" min="1" max="5" step="1">
+                                <input type="number" class="number-input" id="fps-number" v-model.number="newFPS" min="1" max="5" step="1">
+                            </div>
+                            <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
+                                <button class="btn submit-btn" @click="showSaveFrameRateConfrim = true">Save Frame Rate</button>
+                                <ConfirmationBox v-model="showSaveFrameRateConfrim" message="Would you like to save the frame rate?" />
+                                <button type="button" class="btn submit-btn" @click="showResetFrameRateConfrim = true">Reset Frame Rate</button>
+                                <ConfirmationBox v-model="showResetFrameRateConfrim" message="Would you like to reset the frame rate?" :onConfirmFunction="setDefaultFPS"/>
+                            </div>
+                        </div>
+                        <hr class="line-break" v-if="selectedCamera">
+                        <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">Deviation Thresholds</h4>
+                        <div v-if="selectedConfig">
+                            <label for="fps-range" class="config-label">Warning Threshold</label>
+                            <div class="form-element">
+                                <input type="range" class="slider-input" id="warning-range" v-model.number="newWarningThreshold" min="2" max="100" step="1">
+                                <input type="number" class="number-input" id= "warning-number" v-model.number="newWarningThreshold" min="2" max="100" step="1">
+                                <button type="button" class="btn submit-btn" @click="resetWarningThreshold">Reset</button>
+                            </div>
+                        </div>
+                        <div v-if="selectedConfig">
+                            <label for="fps-range" class="config-label">Critical Threshold</label>
+                            <div class="form-element">
+                                <input type="range" class="slider-input" id="critical-range" v-model.number="newCriticalThreshold" min="1" max="99" step="1">
+                                <input type="number" class="number-input" id= "critical-number" v-model.number="newCriticalThreshold" min="1" max="99" step="1">
+                                <button type="button" class="btn submit-btn" @click="resetCriticalThreshold">Reset</button>
+                            </div>
+                        </div>
+                        <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
+                            <button class="btn submit-btn" @click="showSaveThresholdsConfrim = true">Save Deviation Threshold</button>
+                            <ConfirmationBox v-model="showSaveThresholdsConfrim" message="Would you like to save the Deviation Thresholds?" :onConfirmFunction="saveThresholds" />
+                            <button type="button" class="btn submit-btn" @click="showResetThresholdsConfrim = true">Reset Thresholds</button>
+                            <ConfirmationBox v-model="showResetThresholdsConfrim" message="Would you like to reset all Devation Thresholds?" :onConfirmFunction="resetAllThresholds"/>
+                        </div>
                     </div>
+                    <hr class="line-break" v-if="selectedCamera">
                 </form>
             </div>
             <div class="col-12">
@@ -649,17 +735,17 @@ onMounted(() => {
     color: var(--config-title);
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
-.submit-btn {
-    background-color: var(--nav-bg);
-    border-color: darkslateblue;
-    color: white;
-    gap: 2em;
+.config-title {
+    font-weight: 600;
+    font-size: 20pt;
+    color: var(--config-title);
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
-
-.submit-btn:hover {
-    background-color: var(--button-hover);
-    border-color: slateblue;
-    color: black;
+.config-subtitle {
+    font-weight: 600;
+    font-size: 18pt;
+    color: var(--config-title);
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
 .number-input{
     flex: 0 0 4em;
@@ -716,6 +802,6 @@ option:hover{
     border: none;
     height: 3px;
     color: var(--config-title);
-    background-color: var(--config-title);
+    background-color: var(--line-break-color);
 }
 </style>

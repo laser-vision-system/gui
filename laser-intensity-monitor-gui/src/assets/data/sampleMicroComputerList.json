@@ -3,12 +3,54 @@
     {
       "conn_id": 1,
       "name": "Raspberry Pi 5 8GB (main Pi)",
-      "state": "Active"
+      "state": "Active",
+      "Menu": {
+        "control_type": "Vision Processing",
+        "value": {
+          "ConValueMenu": 1
+        },
+        "default": 1,
+        "items": [
+          {
+            "id": 1,
+            "item": {
+              "Name": "Linear Regression"
+            }
+          },
+          {
+            "id": 2,
+            "item": {
+              "Name": "Logarithmic Regression"
+            }
+          }
+        ]
+      }
     },
     {
       "conn_id": 2,
       "name": "Raspberry Pi 5 8GB (sub Pi)",
-      "state": "Active"
+      "state": "Active",
+      "Menu": {
+        "menu_type": "Vision Processing",
+        "value": {
+          "ConValueMenu": 2
+        },
+        "default": 1,
+        "items": [
+          {
+            "id": 1,
+            "item": {
+              "Name": "Linear Regression"
+            }
+          },
+          {
+            "id": 2,
+            "item": {
+              "Name": "Logarithmic Regression"
+            }
+          }
+        ]
+      }
     }
   ]
 }

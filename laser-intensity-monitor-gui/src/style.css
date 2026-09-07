@@ -11,6 +11,7 @@
     --config-title: black;
     --cam-bg: aliceblue;
     --button-hover: mediumslateblue;
+    --line-break-color: lightslategray;
 }
 
 /* Light Mode Table Overrides */
@@ -33,6 +34,7 @@
     --config-title: white;
     --cam-bg: SlateGray;
     --button-hover: slateblue;
+    --line-break-color: white;
 }
 
 /* Dark Mode Table Overrides */
@@ -72,13 +74,14 @@
 }
 
 .submit-btn {
-    background-color: slateblue;
+    background-color: var(--nav-bg);
     border-color: darkslateblue;
-    color: white
+    color: white;
+    gap: 2em;
 }
 
 .submit-btn:hover {
-    background-color: mediumslateblue;
+    background-color: var(--button-hover);
     border-color: slateblue;
     color: black;
 }
