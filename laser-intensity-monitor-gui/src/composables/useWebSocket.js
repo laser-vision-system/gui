@@ -1,11 +1,23 @@
 import { ref, computed, onUnmounted } from 'vue'
-
+// TODO:
+// add colnes to each case as that is how the decoders figure out what a json is
+// fix onmessage case to string from json as the server will be sending strings
+// create a decoder for string to json use jack and cams ones as examples.
+// add new routes to the case and functions to match rust datatypes.
+// add function keep alive for websocket 10sec time out
 export function useWebSocket(url) {
+  // -------------------------
+  //   Constant Values
+  // -------------------------
   const status = ref('DISCONNECTED')   // 'CONNECTING' | 'CONNECTED' | 'DISCONNECTED' | 'ERROR'
   const error = ref(null)
-
+  // edge hashmap:
+  // Hashmap: < conn_id, name >
+  const edges = ref({})
+  const edgeList = computed(() => Object.values(edges.value))
   // cameras hashmap:
   // Hashmap: < (conn_id , camera_id), name, state >
+  // CameraDetails: { name, state, warnBelowThreshold, alertBelowThreshold }
   // state: 'Active' | 'Disconnected' | 'Broken'
   const cameras = ref({})
   // camera list java array
@@ -19,18 +31,59 @@ export function useWebSocket(url) {
   const controlConfig = ref(null)
   // Active Camera / selected camera
   const activeCamera = ref(null)
-
+  // -------------------------
+  //   Variable Values
+  // -------------------------
   let socket = null
   let currentObjectUrl = null
+  // -----------------
+  //   Wire format
+  // -----------------
+  // Encoder: builds the "Type:{JSON}" String thr server expects.
+  function encodeMessage(type, data) {
+    if (data === undefined || data === null) return type
+    if (typeof data === 'object' && Object.keys(data).length === 0) return type
+    return `${type}:${JSON.stringify(data)}`
+  }
+  // Decoder: Breaks down string into Type and JSON
+  function decodeServerMessage(raw) {
+    const text = String(raw).trim()
+    const sep = text.indexOf(':')
+    if (sep === -1) {
+      return {type: text, data:null}
+    }
+    const type = text.slice(0, sep)
+    const jsonData = text.slice(sep + 1)
+    try {
+      return {type, data: JSON.parse(jsonData)}
+    } catch (e) {
+      console.error(`Failed to parse JSON payload for message type: "${type}"`, e, jsonData)
+      return {type: null, data:null}
+    }
 
-  function send(type, data = {}) {
+  }
+  // ---------------------------
+  //   Send Message to Sever
+  // ---------------------------
+  function send(type, data) {
     if (socket?.readyState !== WebSocket.OPEN) {
       console.warn(`Cannot send "${type}", socket is not open`)
       return
     }
-    socket.send(JSON.stringify({ type, data }))
+    socket.send(encodeMessage(type, data))
   }
+  // -------------------------
+  //   Heartbeat
+  // -------------------------
+  function startHeartbeat() {
 
+  }
+  function stopHeartbeat() {
+
+  }
+  // -------------------------
+  //   Connection to Server
+  // -------------------------
   function connect() {
     if (socket?.readyState === WebSocket.OPEN) return
     status.value = 'CONNECTING'
@@ -40,14 +93,14 @@ export function useWebSocket(url) {
     socket.onopen = () => {
       status.value = 'CONNECTED'
       error.value = null
+      startHeartbeat()
       listCameras()
     }
-    // check if the recived data is the image feed (blob) or json message, and handle appropriately
     socket.onmessage = (event) => {
       if (event.data instanceof Blob) {
         handleImageFrame(event.data)
       } else {
-        handleJsonMessage(event.data)
+        handleTextMessage(event.data)
       }
     }
 
@@ -58,19 +111,26 @@ export function useWebSocket(url) {
     }
 
     socket.onclose = () => {
+      stopHeartbeat()
       status.value = 'DISCONNECTED'
     }
   }
-
+  // -------------------------
+  //   Server Disconnection
+  // -------------------------
   function disconnect() {
     // check if a camera is active
     if (activeCamera.value) {
       stopViewingCamera(activeCamera.value.connId, activeCamera.value.cameraId)
     }
+    stopHeartbeat()
     socket?.close()
     status.value = 'DISCONNECTED'
   }
-
+  // -------------------------
+  //   Handling Server Data
+  // -------------------------
+  // Handle the image feed
   function handleImageFrame(blob) {
     if (currentObjectUrl) {
       URL.revokeObjectURL(currentObjectUrl)
@@ -82,54 +142,80 @@ export function useWebSocket(url) {
   function normaliseCameraMap(raw) {
     const normalised = {}
     if (!raw) return normalised
-    // if the tuple is sent as an array of pairs
+    // renames the entries to match js naming conventions
+    const setArrayEntry = (connId, cameraId, details) => {
+      const key = `${connId},${cameraId}`
+      normalised[key] = {
+        connId,
+        cameraId,
+        name: details?.name ?? '',
+        state: details?.state ?? 'Disconnected',
+        warnBelowThreshold: details?.warn_below_threshold ?? null,
+        alertBelowThreshold: details?.alert_below_threshold ?? null,
+      }
+    }
+    // if the raw data array is in the shape of an array
     if (Array.isArray(raw)) {
-      for (const [key, val] of raw) {
-        const [conn_id, camera_id] = Array.isArray(key) ? key : [key.conn_id, key.camera_id]
-        const [name, state] = val
-        normalised[`${conn_id},${camera_id}`] = { conn_id, camera_id, name, state }
+      for (const [key, details] of raw) {
+        const [connId, cameraId] = Array.isArray(key) ? key : [key.conn_id, key.camera_id]
+        setArrayEntry(connId, cameraId, details)
       }
       return normalised
     }
-    // fall back code incase the raw data is already in an array (probs can be deleted after testing)
-    for (const [key, val] of Object.entries(raw)) {
-      const match = String(key).match(/(-?\d+)\D+(-?\d+)/) // does not matter what is sepperating the conn and cam id this generic will match
-      const conn_id = match ? Number(match[1]) : key
-      const camera_id = match ? Number(match[2]) : null
-      const [name, state] = val
-      normalised[`${conn_id},${camera_id}`] = { conn_id, camera_id, name, state }
+    // Fallback: object keyed by some stringified form of the tuple, e.g. "(1, 2)" or "1,2"
+    for (const [key, details] of Object.entries(raw)) {
+      const match = String(key).match(/(-?\d+)\D+(-?\d+)/)
+      const connId = match ? Number(match[1]) : key
+      const cameraId = match ? Number(match[2]) : null
+      setArrayEntry(connId, cameraId, details)
     }
     return normalised
   }
-
-
-  function handleJsonMessage(raw) {
-    let message
-    try {
-      message = JSON.parse(raw)
-    } catch (e) {
-      console.error('Received faulty JSON from server:', e, raw)
-      return
+  // Normalise the Edge hash map into a java array
+  function normaliseEdgeMap(raw) {
+    const normalised = {}
+    if (!raw) return normalised
+    for (const [key, name] of Object.entries(raw)) {
+      const connId = Number(key)
+      normalised[connId] = { connId, name }
     }
+    return normalised
+  }
+  // Handle the Text message sent by the server
+  function handleTextMessage(raw) {
+    const { type, data } = decodeServerMessage(raw)
+    if (type === null) return
 
-    switch (message.type) {
-      // list of cameras
+    switch (type) {
+      // list of All cameras
       case 'ListOfCameras':
-        cameras.value = normaliseCameraMap(message.data.cameras)
+        cameras.value = normaliseCameraMap(data.cameras)
+        break
+      // list of All edge (micro computers)
+      case 'ListOfEdges':
+        edges.value = normaliseEdgeMap(data.edges)
         break
       // Camera Connect  (a new camera has come online)
       case 'CameraConnected': {
-        const { conn_id, camera_id, camera_name } = message.data
+        const { conn_id, camera_id, camera_name } = data
         const key = `${conn_id},${camera_id}`
+        const existing = cameras.value[key]
         cameras.value = {
           ...cameras.value,
-          [key]: { connId: conn_id, cameraId: camera_id, name: camera_name, state: 'Active' },
+          [key]: {
+            connId: conn_id,
+            cameraId: camera_id,
+            name: camera_name,
+            state: 'Active',
+            warnBelowThreshold: existing?.warnBelowThreshold ?? null,
+            alertBelowThreshold: existing?.alertBelowThreshold ?? null,
+          },
         }
         break
       }
       // Camera Disconnect
       case 'CameraDisconnected': {
-        const { conn_id, camera_id } = message.data
+        const { conn_id, camera_id } = data
         const key = `${conn_id},${camera_id}`
         const updated = { ...cameras.value }
         delete updated[key]
@@ -142,7 +228,7 @@ export function useWebSocket(url) {
       }
       // Forget Camera
       case 'ForgetCamera': {
-        const { conn_id, camera_id, confirm } = message.data
+        const { conn_id, camera_id, confirm } = data
         if (confirm) {
           const key = `${conn_id},${camera_id}`
           const updated = { ...cameras.value }
@@ -156,20 +242,15 @@ export function useWebSocket(url) {
       }
       // Control configuration (reading and writing)
       case 'Configuration':
-        controlConfig.value = message.data
+        controlConfig.value = data
         break
       // GUI Image Analysis (reading the deviation and intensity)
-      case 'GUIImageAnalysis':
-        analysis.value = message.data
-        break
-      // server-reported error
-      case 'ErrorMSG':
-        error.value = message.data
-        console.error('Server error:', message.data.code, message.data.message)
+      case 'ImageAnalysis':
+        analysis.value = data
         break
       // warn if case is not met.
       default:
-        console.warn('Unhandled message type from server:', message.type, message.data)
+        console.warn('Unhandled message type from server:', type, data)
     }
   }
 
@@ -184,7 +265,24 @@ export function useWebSocket(url) {
     analysis.value = null
   }
 
-  // ------------------- Outgoing API Commands (GUI -> Server) -------------------
+  // -----------------------------------------
+  //   Outgoing API Commands (GUI -> Server)
+  // -----------------------------------------
+
+  // List the Edge micro computers
+  function listEdges() {
+    send('ListEdges')
+  }
+
+  // Set the name of Edge micro computers
+  function setEdgeName(edgeId, name) {
+    send('SetEdgeName', { edge_id: edgeId, name })
+  }
+
+  // Set Vision Processing Type
+  function setEdgeProcessingType(edgeId, processingType) {
+    send('SetEdgeProcessingType', { edge_id: edgeId, processing_type: processingType })
+  }
 
   // list camera API function
   function listCameras() {
@@ -193,7 +291,7 @@ export function useWebSocket(url) {
 
   // set camera name API function
   function setCameraName(connId, cameraId, name) {
-    send('GUISetNameCamera', { conn_id: connId, camera_id: cameraId, name })
+    send('SetNameCamera', { conn_id: connId, camera_id: cameraId, name })
   }
 
   // switch selected camera to a new camera, stopping the old one first (if any)
@@ -203,7 +301,7 @@ export function useWebSocket(url) {
       clearActiveFeed()
     }
     activeCamera.value = { connId, cameraId }
-    send('GUIStartViewingCamera', { conn_id: connId, camera_id: cameraId })
+    send('StartViewingCamera', { conn_id: connId, camera_id: cameraId })
   }
 
   // stop viewing camera
@@ -229,9 +327,33 @@ export function useWebSocket(url) {
     })
   }
 
-  // Setpoint function
+  // Set Camera Thresholds (Deviation alerts thresholds)
+  function setCameraThresholds(edgeId, cameraId, warnBelowThreshold, alertBelowThreshold) {
+    send('SetCameraThresholds', {
+      edge_id: edgeId,
+      camera_id: cameraId,
+      warn_below_threshold: warnBelowThreshold,
+      alert_below_threshold: alertBelowThreshold,
+    })
+  }
+
+  // Set the Camera Thresholds to Default
+  function setDefaultThreshold(warnBelowThreshold, alertBelowThreshold) {
+    send('SetDefaultThreshold', {
+      warn_below_threshold: warnBelowThreshold,
+      alert_below_threshold: alertBelowThreshold,
+    })
+  }
+
+
+  // Setpoint function for a single camera
   function setpoint(connId, cameraId) {
-    send('GUISetpoint', { conn_id: connId, camera_id: cameraId })
+    send('Setpoint', { conn_id: connId, camera_id: cameraId })
+  }
+
+  // Setpoint function for all ListCameras
+  function setpointAll() {
+    send('Setpoint')
   }
 
   // Forget Camera Function
@@ -239,8 +361,9 @@ export function useWebSocket(url) {
     send('ForgetCamera', { conn_id: connId, camera_id: cameraId, confirm: true })
   }
 
-
-
+  // ---------------
+  //   UnMount
+  // ---------------
   onUnmounted(() => {
     disconnect()
   })
@@ -251,6 +374,8 @@ export function useWebSocket(url) {
     // error
     error,
     // data
+    edges,
+    edgeList,
     cameras,
     cameraList,
     imageSrc,
@@ -261,13 +386,19 @@ export function useWebSocket(url) {
     connect,
     disconnect,
     // commands
+    listEdges,
+    setEdgeName,
+    setEdgeProcessingType,
     listCameras,
     setCameraName,
     viewCamera,
     stopViewingCamera,
     viewCameraConfig,
     updateConfiguration,
+    setCameraThresholds,
+    setDefaultThreshold,
     setpoint,
+    setpointAll,
     forgetCamera,
   }
 }
