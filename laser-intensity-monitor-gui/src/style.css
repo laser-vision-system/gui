@@ -7,6 +7,7 @@
     /* CUSTOM CSS */
     --nav-bg: slateblue;
     --nav-title: black;
+    --camera-tab-text: white;
     --config-title: black;
     --cam-bg: aliceblue;
     --button-hover: mediumslateblue;
@@ -29,6 +30,7 @@
     /* CUSTOM CSS */
     --nav-bg: darkslateblue;
     --nav-title: white;
+    --camera-tab-text: white;
     --config-title: white;
     --cam-bg: SlateGray;
     --button-hover: slateblue;
@@ -52,6 +54,12 @@
     background-color: var(--nav-bg);
 }
 
+.alert-info {
+    --bs-alert-bg: var(--bs-info);
+    --bs-alert-border-color: var(--bs-info);
+    --bs-alert-color: var(--bs-dark);
+    --bs-alert-link-color: var(--bs-dark);
+}
 .alert-warning {
     --bs-alert-bg: var(--bs-warning);
     --bs-alert-border-color: var(--bs-warning);
