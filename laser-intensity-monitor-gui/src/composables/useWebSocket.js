@@ -5,8 +5,11 @@ export function useWebSocket(url) {
   const error = ref(null)
 
   // cameras hashmap:
+  // Hashmap: < (conn_id , camera_id), name, state >
+  // state: 'Active' | 'Disconnected' | 'Broken'
   const cameras = ref({})
-  // camera list java data object
+  // camera list java array
+  // Array: { connId, cameraId, name, state }
   const cameraList = computed(() => Object.values(cameras.value))
   // active camera feed
   const imageSrc = ref('')
@@ -75,11 +78,11 @@ export function useWebSocket(url) {
     currentObjectUrl = URL.createObjectURL(blob)
     imageSrc.value = currentObjectUrl
   }
-  // normalise hash map to java object array
+  // normalise hash map to java data object array and get rid of the tuple
   function normaliseCameraMap(raw) {
     const normalised = {}
     if (!raw) return normalised
-
+    // if the tuple is sent as an array of pairs
     if (Array.isArray(raw)) {
       for (const [key, val] of raw) {
         const [conn_id, camera_id] = Array.isArray(key) ? key : [key.conn_id, key.camera_id]
@@ -88,9 +91,9 @@ export function useWebSocket(url) {
       }
       return normalised
     }
-
+    // fall back code incase the raw data is already in an array (probs can be deleted after testing)
     for (const [key, val] of Object.entries(raw)) {
-      const match = String(key).match(/(-?\d+)\D+(-?\d+)/)
+      const match = String(key).match(/(-?\d+)\D+(-?\d+)/) // does not matter what is sepperating the conn and cam id this generic will match
       const conn_id = match ? Number(match[1]) : key
       const camera_id = match ? Number(match[2]) : null
       const [name, state] = val
@@ -112,7 +115,7 @@ export function useWebSocket(url) {
     switch (message.type) {
       // list of cameras
       case 'ListOfCameras':
-        cameras.value = message.data.cameras
+        cameras.value = normaliseCameraMap(message.data.cameras)
         break
       // Camera Connect  (a new camera has come online)
       case 'CameraConnected': {
@@ -120,7 +123,7 @@ export function useWebSocket(url) {
         const key = `${conn_id},${camera_id}`
         cameras.value = {
           ...cameras.value,
-          [key]: [camera_name, true],
+          [key]: { connId: conn_id, cameraId: camera_id, name: camera_name, state: 'Active' },
         }
         break
       }
@@ -196,10 +199,7 @@ export function useWebSocket(url) {
   // switch selected camera to a new camera, stopping the old one first (if any)
   function viewCamera(connId, cameraId) {
     if (activeCamera.value) {
-      send('StopViewingCamera', {
-        conn_id: activeCamera.value.connId,
-        camera_id: activeCamera.value.cameraId,
-      })
+      send('StopViewingCamera')
       clearActiveFeed()
     }
     activeCamera.value = { connId, cameraId }
@@ -208,7 +208,7 @@ export function useWebSocket(url) {
 
   // stop viewing camera
   function stopViewingCamera(connId, cameraId) {
-    send('StopViewingCamera', { conn_id: connId, camera_id: cameraId })
+    send('StopViewingCamera')
     if (activeCamera.value?.connId === connId && activeCamera.value?.cameraId === cameraId) {
       clearActiveFeed()
     }
