@@ -1,22 +1,26 @@
 <script setup>
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 //import cameraFeed from '../components/CameraFeed.vue'
-//import { useWebSocket } from '../composables/useWebSocket'
+import { useWebSocket } from '../composables/useWebSocket'
 // --------------------
 //   WebSocket
 // --------------------
 // Point this at your server's websocket endpoint
-/* const {
+const {
   status,
-  error,
-  cameras,
+  cameraList: wsCameraList,
   imageSrc,
   analysis,
+  activeCamera,
   connect,
   disconnect,
   viewCamera,
-  stopViewingCamera,
-} = useWebSocket('ws://localhost:8080/ws') */
+  stopViewingCamera
+} = useWebSocket('ws://localhost:8080/ws')
+
+//  Check if the websocket is connected
+const isLive = computed(() => status.value === 'CONNECTED')
+
 // --------------------
 //        Data
 // --------------------
@@ -107,11 +111,24 @@ const disconnectionAlerts = computed(() => {
         }
     })
 })
+// grab camera list from websocket connection
+const loadCameraList = computed(() => {
+    const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : sampleCameraList.cameras
+    return source
+})
+// grab image analysis from websocket connection
+const loadImageAnalysis = computed(() => {
+    const source = isLive.value && analysis.value.length > 0 ? analysis.value : sampleImageAnalysis.GUIImageAnalysis
+    return source
+})
+// merge camera list with microcomputer, image analysis & selection details
 const mergedCameraData = computed(() => {
+    const camDataList = loadCameraList.value
+    const imageAnalysisData = loadImageAnalysis.value
     const result = []
 
-    for (const camera of sampleCameraList.cameras) {
-        const matchingData = sampleImageAnalysis.GUIImageAnalysis.find(
+    for (const camera of camDataList) {
+        const matchingData = imageAnalysisData.find(
             analysis => analysis.conn_id === camera.conn_id && analysis.camera_id === camera.camera_id
         )
         const matchingComData = sampleMicroComputerList.microComputers.find(
@@ -129,6 +146,7 @@ const mergedCameraData = computed(() => {
     }
     return result
 })
+// group by microcomputer & for active cameras
 const activeMergedData = computed(() => {
     const sections = {}
 
@@ -180,11 +198,15 @@ function selectCamera(feedId) {
         }
     })
 }
+// select one camera at a time by ID
 const toggleCameraSelection = (cameraId) => {
+    const [conn_id, camera_id] = cameraId.split('-')
     if (selectedCameraId.value === cameraId) {
         selectedCameraId.value = null
+        stopViewingCamera(conn_id, camera_id)
     } else {
         selectedCameraId.value = cameraId
+        viewCamera(conn_id, camera_id)
     }
 }
 // fetch method for Read camera config API call
@@ -281,6 +303,11 @@ async function fetchCameraFeed() {
     liveFeedSrc.value = `${cameraFeedApiURL.value}?t=${Date.now()}`
 }
 
+async function wsFetchCameraFeed() {
+    if (!wsHasSelectedCamera.value) return
+    liveFeedSrc.value = imageSrc.value
+}
+
 function startPolling() {
     stopPolling() // clear any existing interval first
     fetchCameraFeed() // fetch immediately, then start interval
@@ -344,7 +371,7 @@ onUnmounted(() => {
                             </div>
                         </div>
                     </div>
-                    <div v-if="disconnectionAlerts.length > 0" class="text-center mt-4">
+                    <div v-if="disconnectionAlerts.length > 0" class="text-center mt-0">
                         <div v-show="alertsExpanded">
                             <div v-for="alert in disconnectionAlerts" :key="`${alert.conn_id}-${alert.camera_id}`"
                                 :class="['alert mb-1', `alert-${alert.alertType}`, 'fade', 'show']" role="alert">
@@ -381,9 +408,16 @@ onUnmounted(() => {
                         <tr>
                             <th scope="col" class="table-dark">Disconnected microComputers</th>
                         </tr>
-                        <tr>
-                            <td>N/A</td>
-                        </tr>
+                        <template v-if="sampleMicroComputers.length === 0">
+                            <tr>
+                                <td>&nbsp</td>
+                            </tr>
+                        </template>
+                        <template v-else>
+                            <tr v-for="com in sampleMicroComputers" :key="com.conn_id">
+                                <td v-if="com.state === 'Disconnected'">{{ com.name }}</td>
+                            </tr>
+                        </template>
                         <tr>
                             <th scope="col" class="table-dark">Disconnected Cameras</th>
                         </tr>
@@ -417,8 +451,8 @@ onUnmounted(() => {
                         <div class="col-lg-7 col-9">
                             <div v-for="cam in mergedCameraData" :key="cam.camera_id">
                                     <div v-if="cam.isSelected">
-                                        <p>Camera: {{ cam.camera_id }}</p>
-                                        <p>Description: {{ cam.name }}</p>
+                                        <p>ID: {{ cam.camera_id }}</p>
+                                        <p>Name: {{ cam.name }}</p>
                                         <p>Intensity: {{ cam.intensity }}</p>
                                         <p>Deviation: {{ cam.deviation }}</p>
                                     </div>
