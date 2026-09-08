@@ -26,6 +26,8 @@ export function useWebSocket(url) {
   const controlConfig = ref(null)
   // Active Camera / selected camera
   const activeCamera = ref(null)
+  // default Threasholds
+  const defaultThresholds = ref(null)
   // -------------------------
   //   Variable Values
   // -------------------------
@@ -64,7 +66,12 @@ export function useWebSocket(url) {
       console.warn(`Cannot send "${type}", socket is not open`)
       return
     }
-    socket.send(encodeMessage(type, data))
+    try {
+      socket.send(encodeMessage(type, data))
+    } catch(e) {
+      console.error(`Failed to send "${type}"`, e)
+      error.value = `Failed to send ${type}.`
+    }
   }
   // -------------------------
   //   Heartbeat
@@ -95,8 +102,15 @@ export function useWebSocket(url) {
   function connect() {
     if (socket?.readyState === WebSocket.OPEN) return
     status.value = 'CONNECTING'
-    socket = new WebSocket(url)
-    socket.binaryType = 'blob'
+    try {
+      socket = new WebSocket(url)
+      socket.binaryType = 'blob'
+    } catch(e) {
+      console.error('Failed to create WebSocket', e)
+      return
+    }
+
+
 
     socket.onopen = () => {
       status.value = 'CONNECTED'
@@ -135,6 +149,7 @@ export function useWebSocket(url) {
     }
     stopHeartbeat()
     socket?.close()
+    clearActiveFeed()
     status.value = 'DISCONNECTED'
   }
   // -------------------------
@@ -171,9 +186,13 @@ export function useWebSocket(url) {
       }
       return normalised
     }
-    // Fallback: object keyed by some stringified form of the tuple, e.g. "(1, 2)" or "1,2"
+    // Fallback if the object keyed by some stringified form of the tuple
     for (const [key, details] of Object.entries(raw)) {
       const match = String(key).match(/(-?\d+)\D+(-?\d+)/)
+      if (!match) {
+        console.warn('Could not decode camera map key:', key)
+        continue
+      }
       const connId = match ? Number(match[1]) : key
       const cameraId = match ? Number(match[2]) : null
       setArrayEntry(connId, cameraId, details)
@@ -198,11 +217,11 @@ export function useWebSocket(url) {
     switch (type) {
       // list of All cameras
       case 'ListOfCameras':
-        cameras.value = normaliseCameraMap(data.cameras)
+        cameras.value = normaliseCameraMap(data?.cameras)
         break
       // list of All edge (micro computers)
       case 'ListOfEdges':
-        edges.value = normaliseEdgeMap(data.edges)
+        edges.value = normaliseEdgeMap(data?.edges)
         break
       // Camera Connect  (a new camera has come online)
       case 'CameraConnected': {
@@ -261,6 +280,10 @@ export function useWebSocket(url) {
       // Pong message from the server
       case 'Pong':
         lastPongTimestamp.value = Date.now()
+        break
+      // read the default thresholds
+      case 'DefaultThresholds':
+        defaultThresholds.value = data
         break
       // warn if case is not met.
       default:
@@ -351,7 +374,7 @@ export function useWebSocket(url) {
     })
   }
 
-  // Set the Camera Thresholds to Default
+  // Set Defualt vlaue of the servers camera thresholds
   function setDefaultThreshold(warnBelowThreshold, alertBelowThreshold) {
     send('SetDefaultThreshold', {
       warn_below_threshold: warnBelowThreshold,
@@ -396,6 +419,7 @@ export function useWebSocket(url) {
     analysis,
     controlConfig,
     activeCamera,
+    defaultThresholds,
     // connection
     connect,
     disconnect,
