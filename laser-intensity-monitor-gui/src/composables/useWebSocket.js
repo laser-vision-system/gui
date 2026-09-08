@@ -76,8 +76,8 @@ export function useWebSocket(url) {
   // -------------------------
   //   Heartbeat
   // -------------------------
-  // Ping rate time in ms
-  const HEARTBEAT_INTERVAL = 7000
+  // Ping rate (time in ms)
+  const HEARTBEAT_INTERVAL = 2000
   // last pong time stamp
   const lastPongTimestamp = ref(null)
   // Heartbeat variable

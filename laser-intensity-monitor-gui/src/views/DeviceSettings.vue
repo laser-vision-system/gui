@@ -12,7 +12,7 @@ const showRenameCameraConfrim = ref(false)
 const showSaveAllControlsConfrim = ref(false)
 const showResetAllControlsConfrim = ref(false)
 const showSaveFrameRateConfrim = ref(false)
-const showResetFrameRateConfrim = ref(false) // probably not needed will get rid of in sprint 6 :] 
+const showResetFrameRateConfrim = ref(false) // probably not needed will get rid of in sprint 6 :]
 const showSaveThresholdsConfrim = ref(false)
 const showResetThresholdsConfrim = ref(false)
 const showSetDefaultThresholdConfrim = ref(false)
@@ -160,12 +160,13 @@ function renameCamera() {
   if (!selectedCamera.value || !newName.value) return
   if (isLive.value) {
     setCameraName(selectedCamera.value.conn_id, selectedCamera.value.camera_id, newName.value)
+    listCameras() // refresh camera list
   } else {
     selectedCamera.value.name = newName.value
   }
 }
 
-// check for empty value if empty returns the current value if not returns the newValue from form.
+// check for empty value if empty return the current value if not return the newValue from form.
 function checkBlank(newValue, currentValue) {
     if (newValue === '' || newValue === null || newValue === undefined || Number.isNaN(newValue)) {
         return currentValue;
