@@ -1,10 +1,5 @@
 import { ref, computed, onUnmounted } from 'vue'
-// TODO:
-// add colnes to each case as that is how the decoders figure out what a json is
-// fix onmessage case to string from json as the server will be sending strings
-// create a decoder for string to json use jack and cams ones as examples.
-// add new routes to the case and functions to match rust datatypes.
-// add function keep alive for websocket 10sec time out
+
 export function useWebSocket(url) {
   // -------------------------
   //   Constant Values
