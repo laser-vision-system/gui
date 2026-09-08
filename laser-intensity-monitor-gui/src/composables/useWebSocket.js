@@ -382,6 +382,10 @@ export function useWebSocket(url) {
     })
   }
 
+  // get defualt thresholds
+  function getDefaultThresholds() {
+    send('GetDefaultThresholds')
+  }
 
   // Setpoint function for a single camera
   function setpoint(connId, cameraId) {
@@ -435,6 +439,7 @@ export function useWebSocket(url) {
     updateConfiguration,
     setCameraThresholds,
     setDefaultThreshold,
+    getDefaultThresholds,
     setpoint,
     setpointAll,
     forgetCamera,
