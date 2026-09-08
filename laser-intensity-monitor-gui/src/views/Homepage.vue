@@ -65,18 +65,18 @@ const alertsExpanded = ref(true) // alert system variable
 //        Computed
 // --------------------
 const deviationAlerts = computed(() => {
-    return sampleAnalysis.value.map(analysis => {
+    return mergedCameraData.value.map(analysis => {
         let alertMsg = ''
         let alertType = ''
 
-        if (analysis.deviation >= 0 && analysis.deviation <= 0.3) {
-            alertMsg = `[LOW] Camera ${analysis.camera_id} --- Deviation of ${Math.round(analysis.deviation * 100)}%`
+        if (analysis.deviation < analysis.warning_threshold) {
+            alertMsg = `[LOW] Camera ${analysis.camera_id} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
             alertType = 'success'
-        } else if (analysis.deviation > 0.3 && analysis.deviation <= 0.7) {
-            alertMsg = `[MODERATE] Camera ${analysis.camera_id} --- Deviation of ${Math.round(analysis.deviation * 100)}%`
+        } else if (analysis.deviation >= analysis.warning_threshold && analysis.deviation < analysis.critical_threshold) {
+            alertMsg = `[MODERATE] Camera ${analysis.camera_id} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
             alertType = 'warning'
-        } else if (analysis.deviation > 0.7 && analysis.deviation <= 1) {
-            alertMsg = `[HIGH] Camera ${analysis.camera_id} --- Deviation of ${Math.round(analysis.deviation * 100)}%`
+        } else if (analysis.deviation >= analysis.critical_threshold) {
+            alertMsg = `[HIGH] Camera ${analysis.camera_id} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
             alertType = 'danger'
         }
         return {
@@ -149,10 +149,10 @@ const mergedCameraData = computed(() => {
 
         result.push({
             ...camera,
-            microComName: matchingComData ? matchingComData.name : null,
-            microComState: matchingComData ? matchingComData.state : null,
             intensity: matchingData ? matchingData.intensity : 0,
             deviation: matchingData ? matchingData.deviation : 0,
+            microComName: matchingComData ? matchingComData.name : null,
+            microComState: matchingComData ? matchingComData.state : null,
             isSelected: selectedCameraId.value === `${camera.conn_id}-${camera.camera_id}`
         })
     }
@@ -295,11 +295,11 @@ async function postSetpointTrue() {
 }
 // camera card traffic light system (using sample JSON data)
 function getCardColour(deviation) {
-    if (deviation >= 0 && deviation <= 0.3) {
+    if (deviation >= 0 && deviation <= 0.05) {
         return 'bg-success'
-    } else if (deviation > 0.3 && deviation <= 0.7) {
+    } else if (deviation > 0.05 && deviation <= 0.20) {
         return 'bg-warning text-dark'
-    } else if (deviation > 0.7 && deviation <= 1) {
+    } else if (deviation > 0.20 && deviation <= 1) {
         return 'bg-danger'
     } else {
         return 'bg-dark'
@@ -347,15 +347,15 @@ watch(
 //        onMount and unMount
 // -------------------------------
 onMounted(async () => {
-    // connect('ws://localhost:8080/ws')
+    connect()
     // await fetchCameraConfig()
     // await fetchCameraInfo()
-    if (hasSelectedCamera.value) startPolling()
+    // if (hasSelectedCamera.value) startPolling()
 })
 
 onUnmounted(() => {
     // Clean up on unmount
-    stopPolling()
+    // stopPolling()
 })
 </script>
 <template>
@@ -461,7 +461,19 @@ onUnmounted(() => {
                                         <p>ID: {{ cam.camera_id }}</p>
                                         <p>Name: {{ cam.name }}</p>
                                         <p>Intensity: {{ cam.intensity }}</p>
-                                        <p>Deviation: {{ cam.deviation }}</p>
+                                        <p>Deviation: {{ Math.round(cam.deviation * 100) + '%' }}</p>
+                                        <table class="table border border-2 hardware-info">
+                                            <tbody>
+                                                <tr>
+                                                    <th class="bg-warning text-dark">Warning Threshold:</th>
+                                                    <td>0-{{ Math.round(cam.warning_threshold * 100) + '%' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th class="bg-danger text-white">Critical Threshold:</th>
+                                                    <td>{{Math.round(cam.warning_threshold * 100)}}-{{ Math.round(cam.critical_threshold * 100) + '%' }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
                                     </div>
                             </div>
                         </div>
