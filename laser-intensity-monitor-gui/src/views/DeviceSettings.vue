@@ -12,7 +12,7 @@ const showRenameCameraConfrim = ref(false)
 const showSaveAllControlsConfrim = ref(false)
 const showResetAllControlsConfrim = ref(false)
 const showSaveFrameRateConfrim = ref(false)
-const showResetFrameRateConfrim = ref(false)
+const showResetFrameRateConfrim = ref(false) // probably not needed will get rid of in sprint 6 :] 
 const showSaveThresholdsConfrim = ref(false)
 const showResetThresholdsConfrim = ref(false)
 const showSetDefaultThresholdConfrim = ref(false)
@@ -615,7 +615,7 @@ onMounted(() => {
                                         </option>
                                     </select>
                                     <button type="button" class="btn submit-btn" @click="showSelectVisionProcessingConfrim = true">Select</button>
-                                    <ConfirmationBox v-model="showSelectVisionProcessingConfrim" message="Please click Confrim to chanage the Vision Processing Method"/>
+                                    <ConfirmationBox v-model="showSelectVisionProcessingConfrim" message="Please click Confrim to chanage the Vision Processing Method" :onConfirmFunction="submitVisionProcessing"/>
                                 </div>
                             </div>
                             <hr class="line-break">
