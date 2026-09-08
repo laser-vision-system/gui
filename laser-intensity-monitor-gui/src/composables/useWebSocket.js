@@ -31,14 +31,11 @@ export function useWebSocket(url) {
   const controlConfig = ref(null)
   // Active Camera / selected camera
   const activeCamera = ref(null)
-  // reconnect attemps counter
-  const reconnectCounter = ref(0)
   // -------------------------
   //   Variable Values
   // -------------------------
   let socket = null
   let currentObjectUrl = null
-  let manualDisconnect = false
   // -----------------
   //   Wire format
   // -----------------
