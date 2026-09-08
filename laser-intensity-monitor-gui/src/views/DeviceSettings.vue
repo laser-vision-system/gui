@@ -593,8 +593,8 @@ onMounted(() => {
                                 <select class="w-100" id="microCompSelect" required v-model="selectedMicroComputer">
                                     <option value="" disabled selected>Please select a µ-computer</option>
                                     <option value="all">Select All µ-computers</option>
-                                    <option v-for="com in activeMicroComputers" :key="`${com.conn_id}`" :value="com">
-                                        [ {{com.conn_id}} ] : {{com.name}}
+                                    <option v-for="(com, index) in activeMicroComputers" :key="`${com.conn_id}`" :value="com">
+                                        [ {{index + 1}} ] : {{com.name}}
                                     </option>
                                 </select>
                             </div>
@@ -611,6 +611,7 @@ onMounted(() => {
                                 <label for="vision-process" class="config-label">Select Vision Processing Method</label>
                                 <div class="form-element">
                                     <select class="menu-input" id="vision-process" v-model.number="newVisionProcessing">
+                                        <!-- TODO: this needs to be fixed to match the data that is sent thorugh -->
                                         <option v-for="item in selectedMicroComputer.Menu.items" :key="item.id" :value="item.id">
                                             {{item.item.Name}}
                                         </option>
@@ -626,8 +627,8 @@ onMounted(() => {
                         <div class="form-element">
                             <select class="w-100" id="cameraSelect" required v-model="selectedCamera">
                                 <option value="" disabled selected>Please select a camera</option>
-                                <option v-for="cam in activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`" :value="cam">
-                                    [ {{cam.conn_id}} - {{cam.camera_id}} ] : {{cam.name}}
+                                <option v-for="(cam, index) in activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`" :value="cam">
+                                    [ {{selectedMicroComputer.name}} - {{index + 1}} ] : {{cam.name}}
                                 </option>
                             </select>
                         </div>
