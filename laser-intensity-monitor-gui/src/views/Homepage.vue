@@ -57,6 +57,7 @@ const cameraFeedsData = ref([{
     isSelected: false
 }]) // is replaced by the camera data when read.
 const setpointState = ref(false)
+const wsSetpointState = ref(false)
 const liveFeedSrc = ref(null) // dynamic image source
 let pollInterval = null
 const selectedCameraId = ref(null)
@@ -184,6 +185,12 @@ const activeMergedData = computed(() => {
     })
     return sections
 })
+const activeSection = computed(() => {
+    if (!selectedCameraId.value) return null
+
+    const connId = selectedCameraId.value.split('-')[0]
+    return activeMergedData.value[connId] || null
+})
 const hasSelectedCamera = computed(() => {
     return cameraFeedsData.value.some(feed => feed.isSelected)
 })
@@ -293,6 +300,11 @@ async function postSetpointTrue() {
         console.error('Error fetching camera data:', error)
     }
 }
+const updateSetpoint = () => {
+    const [conn_id, camera_id] = selectedCameraId.value.split('-')
+    setpoint(conn_id, camera_id)
+    wsSetpointState.value = true
+}
 // camera card traffic light system (using sample JSON data)
 function getCardColour(deviation) {
     if (deviation >= 0 && deviation <= 0.05) {
@@ -396,7 +408,7 @@ onUnmounted(() => {
                         </h4>
                         <div class="row d-flex justify-content-start p-2 g-2">
                             <div class="col-4 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
-                                <div :class="['card', 'camera-tab', getCardColour(cam.deviation), { 'selected-camera': cam.isSelected }]">
+                                <div :class="['card', 'camera-tab', getCardColour(cam.deviation), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
                                     <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
                                         <h5 class="card-title">Camera {{ cam.camera_id }}</h5>
                                             <p class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
@@ -454,10 +466,10 @@ onUnmounted(() => {
             <div class="col-lg-4 col-12 cam-info d-flex flex-column p-3 pe-0 mt-2">
                 <div class="row h-100 mx-0 align-content-between">
                     <div class="col-12 px-0">
-                        <h3 class="mb-3">Camera Info</h3>
+                        <h3 class="mb-2">Camera Info</h3>
                         <div class="col-lg-7 col-9">
-                            <div v-for="cam in mergedCameraData" :key="cam.camera_id">
-                                    <div v-if="cam.isSelected">
+                            <div v-for="cam in activeSection?.activeCameras" :key="cam.camera_id">
+                                    <div v-if="selectedCameraId === `${cam.conn_id}-${cam.camera_id}`">
                                         <p>ID: {{ cam.camera_id }}</p>
                                         <p>Name: {{ cam.name }}</p>
                                         <p>Intensity: {{ cam.intensity }}</p>
@@ -479,8 +491,8 @@ onUnmounted(() => {
                         </div>
                     </div>
                     <div class="col-12 px-0">
-                        <button class="btn submit-btn" @click="postSetpointTrue">Set Setpoint</button>
-                        <p v-if="setpointState">Setpoint Successful</p>
+                        <button class="btn submit-btn" @click="updateSetpoint">Set Setpoint</button>
+                        <p v-if="wsSetpointState">Setpoint Successful.</p>
                     </div>
                 </div>
             </div>
