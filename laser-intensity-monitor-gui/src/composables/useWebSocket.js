@@ -95,7 +95,6 @@ export function useWebSocket(url) {
     clearInterval(heartbeatInterval)
     heartbeatInterval = null
   }
-  // handle pong when it is recived:
   // -------------------------
   //   Connection to Server
   // -------------------------
@@ -109,8 +108,6 @@ export function useWebSocket(url) {
       console.error('Failed to create WebSocket', e)
       return
     }
-
-
 
     socket.onopen = () => {
       status.value = 'CONNECTED'
@@ -186,7 +183,7 @@ export function useWebSocket(url) {
       }
       return normalised
     }
-    // Fallback if the object keyed by some stringified form of the tuple
+    // Fallback if the object keyed by some string form of the tuple
     for (const [key, details] of Object.entries(raw)) {
       const match = String(key).match(/(-?\d+)\D+(-?\d+)/)
       if (!match) {
@@ -209,6 +206,17 @@ export function useWebSocket(url) {
     }
     return normalised
   }
+
+  // parse the configuration payload
+  function parseConfigurationPayload(data) {
+    if (typeof raw !== 'string') return raw ?? null
+    try {
+      return JSON.parse(raw)
+    } catch {
+      console.error('Failed to parse Configuration.configuration JSON', e, raw)
+    }
+  }
+
   // Handle the Text message sent by the server
   function handleTextMessage(raw) {
     const { type, data } = decodeServerMessage(raw)
@@ -245,9 +253,13 @@ export function useWebSocket(url) {
       case 'CameraDisconnected': {
         const { conn_id, camera_id } = data
         const key = `${conn_id},${camera_id}`
-        const updated = { ...cameras.value }
-        delete updated[key]
-        cameras.value = updated
+        const existing = cameras.value[key]
+        if (existing) {
+          cameras.value = {
+            ...cameras.value,
+            [key]: { ...existing, state: 'Disconnected' },
+          }
+        }
         // if the disconnected camera is the one selected, clear the feed
         // active camera is js object and uses connId not conn_id
         if (activeCamera.value?.connId === conn_id && activeCamera.value?.cameraId === camera_id) {
@@ -271,7 +283,7 @@ export function useWebSocket(url) {
       }
       // Control configuration (reading and writing)
       case 'Configuration':
-        controlConfig.value = data
+        controlConfig.value = { ... data, configuration: parseConfigurationPayload(data?.configuration) }
         break
       // GUI Image Analysis (reading the deviation and intensity)
       case 'ImageAnalysis':
@@ -392,7 +404,7 @@ export function useWebSocket(url) {
     send('Setpoint', { conn_id: connId, camera_id: cameraId })
   }
 
-  // Setpoint function for all ListCameras
+  // Setpoint function for all ListCameras (no json attached)
   function setpointAll() {
     send('Setpoint')
   }

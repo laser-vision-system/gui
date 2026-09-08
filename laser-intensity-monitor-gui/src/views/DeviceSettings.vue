@@ -46,6 +46,7 @@ const {
   updateConfiguration,
   setCameraThresholds,
   setDefaultThreshold,
+  getDefaultThresholds,
 } = useWebSocket('ws://localhost:8080/gui_ws')
 
 //  Check if the websocket is connected
@@ -64,7 +65,7 @@ const selectedConfig = ref(null) // matches choice from camera list using the co
 // --------------------
 //     Sample Data
 // --------------------
-//mirrors the output of listcameras in websocket
+// mirrors the output of listcameras in websocket
 import sampleCameraList from '../assets/data/sampleCameraList.json'
 // mirrors the Configuration or control config value from websocket
 import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.json'
@@ -82,6 +83,7 @@ const newName = ref(null)
 // Diviation configration
 const newCriticalThreshold = ref(null)
 const newWarningThreshold = ref(null)
+// FPS (not added yet)
 const newFPS = ref(null)
 // camera controls
 const newBrightness = ref(null)
@@ -443,7 +445,8 @@ function resetWarningThreshold() {
 }
 function resetAllThresholds() {
   if (isLive.value) {
-    // add APi function when avaible
+    newWarningThreshold.value = defaultThresholds.value.warn_below_threshold * 100
+    newCriticalThreshold.value = defaultThresholds.value.alert_below_threshold * 100
   } else {
     resetCriticalThreshold()
     resetWarningThreshold()
@@ -479,6 +482,8 @@ function setServerDefaultThreshold() {
   if (isLive.value) {
     try {
       setDefaultThreshold(warning, alert)
+      // update the default values
+      getDefaultThresholds()
     } catch(e) {
       console.error('Error setting default thresholds:', e)
     }
@@ -546,7 +551,7 @@ watch(newCriticalThreshold, (newValue) => {
 onMounted(() => {
     //fetchCameraConfig()
     connect()
-
+    getDefaultThresholds()
 });
 
 
@@ -778,7 +783,7 @@ console.log(saveState)
                             <button type="button" class="btn submit-btn" @click="showResetThresholdsConfrim = true">Reset to Default</button>
                             <ConfirmationBox v-model="showResetThresholdsConfrim" message="Would you like to reset all Devation Thresholds to default?" :onConfirmFunction="resetAllThresholds"/>
                             <button type="button" class="btn submit-btn" @click="showSetDefaultThresholdConfrim = true">Set Global Default Thresholds</button>
-                            <ConfirmationBox v-model="showSetDefaultThresholdConfrim" message="Would you like to set the Golbal Defualt for the thresholds?" :onConfirmFunction=""/>
+                            <ConfirmationBox v-model="showSetDefaultThresholdConfrim" message="Would you like to set the defualt value for the thresholds?" :onConfirmFunction="setServerDefaultThreshold()"/>
                         </div>
                     </div>
                     <hr class="line-break" v-if="selectedCamera">
