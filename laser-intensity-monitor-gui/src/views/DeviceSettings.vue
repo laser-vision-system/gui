@@ -23,16 +23,24 @@ const showResetThresholdsConfrim = ref(false)
 // Point this at your server's websocket endpoint
 // All REST-ful api methods and variables have been commented out but not deleted as a redundancy
 const {
+  // state
   status,
+  // data
+  edgeList: wsEdgeList, // renamed so no confusion between sample data and live data.
   cameraList: wsCameraList,
   imageSrc,
   controlConfig,
   connect,
+  // functions
+  listEdges,
+  listCameras,
   viewCamera,
   stopViewingCamera,
   setCameraName,
   viewCameraConfig,
   updateConfiguration,
+  setCameraThresholds,
+  setDefaultThreshold,
 } = useWebSocket('ws://localhost:8080/gui_ws')
 
 //  Check if the websocket is connected

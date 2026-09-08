@@ -107,6 +107,7 @@ export function useWebSocket(url) {
       status.value = 'CONNECTED'
       error.value = null
       startHeartbeat()
+      listEdges()
       listCameras()
     }
 
@@ -403,7 +404,7 @@ export function useWebSocket(url) {
     // connection
     connect,
     disconnect,
-    // commands
+    // functions
     listEdges,
     setEdgeName,
     setEdgeProcessingType,
