@@ -7,16 +7,22 @@ import { useWebSocket } from '../composables/useWebSocket'
 // --------------------
 // Point this at your server's websocket endpoint
 const {
+  // state
   status,
+  // data
+  edgeList: wsEdgeList,
   cameraList: wsCameraList,
   imageSrc,
   analysis,
   activeCamera,
   connect,
   disconnect,
+  // functions
+  listEdges,
+  listCameras,
   viewCamera,
   stopViewingCamera
-} = useWebSocket('ws://localhost:8080/ws')
+} = useWebSocket('ws://localhost:8080/gui_ws')
 
 //  Check if the websocket is connected
 const isLive = computed(() => status.value === 'CONNECTED')
@@ -111,12 +117,17 @@ const disconnectionAlerts = computed(() => {
         }
     })
 })
-// grab camera list from websocket connection
+// grab microCom list from websocket or sample data
+const loadEdgesList = computed(() => {
+    const source = isLive.value && wsEdgeList.value.length > 0 ? wsEdgeList.value : sampleMicroComputerList.microComputers
+    return source
+})
+// grab camera list from websocket or sample data
 const loadCameraList = computed(() => {
     const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : sampleCameraList.cameras
     return source
 })
-// grab image analysis from websocket connection
+// grab image analysis from websocket or sample data
 const loadImageAnalysis = computed(() => {
     const source = isLive.value && analysis.value.length > 0 ? analysis.value : sampleImageAnalysis.GUIImageAnalysis
     return source
@@ -125,13 +136,14 @@ const loadImageAnalysis = computed(() => {
 const mergedCameraData = computed(() => {
     const camDataList = loadCameraList.value
     const imageAnalysisData = loadImageAnalysis.value
+    const edgeDataList = loadEdgesList.value
     const result = []
 
     for (const camera of camDataList) {
         const matchingData = imageAnalysisData.find(
             analysis => analysis.conn_id === camera.conn_id && analysis.camera_id === camera.camera_id
         )
-        const matchingComData = sampleMicroComputerList.microComputers.find(
+        const matchingComData = edgeDataList.find(
             connection => connection.conn_id === camera.conn_id
         )
 
@@ -200,13 +212,10 @@ function selectCamera(feedId) {
 }
 // select one camera at a time by ID
 const toggleCameraSelection = (cameraId) => {
-    const [conn_id, camera_id] = cameraId.split('-')
     if (selectedCameraId.value === cameraId) {
         selectedCameraId.value = null
-        stopViewingCamera(conn_id, camera_id)
     } else {
         selectedCameraId.value = cameraId
-        viewCamera(conn_id, camera_id)
     }
 }
 // fetch method for Read camera config API call
@@ -303,11 +312,6 @@ async function fetchCameraFeed() {
     liveFeedSrc.value = `${cameraFeedApiURL.value}?t=${Date.now()}`
 }
 
-async function wsFetchCameraFeed() {
-    if (!wsHasSelectedCamera.value) return
-    liveFeedSrc.value = imageSrc.value
-}
-
 function startPolling() {
     stopPolling() // clear any existing interval first
     fetchCameraFeed() // fetch immediately, then start interval
@@ -381,7 +385,7 @@ onUnmounted(() => {
                     </div>
                 </div>
         </div>
-        <div class="row mx-0 mt-2 align-items-start">
+        <div class="row mx-0 mt-2 mb-2 align-items-start">
             <div class="col-lg-8 col-12 ps-0">
                 <h3 class="cam-title">Connections:</h3>
                     <div v-for="(section, conn_id) in activeMergedData" :key="conn_id">
@@ -428,10 +432,13 @@ onUnmounted(() => {
                 </table>
             </div>
         </div>
-        <div class="row mx-0 align-items-stretch mb-5 mt-4">
+        <div v-if="selectedCameraId" class="row mx-0 align-items-stretch mb-5 mt-4">
             <div class="col-lg-8 col-12 d-flex ps-0 mt-2">
                 <div class="feed-wrapper w-100 h-100">
-                    <div v-if="hasSelectedCamera" class="w-100 h-100">
+                    <div v-if="isLive && imageSrc" class="w-100 h-100">
+                        <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
+                    </div>
+                    <div v-else-if="hasSelectedCamera" class="w-100 h-100">
                         <img :src="liveFeedSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
                     </div>
                     <div v-else-if="hasConnectedCamera" class="w-100 h-100">
@@ -456,9 +463,6 @@ onUnmounted(() => {
                                         <p>Intensity: {{ cam.intensity }}</p>
                                         <p>Deviation: {{ cam.deviation }}</p>
                                     </div>
-                            </div>
-                            <div v-if="!hasSelectedCamera">
-                                <p><strong>No camera feed connection</strong></p>
                             </div>
                         </div>
                     </div>
