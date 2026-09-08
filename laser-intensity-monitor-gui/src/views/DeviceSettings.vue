@@ -2,7 +2,6 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useWebSocket } from '../composables/useWebSocket'
 
-
 // -------------------------
 //   Confrimation pop up
 // -------------------------
@@ -21,7 +20,7 @@ const showResetThresholdsConfrim = ref(false)
 //   WebSocket
 // --------------------
 // Point this at your server's websocket endpoint
-// All REST-ful api methods and variables have been commented out but not deleted as a redundancy
+
 const {
   // state
   status,
@@ -31,8 +30,12 @@ const {
   imageSrc,
   controlConfig,
   connect,
-  // functions
+  // Functions
+  // Edge (micro computers)
   listEdges,
+  setEdgeName,
+  setEdgeProcessingType,
+  // Cameras
   listCameras,
   viewCamera,
   stopViewingCamera,
@@ -96,7 +99,7 @@ const saveState = ref('')
 // filter micro Computer list for active computers
 // the wsCameraList needs to be changed to the wsMicroComputer list when it becomes aviable
 const activeMicroComputers = computed(() => {
-  const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : sampleMicroComputerList.microComputers
+  const source = isLive.value && wsEdgeList.value.length > 0 ? wsEdgeList.value : sampleMicroComputerList.microComputers
   return source.filter((com) => com.state === 'Active')
 })
 //filter out the cameras that are not active
@@ -107,6 +110,7 @@ const activeCameras = computed(() => {
   if (!selectedMicroComputer.value || selectedMicroComputer.value === 'all') {
     return active
   }
+  // else a micro computer is selected filter only the cameras for that computer
   return active.filter((cam) => cam.conn_id === selectedMicroComputer.value.conn_id)
 })
 
@@ -219,9 +223,9 @@ function saveChanges() {
     saveState.value = 'success'
   }
 }
-
-//
-
+//------------------------------------------------------------------------------------------------
+// All REST-ful api methods and variables have been commented out but not deleted as a redundancy
+//------------------------------------------------------------------------------------------------
 //fetch method for read function
 // async function fetchCameraConfig() {
 //     try {
@@ -295,7 +299,9 @@ function saveChanges() {
 //         console.error('Error fetching camera data:', error)
 //     }
 // }
-
+//------------------------------------------------------------------------------------------------
+// All REST-ful api methods and variables have been commented out but not deleted as a redundancy
+//------------------------------------------------------------------------------------------------
 
 // ------------------------------
 //        Sample data Methods
@@ -313,7 +319,7 @@ function controlFilter(controlName) {
   return selectedConfig.value?.configuration?.[controlName] ?? null
 }
 
-// Load current values from the matched config must be used after select config is set
+// Load current values from the matched config. must be used after select config is set
 function loadCameraValues() {
   if (!selectedConfig.value) {
     newFPS.value = null

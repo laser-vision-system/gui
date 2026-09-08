@@ -152,16 +152,15 @@ export function useWebSocket(url) {
   function normaliseCameraMap(raw) {
     const normalised = {}
     if (!raw) return normalised
-    // renames the entries to match js naming conventions
     const setArrayEntry = (connId, cameraId, details) => {
       const key = `${connId},${cameraId}`
       normalised[key] = {
-        connId,
-        cameraId,
+        conn_id: connId,
+        camera_id: cameraId,
         name: details?.name ?? '',
         state: details?.state ?? 'Disconnected',
-        warnBelowThreshold: details?.warn_below_threshold ?? null,
-        alertBelowThreshold: details?.alert_below_threshold ?? null,
+        warn_below_threshold: details?.warn_below_threshold ?? null,
+        alert_below_threshold: details?.alert_below_threshold ?? null,
       }
     }
     // if the raw data array is in the shape of an array
@@ -187,7 +186,7 @@ export function useWebSocket(url) {
     if (!raw) return normalised
     for (const [key, name] of Object.entries(raw)) {
       const connId = Number(key)
-      normalised[connId] = { connId, name }
+      normalised[connId] = { conn_id: connId, name, state: 'Active' }
     }
     return normalised
   }
@@ -213,12 +212,12 @@ export function useWebSocket(url) {
         cameras.value = {
           ...cameras.value,
           [key]: {
-            connId: conn_id,
-            cameraId: camera_id,
+            conn_id,
+            camera_id,
             name: camera_name,
             state: 'Active',
-            warnBelowThreshold: existing?.warnBelowThreshold ?? null,
-            alertBelowThreshold: existing?.alertBelowThreshold ?? null,
+            warn_below_threshold: existing?.warn_below_threshold ?? null,
+            alert_below_threshold: existing?.alert_below_threshold ?? null,
           },
         }
         break
@@ -231,6 +230,7 @@ export function useWebSocket(url) {
         delete updated[key]
         cameras.value = updated
         // if the disconnected camera is the one selected, clear the feed
+        // active camera is js object and uses connId not conn_id
         if (activeCamera.value?.connId === conn_id && activeCamera.value?.cameraId === camera_id) {
           clearActiveFeed()
         }
