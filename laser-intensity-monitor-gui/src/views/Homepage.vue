@@ -39,11 +39,11 @@ const sampleAnalysis = ref(sampleImageAnalysis.GUIImageAnalysis)
 const sampleCameraConfigData = ref(sampleCameraConfiguration.configurations)
 const sampleMicroComputers = ref(sampleMicroComputerList.microComputers)
 //const WebSocketURL = ref('') // API URL for camera stream Data
-const cameraConfigApiURL = ref('/api/configuration') // API URL for camera config Data
-const cameraFeedApiURL = ref('/api/image') // API URL for camera feed Data
-const cameraInfoApiURL = ref('/api/camera_info') // API URL for camera info
-const guiUpdateApiURL = ref('/api/gui_update') // API URL for gui update setpoint and config
-const cameraFeedsData = ref([{
+//const cameraConfigApiURL = ref('/api/configuration') // API URL for camera config Data
+//const cameraFeedApiURL = ref('/api/image') // API URL for camera feed Data
+//const cameraInfoApiURL = ref('/api/camera_info') // API URL for camera info
+//const guiUpdateApiURL = ref('/api/gui_update') // API URL for gui update setpoint and config
+/*const cameraFeedsData = ref([{
     id: '00',
     name: 'cam00',
     description: 'Primary Camera',
@@ -55,36 +55,43 @@ const cameraFeedsData = ref([{
     deviation: null,
     isConnected: false,
     isSelected: false
-}]) // is replaced by the camera data when read.
-const setpointState = ref(false)
+}]) // is replaced by the camera data when read.*/
+//const setpointState = ref(false)
 const wsSetpointState = ref(false)
 const liveFeedSrc = ref(null) // dynamic image source
-let pollInterval = null
+//let pollInterval = null
 const selectedCameraId = ref(null)
 const alertsExpanded = ref(true) // alert system variable
 // --------------------
 //        Computed
 // --------------------
 const deviationAlerts = computed(() => {
-    return mergedCameraData.value.map(analysis => {
-        let alertMsg = ''
-        let alertType = ''
+    if (!activeMergedData.value) return []
 
-        if (analysis.deviation < analysis.warning_threshold) {
-            alertMsg = `[LOW] Camera ${analysis.camera_id} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
-            alertType = 'success'
-        } else if (analysis.deviation >= analysis.warning_threshold && analysis.deviation < analysis.critical_threshold) {
-            alertMsg = `[MODERATE] Camera ${analysis.camera_id} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
-            alertType = 'warning'
-        } else if (analysis.deviation >= analysis.critical_threshold) {
-            alertMsg = `[HIGH] Camera ${analysis.camera_id} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
-            alertType = 'danger'
-        }
-        return {
-            ...analysis,
-            alertMsg,
-            alertType
-        }
+    return Object.values(activeMergedData.value).flatMap(section => {
+        if (!section.activeCameras) return []
+        
+        return section.activeCameras.map(analysis => {
+                let alertMsg = ''
+                let alertType = ''
+
+                if (analysis.deviation > analysis.warning_threshold) {
+                    alertMsg = `[LOW] Camera ${analysis.camera_id} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
+                    alertType = 'success'
+                }
+                else if (analysis.deviation <= analysis.warning_threshold && analysis.deviation > analysis.critical_threshold) {
+                    alertMsg = `[MODERATE] Camera ${analysis.camera_id} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
+                    alertType = 'warning'
+                } else if (analysis.deviation <= analysis.critical_threshold) {
+                    alertMsg = `[HIGH] Camera ${analysis.camera_id} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
+                    alertType = 'danger'
+                }
+                return {
+                    ...analysis,
+                    alertMsg,
+                    alertType
+                }
+        })
     })
 })
 const sortedDeviationAlerts = computed(() => {
@@ -191,7 +198,7 @@ const activeSection = computed(() => {
     const connId = selectedCameraId.value.split('-')[0]
     return activeMergedData.value[connId] || null
 })
-const hasSelectedCamera = computed(() => {
+/*const hasSelectedCamera = computed(() => {
     return cameraFeedsData.value.some(feed => feed.isSelected)
 })
 const hasConnectedCamera = computed(() => {
@@ -199,7 +206,7 @@ const hasConnectedCamera = computed(() => {
 })
 const selectedCamera = computed(() =>
     cameraFeedsData.value.find(feed => feed.isSelected) ?? null
-)
+)*/
 // alert system
 const toggleAlerts = computed(() => {
     alertsExpanded.value = !alertsExpanded.value
@@ -306,12 +313,18 @@ const updateSetpoint = () => {
     wsSetpointState.value = true
 }
 // camera card traffic light system (using sample JSON data)
-function getCardColour(deviation) {
-    if (deviation >= 0 && deviation <= 0.05) {
+function getCardColour(cam) {
+    if (!cam) return 'bg-dark'
+
+    const deviation = cam.deviation
+    const warning = cam.warning_threshold
+    const critical = cam.critical_threshold
+
+    if (deviation > warning) {
         return 'bg-success'
-    } else if (deviation > 0.05 && deviation <= 0.20) {
-        return 'bg-warning text-dark'
-    } else if (deviation > 0.20 && deviation <= 1) {
+    } else if (deviation <= warning && deviation > critical) {
+        return 'bg-warning'
+    } else if (deviation <= critical) {
         return 'bg-danger'
     } else {
         return 'bg-dark'
@@ -345,7 +358,7 @@ function stopPolling() {
 //        Watchers
 // --------------------
 // Start/stop polling whenever the selected camera changes
-watch(
+/*watch(
     () => cameraFeedsData.value.map(f => f.isSelected),
     () => {
         if (hasSelectedCamera.value) {
@@ -354,7 +367,7 @@ watch(
             stopPolling()
         }
     }
-)
+)*/
 // -------------------------------
 //        onMount and unMount
 // -------------------------------
@@ -408,7 +421,7 @@ onUnmounted(() => {
                         </h4>
                         <div class="row d-flex justify-content-start p-2 g-2">
                             <div class="col-4 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
-                                <div :class="['card', 'camera-tab', getCardColour(cam.deviation), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
+                                <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
                                     <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
                                         <h5 class="card-title">Camera {{ cam.camera_id }}</h5>
                                             <p class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>

@@ -5,72 +5,72 @@
       "camera_id": 0,
       "name": "OV7725 USB Camera: All Controls",
       "state": "Active",
-      "warning_threshold":0.05,
-      "critical_threshold": 0.20
+      "warning_threshold":0.95,
+      "critical_threshold": 0.80
     },
     {
       "conn_id": 1,
       "camera_id": 1,
       "name": "OV7725 USB Camera: Missing Brightness",
       "state": "Active",
-      "warning_threshold":0.05,
-      "critical_threshold": 0.20
+      "warning_threshold":0.95,
+      "critical_threshold": 0.80
     },
     {
       "conn_id": 1,
       "camera_id": 2,
       "name": "OV7725 USB Camera: Missing Contrast",
       "state": "Active",
-      "warning_threshold":0.05,
-      "critical_threshold": 0.20
+      "warning_threshold":0.95,
+      "critical_threshold": 0.80
     },
     {
       "conn_id": 1,
       "camera_id": 3,
       "name": "OV7725 USB Camera: Missing Saturation",
       "state": "Active",
-      "warning_threshold":0.05,
-      "critical_threshold": 0.20
+      "warning_threshold":0.95,
+      "critical_threshold": 0.80
     },
     {
       "conn_id": 1,
       "camera_id": 4,
       "name": "OV7725 USB Camera: Missing Hue",
       "state": "Active",
-      "warning_threshold":0.05,
-      "critical_threshold": 0.20
+      "warning_threshold":0.95,
+      "critical_threshold": 0.80
     },
     {
       "conn_id": 2,
       "camera_id": 0,
       "name": "OV7725 USB Camera: Missing Gamma",
       "state": "Active",
-      "warning_threshold":0.05,
-      "critical_threshold": 0.20
+      "warning_threshold":0.95,
+      "critical_threshold": 0.80
     },
     {
       "conn_id": 2,
       "camera_id": 1,
       "name": "OV7725 USB Camera: Missing Gain",
       "state": "Active",
-      "warning_threshold":0.05,
-      "critical_threshold": 0.20
+      "warning_threshold":0.95,
+      "critical_threshold": 0.80
     },
     {
       "conn_id": 2,
       "camera_id": 2,
       "name": "OV7725 USB Camera: Missing AutoExposure",
       "state": "Disconnected",
-      "warning_threshold":0.05,
-      "critical_threshold": 0.20
+      "warning_threshold":0.95,
+      "critical_threshold": 0.80
     },
     {
       "conn_id": 2,
       "camera_id": 3,
       "name": "OV7725 USB Camera: Missing ExposureAbsolute",
       "state": "Disconnected",
-      "warning_threshold":0.05,
-      "critical_threshold": 0.20
+      "warning_threshold":0.95,
+      "critical_threshold": 0.80
     }
   ]
 }
