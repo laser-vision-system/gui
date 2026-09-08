@@ -31,15 +31,18 @@ export function useWebSocket(url) {
   const controlConfig = ref(null)
   // Active Camera / selected camera
   const activeCamera = ref(null)
+  // reconnect attemps counter
+  const reconnectCounter = ref(0)
   // -------------------------
   //   Variable Values
   // -------------------------
   let socket = null
   let currentObjectUrl = null
+  let manualDisconnect = false
   // -----------------
   //   Wire format
   // -----------------
-  // Encoder: builds the "Type:{JSON}" String thr server expects.
+  // Encoder: builds the "Type:{JSON}" String the server expects.
   function encodeMessage(type, data) {
     if (data === undefined || data === null) return type
     if (typeof data === 'object' && Object.keys(data).length === 0) return type
@@ -60,7 +63,6 @@ export function useWebSocket(url) {
       console.error(`Failed to parse JSON payload for message type: "${type}"`, e, jsonData)
       return {type: null, data:null}
     }
-
   }
   // ---------------------------
   //   Send Message to Sever
@@ -75,12 +77,26 @@ export function useWebSocket(url) {
   // -------------------------
   //   Heartbeat
   // -------------------------
+  // Ping rate time in ms
+  const HEARTBEAT_INTERVAL = 7000
+  // last pong time stamp
+  const lastPongTimestamp = ref(null)
+  // Heartbeat variable
+  let heartbeatInterval = null
   function startHeartbeat() {
-
+    stopHeartbeat() // clear any left over timer
+    heartbeatInterval = setInterval(() => {
+      if (socket?.readyState !== WebSocket.OPEN) return
+      // send ping text message
+      send('Ping')
+    }, HEARTBEAT_INTERVAL)
   }
+  // stop the heartbeat
   function stopHeartbeat() {
-
+    clearInterval(heartbeatInterval)
+    heartbeatInterval = null
   }
+  // handle pong when it is recived:
   // -------------------------
   //   Connection to Server
   // -------------------------
@@ -96,6 +112,7 @@ export function useWebSocket(url) {
       startHeartbeat()
       listCameras()
     }
+
     socket.onmessage = (event) => {
       if (event.data instanceof Blob) {
         handleImageFrame(event.data)
@@ -247,6 +264,10 @@ export function useWebSocket(url) {
       // GUI Image Analysis (reading the deviation and intensity)
       case 'ImageAnalysis':
         analysis.value = data
+        break
+      // Pong message from the server
+      case 'Pong':
+        lastPongTimestamp.value = Date.now()
         break
       // warn if case is not met.
       default:
