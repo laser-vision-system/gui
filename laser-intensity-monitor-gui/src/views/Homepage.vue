@@ -20,6 +20,7 @@ const {
   // functions
   listEdges,
   listCameras,
+  setpoint,
   viewCamera,
   stopViewingCamera
 } = useWebSocket('ws://localhost:8080/gui_ws')
@@ -57,10 +58,10 @@ const sampleMicroComputers = ref(sampleMicroComputerList.microComputers)
     isSelected: false
 }]) // is replaced by the camera data when read.*/
 //const setpointState = ref(false)
-const wsSetpointState = ref(false)
 const liveFeedSrc = ref(null) // dynamic image source
 //let pollInterval = null
 const selectedCameraId = ref(null)
+const cameraSetpoints = ref({})
 const alertsExpanded = ref(true) // alert system variable
 // --------------------
 //        Computed
@@ -76,14 +77,14 @@ const deviationAlerts = computed(() => {
                 let alertType = ''
 
                 if (analysis.deviation > analysis.warning_threshold) {
-                    alertMsg = `[LOW] Camera ${analysis.camera_id} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
+                    alertMsg = `[LOW] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                     alertType = 'success'
                 }
                 else if (analysis.deviation <= analysis.warning_threshold && analysis.deviation > analysis.critical_threshold) {
-                    alertMsg = `[MODERATE] Camera ${analysis.camera_id} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
+                    alertMsg = `[MODERATE] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                     alertType = 'warning'
                 } else if (analysis.deviation <= analysis.critical_threshold) {
-                    alertMsg = `[HIGH] Camera ${analysis.camera_id} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
+                    alertMsg = `[HIGH] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                     alertType = 'danger'
                 }
                 return {
@@ -192,11 +193,15 @@ const activeMergedData = computed(() => {
     })
     return sections
 })
-const activeSection = computed(() => {
+// returns camera info based on selected camera
+const selectedCameraInfo = computed(() => {
     if (!selectedCameraId.value) return null
-
-    const connId = selectedCameraId.value.split('-')[0]
-    return activeMergedData.value[connId] || null
+    const [conn_id, camera_id] = selectedCameraId.value.split('-')
+    return activeMergedData.value[conn_id]?.activeCameras.find(c => c.camera_id == camera_id) || null
+})
+// checks if a specific camera has a setpoint set
+const isSetpointActive = computed(() => {
+    return selectedCameraId.value && selectedCameraId.value in cameraSetpoints.value
 })
 /*const hasSelectedCamera = computed(() => {
     return cameraFeedsData.value.some(feed => feed.isSelected)
@@ -226,10 +231,13 @@ function selectCamera(feedId) {
 }
 // select one camera at a time by ID
 const toggleCameraSelection = (cameraId) => {
+    const [conn_id, camera_id] = cameraId.split('-')
     if (selectedCameraId.value === cameraId) {
         selectedCameraId.value = null
+        stopViewingCamera(conn_id, camera_id)
     } else {
         selectedCameraId.value = cameraId
+        viewCamera(conn_id, camera_id)
     }
 }
 // fetch method for Read camera config API call
@@ -308,9 +316,20 @@ async function postSetpointTrue() {
     }
 }
 const updateSetpoint = () => {
+    if (!selectedCameraId.value || !selectedCameraInfo.value) return
+    
     const [conn_id, camera_id] = selectedCameraId.value.split('-')
+    const targetSetpoint = selectedCameraInfo.value.intensity
+    cameraSetpoints.value[selectedCameraId.value] = targetSetpoint
     setpoint(conn_id, camera_id)
-    wsSetpointState.value = true
+
+    /*try {
+        setpoint(conn_id, camera_id)
+        wsSetpointState.value = true
+        console.log("Setpoint call executed successfully.")
+    } catch (error) {
+        console.error("The setpoint() function threw an error:", error)
+    }*/
 }
 // camera card traffic light system (using sample JSON data)
 function getCardColour(cam) {
@@ -420,10 +439,10 @@ onUnmounted(() => {
                             </span>
                         </h4>
                         <div class="row d-flex justify-content-start p-2 g-2">
-                            <div class="col-4 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
+                            <div class="col-3 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
                                 <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
                                     <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
-                                        <h5 class="card-title">Camera {{ cam.camera_id }}</h5>
+                                        <h5 class="card-title">{{ cam.name }}</h5>
                                             <p class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
                                     </div>
                                 </div>
@@ -481,31 +500,29 @@ onUnmounted(() => {
                     <div class="col-12 px-0">
                         <h3 class="mb-2">Camera Info</h3>
                         <div class="col-lg-7 col-9">
-                            <div v-for="cam in activeSection?.activeCameras" :key="cam.camera_id">
-                                    <div v-if="selectedCameraId === `${cam.conn_id}-${cam.camera_id}`">
-                                        <p>ID: {{ cam.camera_id }}</p>
-                                        <p>Name: {{ cam.name }}</p>
-                                        <p>Intensity: {{ cam.intensity }}</p>
-                                        <p>Deviation: {{ Math.round(cam.deviation * 100) + '%' }}</p>
-                                        <table class="table border border-2 hardware-info">
-                                            <tbody>
-                                                <tr>
-                                                    <th class="bg-warning text-dark">Warning Threshold:</th>
-                                                    <td>0-{{ Math.round(cam.warning_threshold * 100) + '%' }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <th class="bg-danger text-white">Critical Threshold:</th>
-                                                    <td>{{Math.round(cam.warning_threshold * 100)}}-{{ Math.round(cam.critical_threshold * 100) + '%' }}</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
+                            <div v-if="selectedCameraInfo">
+                                <p><strong>ID:</strong> {{ selectedCameraInfo.camera_id }}</p>
+                                <p><strong>Name:</strong> {{ selectedCameraInfo.name }}</p>
+                                <p><strong>Intensity:</strong> {{ selectedCameraInfo.intensity }}</p>
+                                <p><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) + '%' }}</p>
+                                <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p>
+                                <table class="table border border-2 hardware-info">
+                                    <tbody>
+                                        <tr>
+                                            <th class="bg-warning text-dark">Warning Threshold:</th>
+                                            <td>0-{{ Math.round(selectedCameraInfo.warning_threshold * 100) + '%' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="bg-danger text-white">Critical Threshold:</th>
+                                            <td>{{Math.round(selectedCameraInfo.warning_threshold * 100)}}-{{ Math.round(selectedCameraInfo.critical_threshold * 100) + '%' }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div class="col-12 px-0">
+                                    <button class="btn submit-btn" :disabled="!selectedCameraId" @click="updateSetpoint">{{ isSetpointActive ? 'Update Setpoint' : 'Set Setpoint' }}</button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-12 px-0">
-                        <button class="btn submit-btn" @click="updateSetpoint">Set Setpoint</button>
-                        <p v-if="wsSetpointState">Setpoint Successful.</p>
                     </div>
                 </div>
             </div>
@@ -522,8 +539,9 @@ onUnmounted(() => {
 
 .camera-tab .card-title {
     font-size: 15cqw;
-    white-space: normal;
-    word-break: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .selected-camera {
@@ -553,7 +571,6 @@ onUnmounted(() => {
     box-shadow: 0 0 0.45rem mediumslateblue;
     background-color: var(--cam-bg);
     color: var(--nav-title);
-    max-height: 480px;
 }
 
 .highlight-row {
