@@ -510,11 +510,11 @@ onUnmounted(() => {
                                     <tbody>
                                         <tr>
                                             <th class="bg-warning text-dark">Warning Threshold:</th>
-                                            <td>0-{{ Math.round(selectedCameraInfo.warning_threshold * 100) + '%' }}</td>
+                                            <td>{{Math.round(selectedCameraInfo.warning_threshold * 100)}}-{{ Math.round(selectedCameraInfo.critical_threshold * 100) + '%' }}</td>
                                         </tr>
                                         <tr>
                                             <th class="bg-danger text-white">Critical Threshold:</th>
-                                            <td>{{Math.round(selectedCameraInfo.warning_threshold * 100)}}-{{ Math.round(selectedCameraInfo.critical_threshold * 100) + '%' }}</td>
+                                            <td>Below {{ Math.round(selectedCameraInfo.critical_threshold * 100) + '%' }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
