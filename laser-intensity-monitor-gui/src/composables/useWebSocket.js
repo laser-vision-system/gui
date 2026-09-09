@@ -181,9 +181,14 @@ export function useWebSocket(url) {
     const normalised = {}
     if (!raw) return normalised
 
-    const setArrayEntry = (connId, cameraId, details) => {
-      const key = `${connId},${cameraId}`
-      normalised[key] = {
+    for (const [rawKey, details] of Object.entries(raw)) {
+      const match = String(rawKey).match(/(-?\d+)\D+(-?\d+)/)
+      if (!match) {
+        console.warn('Could not decode camera map key:', rawKey)
+        continue
+      }
+      const [, connId, cameraId] = match
+      normalised[`${connId},${cameraId}`] = {
         conn_id: connId,
         camera_id: cameraId,
         name: details?.name ?? '',
@@ -192,37 +197,6 @@ export function useWebSocket(url) {
         alert_below_threshold: details?.alert_below_threshold ?? null,
       }
     }
-    // if the raw data array is in the shape of an array
-    if (Array.isArray(raw)) {
-      for (const [key, details] of raw) {
-        const [connId, cameraId] = Array.isArray(key) ? key : [key.conn_id, key.camera_id]
-        setArrayEntry(connId, cameraId, details)
-      }
-      return normalised
-    }
-    // Fallback if the object keyed by some string form of the tuple
-    for (const [rawKey, details] of Object.entries(raw)) {
-      let connId, cameraId
-      try {
-        // if the server sends a JSON encoded Tuple
-        const parseKey = JSON.parse(rawKey)
-        if (!Array.isArray(parseKey) || parseKey.length !== 2) {
-          console.warn('Unexpected key shape: ', parseKey)
-        }
-        [connId, cameraId] = parseKey
-      }
-      catch (e) {
-        // defensive fallback for older formats like "1,1" or "1-1"
-        const match = String(rawKey).match(/(-?\d+)\D+(-?\d+)/)
-        if (!match) {
-          console.warn('Could not decode camera map key:', rawKey, e)
-          continue
-        }
-        connId = match[1]
-        cameraId = match[2]
-      }
-      setArrayEntry(Number(connId), Number(cameraId), details)
-    }
     return normalised
   }
   // Normalise the Edge hash map into a java array
@@ -230,7 +204,7 @@ export function useWebSocket(url) {
     const normalised = {}
     if (!raw) return normalised
     for (const [key, name] of Object.entries(raw)) {
-      const connId = Number(key)
+      const connId = key
       normalised[connId] = { conn_id: connId, name, state: 'Active' }
     }
     return normalised
