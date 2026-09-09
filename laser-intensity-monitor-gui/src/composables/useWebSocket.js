@@ -28,6 +28,10 @@ export function useWebSocket(url) {
   const activeCamera = ref(null)
   // default Threasholds
   const defaultThresholds = ref(null)
+  // Array of Known ID feilds  just add any more ids that are needed to this array of the time comes
+  const ID_KEYS = ['conn_id', 'camera_id', 'edge_id']
+  // Creates regex alturation string out of the array of ids
+  const ID_KEYS_REGEX_OPTIONS = ID_KEYS.join('|')
   // -------------------------
   //   Variable Values
   // -------------------------
@@ -36,23 +40,35 @@ export function useWebSocket(url) {
   // -----------------
   //   Wire format
   // -----------------
+
+  // enquoter for the incoming U64
+  function enquoteIds(jsonString) {
+      // replace / wrap the incoming int with quotes to make it a string
+      return jsonString.replace(new RegExp(`"(${ID_KEYS_REGEX_OPTIONS})":(-?\\d+)`, 'g'), '"$1":"$2"')
+  }
+
+  // unquoter for the outgoing id feilds
+  function unquoteIds(jsonString) {
+    // replaces the string with a number on the out
+    return jsonString.replace(new RegExp(`"(${ID_KEYS_REGEX_OPTIONS})":"(-?\\d+)"`, 'g'), '"$1":$2')
+  }
+
   // Encoder: builds the "Type:{JSON}" String the server expects.
   function encodeMessage(type, data) {
     if (data === undefined || data === null) return type
     if (typeof data === 'object' && Object.keys(data).length === 0) return type
-    return `${type}:${JSON.stringify(data)}`
+    return `${type}:${unquoteIds(JSON.stringify(data))}`
   }
+
   // Decoder: Breaks down string into Type and JSON
   function decodeServerMessage(raw) {
     const text = String(raw).trim()
     const sep = text.indexOf(':')
-    if (sep === -1) {
-      return {type: text, data:null}
-    }
+    if (sep === -1) { return {type: text, data:null} }
     const type = text.slice(0, sep)
     const jsonData = text.slice(sep + 1)
     try {
-      return {type, data: JSON.parse(jsonData)}
+      return {type, data: JSON.parse(enquoteIds(jsonData))}
     } catch (e) {
       console.error(`Failed to parse JSON payload for message type: "${type}"`, e, jsonData)
       return {type: null, data:null}
