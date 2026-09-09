@@ -523,7 +523,8 @@ watch(selectedCamera, (cam, oldCam) => {
 // watch to apply the server's Configuration reply once it matches the currently selected camera
 watch(controlConfig, (config) => {
   if (!isLive.value || !config || !selectedCamera.value) return
-  if (config.conn_id === selectedCamera.value.conn_id && config.camera_id === selectedCamera.value.camera_id) {
+  if (config.conn_id === selectedCamera.value.conn_id
+    && config.camera_id === selectedCamera.value.camera_id) {
     selectedConfig.value = config
     loadCameraValues()
   }
@@ -534,7 +535,8 @@ watch(wsCameraList, () => {
   if (!isLive.value || !selectedCamera.value) return
 
   const freshCam = wsCameraList.value.find(
-    (cam) => cam.conn_id === selectedCamera.value.conn_id && cam.camera_id === selectedCamera.value.camera_id
+    (cam) => cam.conn_id === selectedCamera.value.conn_id
+      && cam.camera_id === selectedCamera.value.camera_id
   )
   if (!freshCam || freshCam.state !== 'Active') {
     selectedCamera.value = ''
@@ -788,7 +790,7 @@ onMounted(() => {
                             </div>
                         </div>
                         <div v-if="selectedConfig">
-                            <label for="fps-range" class="config-label">Critical Threshold</label>
+                            <label for="fps-range" class="config-label">Alert Threshold</label>
                             <div class="form-element">
                                 <input type="range" class="slider-input" id="critical-range" v-model.number="newCriticalThreshold" min="1" max="99" step="1">
                                 <input type="number" class="number-input" id= "critical-number" v-model.number="newCriticalThreshold" min="1" max="99" step="1">

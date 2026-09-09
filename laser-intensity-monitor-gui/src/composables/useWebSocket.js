@@ -160,10 +160,11 @@ export function useWebSocket(url) {
     currentObjectUrl = URL.createObjectURL(blob)
     imageSrc.value = currentObjectUrl
   }
-  // normalise hash map to java data object array and get rid of the tuple
+  // normalise hash map to keyed java script data object
   function normaliseCameraMap(raw) {
     const normalised = {}
     if (!raw) return normalised
+
     const setArrayEntry = (connId, cameraId, details) => {
       const key = `${connId},${cameraId}`
       normalised[key] = {
@@ -184,15 +185,27 @@ export function useWebSocket(url) {
       return normalised
     }
     // Fallback if the object keyed by some string form of the tuple
-    for (const [key, details] of Object.entries(raw)) {
-      const match = String(key).match(/(-?\d+)\D+(-?\d+)/)
-      if (!match) {
-        console.warn('Could not decode camera map key:', key)
-        continue
+    for (const [rawKey, details] of Object.entries(raw)) {
+      let connId, cameraId
+      try {
+        // if the server sends a JSON encoded Tuple
+        const parseKey = JSON.parse(rawKey)
+        if (!Array.isArray(parseKey) || parseKey.length !== 2) {
+          console.warn('Unexpected key shape: ', parseKey)
+        }
+        [connId, cameraId] = parseKey
       }
-      const connId = match ? Number(match[1]) : key
-      const cameraId = match ? Number(match[2]) : null
-      setArrayEntry(connId, cameraId, details)
+      catch (e) {
+        // defensive fallback for older formats like "1,1" or "1-1"
+        const match = String(rawKey).match(/(-?\d+)\D+(-?\d+)/)
+        if (!match) {
+          console.warn('Could not decode camera map key:', rawKey, e)
+          continue
+        }
+        connId = match[1]
+        cameraId = match[2]
+      }
+      setArrayEntry(Number(connId), Number(cameraId), details)
     }
     return normalised
   }
@@ -209,11 +222,12 @@ export function useWebSocket(url) {
 
   // parse the configuration payload
   function parseConfigurationPayload(data) {
-    if (typeof raw !== 'string') return raw ?? null
+    if (typeof data !== 'string') return data ?? null
     try {
-      return JSON.parse(raw)
+      return JSON.parse(data)
     } catch {
-      console.error('Failed to parse Configuration.configuration JSON', e, raw)
+      console.error('Failed to parse Configuration.configuration JSON', e, data)
+      return null
     }
   }
 
