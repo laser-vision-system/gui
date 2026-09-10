@@ -172,6 +172,7 @@ export function useWebSocket(url) {
   function handleImageFrame(blob) {
     const newURL = URL.createObjectURL(blob)
     const img = new Image()
+    // make sure that the image has loaded before clearing the blob before.
     img.onload = () => {
       if (currentObjectUrl) {
         URL.revokeObjectURL(currentObjectUrl)
@@ -299,7 +300,7 @@ export function useWebSocket(url) {
       case 'Configuration':
         controlConfig.value = { ... data, configuration: parseConfigurationPayload(data?.configuration) }
         break
-      // GUI Image Analysis (reading the deviation and intensity)
+      // GUI Image Analysis (reading the deviation)
       case 'ImageAnalysis':
         analysis.value = data
         break
