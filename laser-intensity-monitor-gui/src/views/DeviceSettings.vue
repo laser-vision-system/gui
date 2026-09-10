@@ -759,12 +759,13 @@ onMounted(() => {
                             <button class="btn submit-btn" @click="showResetAllControlsConfrim = true">Reset Camera Controls</button>
                             <ConfirmationBox v-model="showResetAllControlsConfrim" message="Would you like to reset all camera controls?" :onConfirmFunction="resetControlConfig"/>
                         </div>
-                        <div v-if="saveState === 'success'" class="text-center p-1">
+                        <!-- added a success response needs extra logic as the websocket is a send a forget unlike restful -->
+                        <!-- <div v-if="saveState === 'success'" class="text-center p-1">
                             <p>Settings saved successfully.</p>
                         </div>
                         <div v-if="saveState === 'error'" class="text-center p-1">
                             <p>Failed to save settings. Please try again.</p>
-                        </div>
+                        </div> -->
                         <hr class="line-break" v-if="selectedCamera && !isLive">
                         <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera && !isLive">Refresh Rate</h4>
                         <div v-if="selectedConfig">

@@ -170,11 +170,21 @@ export function useWebSocket(url) {
   // -------------------------
   // Handle the image feed
   function handleImageFrame(blob) {
-    if (currentObjectUrl) {
-      URL.revokeObjectURL(currentObjectUrl)
+    const newURL = URL.createObjectURL(blob)
+    const img = new Image()
+    img.onload = () => {
+      if (currentObjectUrl) {
+        URL.revokeObjectURL(currentObjectUrl)
+      }
+      currentObjectUrl = newURL
+      imageSrc.value = newURL
     }
-    currentObjectUrl = URL.createObjectURL(blob)
-    imageSrc.value = currentObjectUrl
+    // handle bad frames
+    img.onerror = () => {
+      console.warn("Bad image frame was sent")
+      URL.revokeObjectURL(newURL)
+    }
+    img.src = newURL
   }
   // normalise hash map to keyed java script data object
   function normaliseCameraMap(raw) {
