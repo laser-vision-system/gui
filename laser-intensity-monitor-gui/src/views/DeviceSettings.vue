@@ -151,6 +151,7 @@ function submitVisionProcessing() {
   if (isLive.value) {
     // API function for submiting the chosen vision processing
     setEdgeProcessingType(selectedMicroComputer.value.conn_id, newVisionProcessing.value)
+    listEdges()
   } else {
     selectedMicroComputer.value.Menu.value.ConValueMenu = newVisionProcessing.value
   }
@@ -181,24 +182,22 @@ function buildControlsPayload() {
   const payload = {}
 
   const integerControls = {
-    Brightness: newBrightness,
-    Contrast: newContrast,
-    Hue: newHue,
-    Saturation: newSaturation,
-    Gamma: newGamma,
-    Gain: newGain,
+    Brightness: newBrightness, Contrast: newContrast, Hue: newHue,
+    Saturation: newSaturation, Gamma: newGamma, Gain: newGain,
     ExposureAbsolute: newExposureAbsolute,
   }
   for (const [name, valueRef] of Object.entries(integerControls)) {
-    if (!original[name]) continue // camera doesn't support this control
-    const current = original[name].IntegerRange.value.ConValueInteger
+    if (!original?.[name]) continue // camera doesn't support this control
+    const current = original[name].IntegerRange?.value?.ConValueInteger
+    const resolved = checkBlank(valueRef.value, current)
+    if (resolved === null || resolved === undefined) continue
     payload[name] = {
-      IntegerRange: {...original[name].IntegerRange, value: { ConValueInteger: checkBlank(valueRef.value, current) },},
+      IntegerRange: {...original[name].IntegerRange, value: { ConValueInteger: resolved },},
     }
   }
 
-  if (original.AutoExposure) {
-    const current = original.AutoExposure.Menu.value.ConValueMenu
+  if (original?.AutoExposure) {
+    const current = original.AutoExposure.Menu?.value?.ConValueMenu
     payload.AutoExposure = {
       Menu: {...original.AutoExposure.Menu, value: { ConValueMenu: checkBlank(newAutoExposure.value, current) },},
     }
@@ -210,25 +209,22 @@ function buildControlsPayload() {
 // Save the changes made to the camera controls
 function saveChanges() {
   if (!selectedCamera.value || !selectedConfig.value) return
-  const controlsPayload = buildControlsPayload()
   saveState.value = ''
-
-  if (isLive.value) {
-    try {
-      // fps is left out as api is not using it yet.
+  try {
+    const controlsPayload = buildControlsPayload()
+    if (isLive.value) {
       updateConfiguration(selectedCamera.value.conn_id, selectedCamera.value.camera_id, controlsPayload)
-      saveState.value = 'success'
-    } catch (e) {
-      console.error('Error updating camera:', e)
-      saveState.value = 'error'
+      listCameras()
+    } else {
+      //  the sample data does model fps
+      selectedConfig.value = {
+        ...selectedConfig.value, fps: checkBlank(newFPS.value, selectedConfig.value.fps),
+        configuration: { ...selectedConfig.value.configuration, ...controlsPayload },
+      }
     }
-  } else {
-    //  the sample data does model fps
-    selectedConfig.value = {
-      ...selectedConfig.value, fps: checkBlank(newFPS.value, selectedConfig.value.fps),
-      configuration: { ...selectedConfig.value.configuration, ...controlsPayload },
-    }
-    saveState.value = 'success'
+  } catch (e) {
+    console.error('Error updating camera:', e)
+    saveState.value = 'error'
   }
 }
 //------------------------------------------------------------------------------------------------
@@ -766,9 +762,10 @@ onMounted(() => {
                         <div v-if="saveState === 'error'" class="text-center p-1">
                             <p>Failed to save settings. Please try again.</p>
                         </div> -->
-                        <hr class="line-break" v-if="selectedCamera && !isLive">
-                        <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera && !isLive">Refresh Rate</h4>
-                        <div v-if="selectedConfig">
+                        <!-- fps probs be handled by a another route and not with the control filters -->
+                        <hr class="line-break" v-if="controlFilter('fps')">
+                        <h4 class="pt-3 pb-2 config-subtitle" v-if="controlFilter('fps')">Refresh Rate</h4>
+                        <div v-if="controlFilter('fps')">
                             <label for="fps-range" class="config-label">Frame Rate</label>
                             <div class="form-element">
                                 <input type="range" class="slider-input" id="fps-range" v-model.number="newFPS" min="1" max="5" step="1">
