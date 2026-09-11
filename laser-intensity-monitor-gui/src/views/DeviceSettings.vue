@@ -361,23 +361,28 @@ function setDefault(controlName) {
   const control = controlFilter(controlName)
   if (!control) return
 
-  const def = control.IntegerRange?.default ?? control.Menu?.default
-  if (def === undefined) return
+  const defualtValue = control.IntegerRange?.default ?? control.Menu?.default
+  if (defualtValue === undefined) return
 
   switch (controlName) {
-    case 'Brightness': newBrightness.value = def; break
-    case 'Contrast': newContrast.value = def; break
-    case 'Hue': newHue.value = def; break
-    case 'Saturation': newSaturation.value = def; break
-    case 'Gamma': newGamma.value = def; break
-    case 'Gain': newGain.value = def; break
-    case 'ExposureAbsolute': newExposureAbsolute.value = def; break
-    case 'AutoExposure': newAutoExposure.value = def; break
+    case 'Brightness': newBrightness.value = defualtValue; break
+    case 'Contrast': newContrast.value = defualtValue; break
+    case 'Hue': newHue.value = defualtValue; break
+    case 'Saturation': newSaturation.value = defualtValue; break
+    case 'Gamma': newGamma.value = defualtValue; break
+    case 'Gain': newGain.value = defualtValue; break
+    case 'ExposureAbsolute': newExposureAbsolute.value = defualtValue; break
+    case 'AutoExposure': newAutoExposure.value = defualtValue; break
   }
 }
+
 // set frame rate to default
 function setDefaultFPS() {
-  newFPS.value = 1
+  if (isLive.value) {
+    // Add when API route becomes avaible
+  } else {
+    newFPS.value = 1
+  }
 }
 function saveFrameRate() {
   if (!selectedCamera.value || !selectedConfig.value) return
@@ -385,7 +390,6 @@ function saveFrameRate() {
   if (isLive.value) {
     // TODO: there's currently no websocket path for fram rate
     console.warn('Saving frame rate against a live camera is not supported yet.')
-    saveState.value = 'error'
   } else {
     selectedConfig.value = {
       ...selectedConfig.value,
@@ -412,6 +416,7 @@ function resetControlConfig() {
     ExposureAbsolute: newExposureAbsolute,
     AutoExposure: newAutoExposure,
   }
+
   // loop through the name
   for (const [controlName, targetRef] of Object.entries(controlRefs)) {
     const control = config[controlName]
@@ -429,17 +434,26 @@ function resetAlertThreshold() {
   if (!selectedCamera.value) return
   if (isLive.value) {
     // add APi function when avaible
+    if (!defaultThresholds.value) {
+      console.warn('Default thresholds have not loaded from the server yet.')
+      return
+    }
+    newAlertThreshold.value = defaultThresholds.value.alert_below_threshold * 100
   } else {
     newAlertThreshold.value = 80
   }
 
 }
 
-// (warn_below_threshold)
+// rest the warn threshold (warn_below_threshold)
 function resetWarningThreshold() {
   if (!selectedCamera.value) return
   if (isLive.value) {
-    // add APi function when avaible
+    if (!defaultThresholds.value) {
+      console.warn('Default thresholds have not loaded from the server yet.')
+      return
+    }
+    newWarningThreshold.value = defaultThresholds.value.warn_below_threshold * 100
   } else {
     newWarningThreshold.value = 95
   }
@@ -455,7 +469,7 @@ function resetAllThresholds() {
     newWarningThreshold.value = defaultThresholds.value.warn_below_threshold * 100
     newAlertThreshold.value = defaultThresholds.value.alert_below_threshold * 100
   } else {
-    resetCriticalThreshold()
+    resetAlertThreshold()
     resetWarningThreshold()
   }
 }
