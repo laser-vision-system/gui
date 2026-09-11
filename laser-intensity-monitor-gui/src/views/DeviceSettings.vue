@@ -57,11 +57,8 @@ const isLive = computed(() => status.value === 'CONNECTED')
 // --------------------
 //const cameraConfigApiURL = ref('/api/configuration')
 //const guiUpdateApiURL = ref('/api/gui_update')
-const cameraFeedData = ref([]) // Live image stream from websocket
-const selectedMicroComputer = ref('') // selected m comp
 
-const selectedCamera = ref('') // chosen from camera list
-const selectedConfig = ref(null) // matches choice from camera list using the conn_id and camera_id
+
 // --------------------
 //     Sample Data
 // --------------------
@@ -74,14 +71,19 @@ import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json
 // -------------------------
 //     V model vairables
 // -------------------------
+// User selected variables
+const selectedMicroComputer = ref('') // selected m comp
+const selectedCamera = ref('') // chosen from camera list
+const selectedConfig = ref(null) // matches choice from camera list using the conn_id and camera_id
 // Form section toggles
-// MicroComputer Configurables
+// MicroComputer Configurables Rename
 const newMicroComputerName = ref(null)
+// MicroComputer Configurables Select vision processing
 const newVisionProcessing = ref(null)
-// Camera Configuration values
+// Camera Configuration Rename
 const newName = ref(null)
 // Diviation configration
-const newCriticalThreshold = ref(null)
+const newAlertThreshold = ref(null)
 const newWarningThreshold = ref(null)
 // FPS (not added yet)
 const newFPS = ref(null)
@@ -144,6 +146,7 @@ function renameMicroComputer() {
     selectedMicroComputer.value.name = newMicroComputerName.value
   }
 }
+
 // Select Vision processing method.
 //  the method for saving/ submiting the selected vision processing method
 function submitVisionProcessing() {
@@ -156,6 +159,7 @@ function submitVisionProcessing() {
     selectedMicroComputer.value.Menu.value.ConValueMenu = newVisionProcessing.value
   }
 }
+
 // Rename Selected camera
 function renameCamera() {
   if (!selectedCamera.value || !newName.value) return
@@ -202,7 +206,6 @@ function buildControlsPayload() {
       Menu: {...original.AutoExposure.Menu, value: { ConValueMenu: checkBlank(newAutoExposure.value, current) },},
     }
   }
-
   return payload
 }
 
@@ -310,6 +313,7 @@ function saveChanges() {
 // ------------------------------
 //        Sample data Methods
 // ------------------------------
+
 // function to find the configuration that matches the selected cameras conn_id and camera_id
 function findConfig(conn_id, camera_id) {
   return (
@@ -318,6 +322,7 @@ function findConfig(conn_id, camera_id) {
     ) ?? null
   )
 }
+
 // control filter function for selected camera
 function controlFilter(controlName) {
   return selectedConfig.value?.configuration?.[controlName] ?? null
@@ -418,16 +423,18 @@ function resetControlConfig() {
     targetRef.value = def
   }
 }
+
 // set the threashold values to defualt (alert_below_threshold)
-function resetCriticalThreshold() {
+function resetAlertThreshold() {
   if (!selectedCamera.value) return
   if (isLive.value) {
     // add APi function when avaible
   } else {
-    newCriticalThreshold.value = 80
+    newAlertThreshold.value = 80
   }
 
 }
+
 // (warn_below_threshold)
 function resetWarningThreshold() {
   if (!selectedCamera.value) return
@@ -437,6 +444,8 @@ function resetWarningThreshold() {
     newWarningThreshold.value = 95
   }
 }
+
+// sets the default threshold for all deviation thresholds
 function resetAllThresholds() {
   if (isLive.value) {
     if (!defaultThresholds.value) {
@@ -444,23 +453,25 @@ function resetAllThresholds() {
       return
     }
     newWarningThreshold.value = defaultThresholds.value.warn_below_threshold * 100
-    newCriticalThreshold.value = defaultThresholds.value.alert_below_threshold * 100
+    newAlertThreshold.value = defaultThresholds.value.alert_below_threshold * 100
   } else {
     resetCriticalThreshold()
     resetWarningThreshold()
   }
 }
+
 // save thresholds
 function saveThresholds() {
   if (!selectedCamera.value) return
   saveState.value = ''
 
   const warning = newWarningThreshold.value / 100
-  const alert = newCriticalThreshold.value / 100
+  const alert = newAlertThreshold.value / 100
 
   if (isLive.value) {
     try {
       setCameraThresholds(selectedCamera.value.conn_id, selectedCamera.value.camera_id, warning, alert)
+      listCameras() // refresh camera list
     } catch (e) {
       console.error('Error updating thresholds:', e)
     }
@@ -470,12 +481,13 @@ function saveThresholds() {
     saveState.value = 'success'
   }
 }
+
 // set global defualt threshold on server
 function setServerDefaultThreshold() {
   if (!selectedCamera.value) return
 
   const warning = newWarningThreshold.value / 100
-  const alert = newCriticalThreshold.value / 100
+  const alert = newAlertThreshold.value / 100
 
   if (isLive.value) {
     try {
@@ -487,9 +499,12 @@ function setServerDefaultThreshold() {
     }
   }
 }
+
 // --------------------
 //        Watchers
 // --------------------
+
+// watch the seleceted camera to load it's values when it changes
 watch(selectedCamera, (cam, oldCam) => {
   saveState.value = ''
   selectedConfig.value = null
@@ -503,7 +518,7 @@ watch(selectedCamera, (cam, oldCam) => {
   }
   // load camera list values
   newName.value = cam.name
-  newCriticalThreshold.value = cam.alert_below_threshold * 100
+  newAlertThreshold.value = cam.alert_below_threshold * 100
   newWarningThreshold.value = cam.warn_below_threshold * 100
 
   if (isLive.value) {
@@ -554,21 +569,23 @@ watch(selectedMicroComputer, () => {
 })
 
 watch(newWarningThreshold, (newValue) => {
-  if (newValue <= newCriticalThreshold.value) {
-    newCriticalThreshold.value = newValue - 1
+  if (newValue <= newAlertThreshold.value) {
+    newAlertThreshold.value = newValue - 1
   }
 })
-watch(newCriticalThreshold, (newValue) => {
+
+watch(newAlertThreshold, (newValue) => {
   if (newValue >= newWarningThreshold.value) {
     newWarningThreshold.value = newValue + 2
   }
 })
+
 // -------------------------------
 //        onMount and unMount
 // -------------------------------
 onMounted(() => {
     //fetchCameraConfig()
-    connect()
+    connect() // gets the edge list and camera list in its function
     getDefaultThresholds()
 });
 </script>
@@ -790,8 +807,8 @@ onMounted(() => {
                         <div v-if="selectedConfig">
                             <label for="fps-range" class="config-label">Alert Threshold</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="critical-range" v-model.number="newCriticalThreshold" min="1" max="99" step="1">
-                                <input type="number" class="number-input" id= "critical-number" v-model.number="newCriticalThreshold" min="1" max="99" step="1">
+                                <input type="range" class="slider-input" id="critical-range" v-model.number="newAlertThreshold" min="1" max="99" step="1">
+                                <input type="number" class="number-input" id= "critical-number" v-model.number="newAlertThreshold" min="1" max="99" step="1">
                             </div>
                         </div>
                         <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
