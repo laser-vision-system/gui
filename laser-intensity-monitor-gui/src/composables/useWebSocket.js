@@ -419,7 +419,7 @@ export function useWebSocket(url) {
     send('Setpoint', { conn_id: connId, camera_id: cameraId })
   }
 
-  // Setpoint function for all ListCameras (no json attached)
+  // Setpoint function for all Cameras (no json attached)
   function setpointAll() {
     send('Setpoint')
   }

@@ -57,7 +57,11 @@ const isLive = computed(() => status.value === 'CONNECTED')
 // --------------------
 //const cameraConfigApiURL = ref('/api/configuration')
 //const guiUpdateApiURL = ref('/api/gui_update')
-
+//     Empty,
+// Cnn,
+// Diff,
+// Demonstration,
+const visionTech = ['Empty', 'Cnn', 'Diff', 'Demonstration']
 
 // --------------------
 //     Sample Data
@@ -574,6 +578,8 @@ watch(selectedMicroComputer, () => {
   clearSelectedCamera()
   if (selectedMicroComputer.value && selectedMicroComputer.value !== 'all') {
     newMicroComputerName.value = selectedMicroComputer.value.name
+    // add auto select current vision processing when value is availbe
+    // newVisionProcessing.value = selectedMicroComputer.value
     if (isLive.value) {
       // add vision processing when api has a path for its value
     } else {
@@ -640,9 +646,9 @@ onMounted(() => {
                                 <label for="vision-process" class="config-label">Select Vision Processing Method</label>
                                 <div class="form-element">
                                     <select class="menu-input" id="vision-process" v-model.number="newVisionProcessing">
-                                        <!-- TODO: this needs to be fixed to match the data that is sent thorugh -->
-                                        <option v-for="item in selectedMicroComputer.Menu.items" :key="item.id" :value="item.id">
-                                            {{item.item.Name}}
+                                        <!-- TODO: change from static data to server hosted data-->
+                                        <option v-for="(item,index) in visionTech" :key="item" :value="item">
+                                            {{item}}
                                         </option>
                                     </select>
                                     <button type="button" class="btn submit-btn" @click="showSelectVisionProcessingConfrim = true">Select</button>
