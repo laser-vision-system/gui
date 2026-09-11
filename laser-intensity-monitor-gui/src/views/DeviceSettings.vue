@@ -574,6 +574,7 @@ watch(wsCameraList, () => {
   Object.assign(selectedCamera.value, freshCam)
 })
 
+// make into compute method
 watch(selectedMicroComputer, () => {
   clearSelectedCamera()
   if (selectedMicroComputer.value && selectedMicroComputer.value !== 'all') {
@@ -648,7 +649,7 @@ onMounted(() => {
                                     <select class="menu-input" id="vision-process" v-model.number="newVisionProcessing">
                                         <!-- TODO: change from static data to server hosted data-->
                                         <option v-for="(item,index) in visionTech" :key="item" :value="item">
-                                            {{item}}
+                                            [{{index + 1}}] : {{item}}
                                         </option>
                                     </select>
                                     <button type="button" class="btn submit-btn" @click="showSelectVisionProcessingConfrim = true">Select</button>
