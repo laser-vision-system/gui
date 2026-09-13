@@ -23,7 +23,7 @@ const {
   setpoint,
   viewCamera,
   stopViewingCamera
-} = useWebSocket('ws://localhost:8080/gui_ws')
+} = useWebSocket('ws://'+ location.hostname +':8080/gui_ws')
 
 //  Check if the websocket is connected
 const isLive = computed(() => status.value === 'CONNECTED')
