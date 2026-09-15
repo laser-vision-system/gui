@@ -47,7 +47,7 @@ const {
   setCameraThresholds,
   setDefaultThreshold,
   getDefaultThresholds,
-} = useWebSocket('ws://localhost:8080/gui_ws')
+} = useWebSocket('ws://'+ location.hostname +':8080/gui_ws')
 
 //  Check if the websocket is connected
 const isLive = computed(() => status.value === 'CONNECTED')
@@ -57,11 +57,12 @@ const isLive = computed(() => status.value === 'CONNECTED')
 // --------------------
 //const cameraConfigApiURL = ref('/api/configuration')
 //const guiUpdateApiURL = ref('/api/gui_update')
-const cameraFeedData = ref([]) // Live image stream from websocket
-const selectedMicroComputer = ref('') // selected m comp
+//     Empty,
+// Cnn,
+// Diff,
+// Demonstration,
+const visionTech = ['Empty', 'Cnn', 'Diff', 'Demonstration']
 
-const selectedCamera = ref('') // chosen from camera list
-const selectedConfig = ref(null) // matches choice from camera list using the conn_id and camera_id
 // --------------------
 //     Sample Data
 // --------------------
@@ -74,14 +75,19 @@ import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json
 // -------------------------
 //     V model vairables
 // -------------------------
+// User selected variables
+const selectedMicroComputer = ref('') // selected m comp
+const selectedCamera = ref('') // chosen from camera list
+const selectedConfig = ref(null) // matches choice from camera list using the conn_id and camera_id
 // Form section toggles
-// MicroComputer Configurables
+// MicroComputer Configurables Rename
 const newMicroComputerName = ref(null)
+// MicroComputer Configurables Select vision processing
 const newVisionProcessing = ref(null)
-// Camera Configuration values
+// Camera Configuration Rename
 const newName = ref(null)
 // Diviation configration
-const newCriticalThreshold = ref(null)
+const newAlertThreshold = ref(null)
 const newWarningThreshold = ref(null)
 // FPS (not added yet)
 const newFPS = ref(null)
@@ -144,6 +150,7 @@ function renameMicroComputer() {
     selectedMicroComputer.value.name = newMicroComputerName.value
   }
 }
+
 // Select Vision processing method.
 //  the method for saving/ submiting the selected vision processing method
 function submitVisionProcessing() {
@@ -151,16 +158,18 @@ function submitVisionProcessing() {
   if (isLive.value) {
     // API function for submiting the chosen vision processing
     setEdgeProcessingType(selectedMicroComputer.value.conn_id, newVisionProcessing.value)
+    // listEdges() ( not requried)
   } else {
     selectedMicroComputer.value.Menu.value.ConValueMenu = newVisionProcessing.value
   }
 }
+
 // Rename Selected camera
 function renameCamera() {
   if (!selectedCamera.value || !newName.value) return
   if (isLive.value) {
     setCameraName(selectedCamera.value.conn_id, selectedCamera.value.camera_id, newName.value)
-    listCameras() // refresh camera list
+    //listCameras() // refresh camera list (not needed)
   } else {
     selectedCamera.value.name = newName.value
   }
@@ -177,60 +186,57 @@ function checkBlank(newValue, currentValue) {
 // build camera control payload does not include the fps (we will figure that out later)
 function buildControlsPayload() {
   if (!selectedConfig.value) return null
+
   const original = selectedConfig.value.configuration
   const payload = {}
 
   const integerControls = {
-    Brightness: newBrightness,
-    Contrast: newContrast,
-    Hue: newHue,
-    Saturation: newSaturation,
-    Gamma: newGamma,
-    Gain: newGain,
+    Brightness: newBrightness, Contrast: newContrast, Hue: newHue,
+    Saturation: newSaturation, Gamma: newGamma, Gain: newGain,
     ExposureAbsolute: newExposureAbsolute,
   }
   for (const [name, valueRef] of Object.entries(integerControls)) {
-    if (!original[name]) continue // camera doesn't support this control
-    const current = original[name].IntegerRange.value.ConValueInteger
+    if (!original?.[name]) continue // camera doesn't support this control
+    const current = original[name].IntegerRange?.value
+    const resolved = checkBlank(valueRef.value?.value, current)
+    if (resolved === null || resolved === undefined) continue
     payload[name] = {
-      IntegerRange: {...original[name].IntegerRange, value: { ConValueInteger: checkBlank(valueRef.value, current) },},
+      IntegerRange: {...original[name].IntegerRange, value:  resolved,},
     }
   }
-
-  if (original.AutoExposure) {
-    const current = original.AutoExposure.Menu.value.ConValueMenu
+  // NOT IN CURRENT SPRINT BUT MAY NEED TO BE FIXED DEPENDING ON HOW THE CONTROLS ARE SET THROUGH
+  if (original?.AutoExposure) {
+    const current = original.AutoExposure.Menu?.value?.ConValueMenu
     payload.AutoExposure = {
       Menu: {...original.AutoExposure.Menu, value: { ConValueMenu: checkBlank(newAutoExposure.value, current) },},
     }
   }
-
   return payload
 }
 
 // Save the changes made to the camera controls
 function saveChanges() {
   if (!selectedCamera.value || !selectedConfig.value) return
-  const controlsPayload = buildControlsPayload()
   saveState.value = ''
-
-  if (isLive.value) {
-    try {
-      // fps is left out as api is not using it yet.
-      updateConfiguration(selectedCamera.value.conn_id, selectedCamera.value.camera_id, controlsPayload)
-      saveState.value = 'success'
-    } catch (e) {
-      console.error('Error updating camera:', e)
-      saveState.value = 'error'
+  try {
+    const controlsPayload = buildControlsPayload()
+    if (isLive.value) {
+      updateConfiguration(selectedCamera.value.conn_id, selectedCamera.value.camera_id, JSON.stringify(controlsPayload))
+      // listCameras()
+    } else {
+      //  the sample data does model fps
+      selectedConfig.value = {
+        ...selectedConfig.value, fps: checkBlank(newFPS.value, selectedConfig.value.fps),
+        configuration: { ...selectedConfig.value.configuration, ...controlsPayload },
+      }
     }
-  } else {
-    //  the sample data does model fps
-    selectedConfig.value = {
-      ...selectedConfig.value, fps: checkBlank(newFPS.value, selectedConfig.value.fps),
-      configuration: { ...selectedConfig.value.configuration, ...controlsPayload },
-    }
-    saveState.value = 'success'
+  } catch (e) {
+    console.error('Error updating camera:', e)
+    saveState.value = 'error'
   }
 }
+
+console.log(controlConfig)
 //------------------------------------------------------------------------------------------------
 // All REST-ful api methods and variables have been commented out but not deleted as a redundancy
 //------------------------------------------------------------------------------------------------
@@ -314,6 +320,7 @@ function saveChanges() {
 // ------------------------------
 //        Sample data Methods
 // ------------------------------
+
 // function to find the configuration that matches the selected cameras conn_id and camera_id
 function findConfig(conn_id, camera_id) {
   return (
@@ -322,13 +329,16 @@ function findConfig(conn_id, camera_id) {
     ) ?? null
   )
 }
+
+// ------------------------------
+//          Methods
+// ------------------------------
+
 // control filter function for selected camera
 function controlFilter(controlName) {
   return selectedConfig.value?.configuration?.[controlName] ?? null
 }
-// ------------------------------
-//          Methods
-// ------------------------------
+
 // Load current values from the matched config. must be used after select config is set
 function loadCameraValues() {
   if (!selectedConfig.value) {
@@ -343,40 +353,49 @@ function loadCameraValues() {
     newAutoExposure.value = null
     return
   }
+
   const config = selectedConfig.value.configuration
 
-  newFPS.value = selectedConfig.value.fps ?? null
-  newBrightness.value = config.Brightness?.IntegerRange?.value?.ConValueInteger ?? null
-  newContrast.value = config.Contrast?.IntegerRange?.value?.ConValueInteger ?? null
-  newHue.value = config.Hue?.IntegerRange?.value?.ConValueInteger ?? null
-  newSaturation.value = config.Saturation?.IntegerRange?.value?.ConValueInteger ?? null
-  newGamma.value = config.Gamma?.IntegerRange?.value?.ConValueInteger ?? null
-  newGain.value = config.Gain?.IntegerRange?.value?.ConValueInteger ?? null
-  newExposureAbsolute.value = config.ExposureAbsolute?.IntegerRange?.value?.ConValueInteger ?? null
-  newAutoExposure.value = config.AutoExposure?.Menu?.value?.ConValueMenu ?? null
+  // load values
+  newBrightness.value = config.Brightness?.IntegerRange ?? null
+  newContrast.value = config.Contrast?.IntegerRange ?? null
+  newHue.value = config.Hue?.IntegerRange ?? null
+  newSaturation.value = config.Saturation?.IntegerRange ?? null
+  newGamma.value = config.Gamma?.IntegerRange ?? null
+  newGain.value = config.Gain?.IntegerRange ?? null
+  newExposureAbsolute.value = config.ExposureAbsolute?.IntegerRange ?? null
+  newAutoExposure.value = config.AutoExposure?.Menu ?? null
+  if (!isLive.value) {
+    newFPS.value = selectedConfig.value.fps ?? null
+  }
 }
 // set selected control values to the defualt settings
 function setDefault(controlName) {
   const control = controlFilter(controlName)
   if (!control) return
 
-  const def = control.IntegerRange?.default ?? control.Menu?.default
-  if (def === undefined) return
+  const defualtValue = control.IntegerRange?.default ?? control.Menu?.default
+  if (defualtValue === undefined) return
 
   switch (controlName) {
-    case 'Brightness': newBrightness.value = def; break
-    case 'Contrast': newContrast.value = def; break
-    case 'Hue': newHue.value = def; break
-    case 'Saturation': newSaturation.value = def; break
-    case 'Gamma': newGamma.value = def; break
-    case 'Gain': newGain.value = def; break
-    case 'ExposureAbsolute': newExposureAbsolute.value = def; break
-    case 'AutoExposure': newAutoExposure.value = def; break
+    case 'Brightness': newBrightness.value = { ...newBrightness.value, value: defualtValue}; break
+    case 'Contrast': newContrast.value = { ...newContrast.value, value: defualtValue};; break
+    case 'Hue': newHue.value = { ...newHue.value, value: defualtValue};; break
+    case 'Saturation': newSaturation.value = { ...newSaturation.value, value: defualtValue};; break
+    case 'Gamma': newGamma.value = { ...newGamma.value, value: defualtValue};; break
+    case 'Gain': newGain.value = { ...newGain.value, value: defualtValue}; break
+    case 'ExposureAbsolute': newExposureAbsolute.value = { ...newExposureAbsolute.value, value: defualtValue}; break
+    case 'AutoExposure': newAutoExposure.value = defualtValue; break
   }
 }
+
 // set frame rate to default
 function setDefaultFPS() {
-  newFPS.value = 1
+  if (isLive.value) {
+    // Add when API route becomes avaible
+  } else {
+    newFPS.value = 1
+  }
 }
 function saveFrameRate() {
   if (!selectedCamera.value || !selectedConfig.value) return
@@ -384,7 +403,6 @@ function saveFrameRate() {
   if (isLive.value) {
     // TODO: there's currently no websocket path for fram rate
     console.warn('Saving frame rate against a live camera is not supported yet.')
-    saveState.value = 'error'
   } else {
     selectedConfig.value = {
       ...selectedConfig.value,
@@ -411,6 +429,7 @@ function resetControlConfig() {
     ExposureAbsolute: newExposureAbsolute,
     AutoExposure: newAutoExposure,
   }
+
   // loop through the name
   for (const [controlName, targetRef] of Object.entries(controlRefs)) {
     const control = config[controlName]
@@ -419,28 +438,41 @@ function resetControlConfig() {
     const def = control.IntegerRange?.default ?? control.Menu?.default
     if (def === undefined) continue
 
-    targetRef.value = def
+    targetRef.value = control.IntegerRange ? {...targetRef.value, value:def} : def
   }
 }
+
 // set the threashold values to defualt (alert_below_threshold)
-function resetCriticalThreshold() {
+function resetAlertThreshold() {
   if (!selectedCamera.value) return
   if (isLive.value) {
     // add APi function when avaible
+    if (!defaultThresholds.value) {
+      console.warn('Default thresholds have not loaded from the server yet.')
+      return
+    }
+    newAlertThreshold.value = defaultThresholds.value.alert_below_threshold * 100
   } else {
-    newCriticalThreshold.value = 80
+    newAlertThreshold.value = 80
   }
 
 }
-// (warn_below_threshold)
+
+// rest the warn threshold (warn_below_threshold)
 function resetWarningThreshold() {
   if (!selectedCamera.value) return
   if (isLive.value) {
-    // add APi function when avaible
+    if (!defaultThresholds.value) {
+      console.warn('Default thresholds have not loaded from the server yet.')
+      return
+    }
+    newWarningThreshold.value = defaultThresholds.value.warn_below_threshold * 100
   } else {
     newWarningThreshold.value = 95
   }
 }
+
+// sets the default threshold for all deviation thresholds
 function resetAllThresholds() {
   if (isLive.value) {
     if (!defaultThresholds.value) {
@@ -448,23 +480,25 @@ function resetAllThresholds() {
       return
     }
     newWarningThreshold.value = defaultThresholds.value.warn_below_threshold * 100
-    newCriticalThreshold.value = defaultThresholds.value.alert_below_threshold * 100
+    newAlertThreshold.value = defaultThresholds.value.alert_below_threshold * 100
   } else {
-    resetCriticalThreshold()
+    resetAlertThreshold()
     resetWarningThreshold()
   }
 }
+
 // save thresholds
 function saveThresholds() {
   if (!selectedCamera.value) return
   saveState.value = ''
 
   const warning = newWarningThreshold.value / 100
-  const alert = newCriticalThreshold.value / 100
+  const alert = newAlertThreshold.value / 100
 
   if (isLive.value) {
     try {
       setCameraThresholds(selectedCamera.value.conn_id, selectedCamera.value.camera_id, warning, alert)
+      listCameras() // refresh camera list
     } catch (e) {
       console.error('Error updating thresholds:', e)
     }
@@ -474,12 +508,13 @@ function saveThresholds() {
     saveState.value = 'success'
   }
 }
+
 // set global defualt threshold on server
 function setServerDefaultThreshold() {
   if (!selectedCamera.value) return
 
   const warning = newWarningThreshold.value / 100
-  const alert = newCriticalThreshold.value / 100
+  const alert = newAlertThreshold.value / 100
 
   if (isLive.value) {
     try {
@@ -491,9 +526,12 @@ function setServerDefaultThreshold() {
     }
   }
 }
+
 // --------------------
 //        Watchers
 // --------------------
+
+// watch the seleceted camera to load it's values when it changes
 watch(selectedCamera, (cam, oldCam) => {
   saveState.value = ''
   selectedConfig.value = null
@@ -507,7 +545,7 @@ watch(selectedCamera, (cam, oldCam) => {
   }
   // load camera list values
   newName.value = cam.name
-  newCriticalThreshold.value = cam.alert_below_threshold * 100
+  newAlertThreshold.value = cam.alert_below_threshold * 100
   newWarningThreshold.value = cam.warn_below_threshold * 100
 
   if (isLive.value) {
@@ -545,10 +583,13 @@ watch(wsCameraList, () => {
   Object.assign(selectedCamera.value, freshCam)
 })
 
+// make into compute method
 watch(selectedMicroComputer, () => {
   clearSelectedCamera()
   if (selectedMicroComputer.value && selectedMicroComputer.value !== 'all') {
     newMicroComputerName.value = selectedMicroComputer.value.name
+    // add auto select current vision processing when value is availbe
+    // newVisionProcessing.value = selectedMicroComputer.value
     if (isLive.value) {
       // add vision processing when api has a path for its value
     } else {
@@ -558,22 +599,24 @@ watch(selectedMicroComputer, () => {
 })
 
 watch(newWarningThreshold, (newValue) => {
-  if (newValue <= newCriticalThreshold.value) {
-    newCriticalThreshold.value = newValue - 1
+  if (newValue <= newAlertThreshold.value) {
+    newAlertThreshold.value = newValue - 1
   }
 })
-watch(newCriticalThreshold, (newValue) => {
+
+watch(newAlertThreshold, (newValue) => {
   if (newValue >= newWarningThreshold.value) {
     newWarningThreshold.value = newValue + 2
   }
 })
+
 // -------------------------------
 //        onMount and unMount
 // -------------------------------
 onMounted(() => {
     //fetchCameraConfig()
-    connect()
-    getDefaultThresholds()
+    connect() // gets the edge list and camera list in its function
+    getDefaultThresholds() // get the default deviation thresholds on load
 });
 </script>
 <template>
@@ -613,9 +656,10 @@ onMounted(() => {
                                 <label for="vision-process" class="config-label">Select Vision Processing Method</label>
                                 <div class="form-element">
                                     <select class="menu-input" id="vision-process" v-model.number="newVisionProcessing">
-                                        <!-- TODO: this needs to be fixed to match the data that is sent thorugh -->
-                                        <option v-for="item in selectedMicroComputer.Menu.items" :key="item.id" :value="item.id">
-                                            {{item.item.Name}}
+                                        <!-- TODO: change from static data to server hosted data-->
+                                        <option value="" disabled selected>Please select a Vision Processing Method</option>
+                                        <option v-for="(item,index) in visionTech" :key="item" :value="item">
+                                            [{{index + 1}}] : {{item}}
                                         </option>
                                     </select>
                                     <button type="button" class="btn submit-btn" @click="showSelectVisionProcessingConfrim = true">Select</button>
@@ -647,84 +691,84 @@ onMounted(() => {
                         <div v-if="controlFilter('Brightness')">
                             <label for="brightness-range" class="config-label">Brightness</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="brightness-range" v-model.number="newBrightness"
-                                    :min="controlFilter('Brightness').IntegerRange.min"
-                                    :max="controlFilter('Brightness').IntegerRange.max"
-                                    :step="controlFilter('Brightness').IntegerRange.step">
-                                <input type="number" class="number-input" id="brightness-number" v-model.number="newBrightness"
-                                    :min="controlFilter('Brightness').IntegerRange.min"
-                                    :max="controlFilter('Brightness').IntegerRange.max"
-                                    :step="controlFilter('Brightness').IntegerRange.step">
+                                <input type="range" class="slider-input" id="brightness-range" v-model.number="newBrightness.value"
+                                    :min="newBrightness.min"
+                                    :max="newBrightness.max"
+                                    :step="newBrightness.step">
+                                <input type="number" class="number-input" id="brightness-number" v-model.number="newBrightness.value"
+                                    :min="newBrightness.min"
+                                    :max="newBrightness.max"
+                                    :step="newBrightness.step">
                                 <button type="button" class="btn submit-btn" @click="setDefault('Brightness')">Reset</button>
                             </div>
                         </div>
                         <div v-if="controlFilter('Contrast')">
                             <label for="contrast-range" class="config-label">Contrast</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="contrast-range" v-model.number="newContrast"
-                                    :min="controlFilter('Contrast').IntegerRange.min"
-                                    :max="controlFilter('Contrast').IntegerRange.max"
-                                    :step="controlFilter('Contrast').IntegerRange.step">
-                                <input type="number" class="number-input" id="contrast-number" v-model.number="newContrast"
-                                    :min="controlFilter('Contrast').IntegerRange.min"
-                                    :max="controlFilter('Contrast').IntegerRange.max"
-                                    :step="controlFilter('Contrast').IntegerRange.step">
+                                <input type="range" class="slider-input" id="contrast-range" v-model.number="newContrast.value"
+                                    :min="newContrast.min"
+                                    :max="newContrast.max"
+                                    :step="newContrast.step">
+                                <input type="number" class="number-input" id="contrast-number" v-model.number="newContrast.value"
+                                    :min="newContrast.min"
+                                    :max="newContrast.max"
+                                    :step="newContrast.step">
                                 <button type="button" class="btn submit-btn" @click="setDefault('Contrast')">Reset</button>
                             </div>
                         </div>
                         <div v-if="controlFilter('Hue')">
                             <label for="hue-range" class="config-label">Hue</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="hue-range" v-model.number="newHue"
-                                    :min="controlFilter('Hue').IntegerRange.min"
-                                    :max="controlFilter('Hue').IntegerRange.max"
-                                    :step="controlFilter('Hue').IntegerRange.step">
-                                <input type="number" class="number-input" id="hue-number" v-model.number="newHue"
-                                    :min="controlFilter('Hue').IntegerRange.min"
-                                    :max="controlFilter('Hue').IntegerRange.max"
-                                    :step="controlFilter('Hue').IntegerRange.step">
+                                <input type="range" class="slider-input" id="hue-range" v-model.number="newHue.value"
+                                    :min="newHue.min"
+                                    :max="newHue.max"
+                                    :step="newHue.step">
+                                <input type="number" class="number-input" id="hue-number" v-model.number="newHue.value"
+                                    :min="newHue.min"
+                                    :max="newHue.max"
+                                    :step="newHue.step">
                                 <button type="button" class="btn submit-btn" @click="setDefault('Hue')">Reset</button>
                             </div>
                         </div>
                         <div v-if="controlFilter('Saturation')">
                             <label for="saturation-range" class="config-label">Saturation</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="saturation-range" v-model.number="newSaturation"
-                                    :min="controlFilter('Saturation').IntegerRange.min"
-                                    :max="controlFilter('Saturation').IntegerRange.max"
-                                    :step="controlFilter('Saturation').IntegerRange.step">
-                                <input type="number" class="number-input" id="saturation-number" v-model.number="newSaturation"
-                                    :min="controlFilter('Saturation').IntegerRange.min"
-                                    :max="controlFilter('Saturation').IntegerRange.max"
-                                    :step="controlFilter('Saturation').IntegerRange.step">
+                                <input type="range" class="slider-input" id="saturation-range" v-model.number="newSaturation.value"
+                                    :min="newSaturation.min"
+                                    :max="newSaturation.max"
+                                    :step="newSaturation.step">
+                                <input type="number" class="number-input" id="saturation-number" v-model.number="newSaturation.value"
+                                    :min="newSaturation.min"
+                                    :max="newSaturation.max"
+                                    :step="newSaturation.step">
                                 <button type="button" class="btn submit-btn" @click="setDefault('Saturation')">Reset</button>
                             </div>
                         </div>
                         <div v-if="controlFilter('Gamma')">
                             <label for="gamma-range" class="config-label">Gamma</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="gamma-range" v-model.number="newGamma"
-                                    :min="controlFilter('Gamma').IntegerRange.min"
-                                    :max="controlFilter('Gamma').IntegerRange.max"
-                                    :step="controlFilter('Gamma').IntegerRange.step">
-                                <input type="number" class="number-input" id="gamma-number" v-model.number="newGamma"
-                                    :min="controlFilter('Gamma').IntegerRange.min"
-                                    :max="controlFilter('Gamma').IntegerRange.max"
-                                    :step="controlFilter('Gamma').IntegerRange.step">
+                                <input type="range" class="slider-input" id="gamma-range" v-model.number="newGamma.value"
+                                    :min="newGamma.min"
+                                    :max="newGamma.max"
+                                    :step="newGamma.step">
+                                <input type="number" class="number-input" id="gamma-number" v-model.number="newGamma.value"
+                                    :min="newGamma.min"
+                                    :max="newGamma.max"
+                                    :step="newGamma.step">
                                 <button type="button" class="btn submit-btn" @click="setDefault('Gamma')">Reset</button>
                             </div>
                         </div>
                         <div v-if="controlFilter('Gain')">
                             <label for="gain-range" class="config-label">Gain</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="gain-range" v-model.number="newGain"
-                                    :min="controlFilter('Gain').IntegerRange.min"
-                                    :max="controlFilter('Gain').IntegerRange.max"
-                                    :step="controlFilter('Gain').IntegerRange.step">
-                                <input type="number" class="number-input" id="gain-number" v-model.number="newGain"
-                                    :min="controlFilter('Gain').IntegerRange.min"
-                                    :max="controlFilter('Gain').IntegerRange.max"
-                                    :step="controlFilter('Gain').IntegerRange.step">
+                                <input type="range" class="slider-input" id="gain-range" v-model.number="newGain.value"
+                                    :min="newGain.min"
+                                    :max="newGain.max"
+                                    :step="newGain.step">
+                                <input type="number" class="number-input" id="gain-number" v-model.number="newGain.value"
+                                    :min="newGain.min"
+                                    :max="newGain.max"
+                                    :step="newGain.step">
                                 <button type="button" class="btn submit-btn" @click="setDefault('Gain')">Reset</button>
                             </div>
                         </div>
@@ -742,14 +786,14 @@ onMounted(() => {
                         <div v-if="controlFilter('ExposureAbsolute')">
                             <label for="exposure-range" class="config-label">Exposure (Absolute)</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="exposure-range" v-model.number="newExposureAbsolute"
-                                :min="controlFilter('ExposureAbsolute').IntegerRange.min"
-                                    :max="controlFilter('ExposureAbsolute').IntegerRange.max"
-                                    :step="controlFilter('ExposureAbsolute').IntegerRange.step">
-                                <input type="number" class="number-input" id="exposure-number" v-model.number="newExposureAbsolute"
-                                    :min="controlFilter('ExposureAbsolute').IntegerRange.min"
-                                    :max="controlFilter('ExposureAbsolute').IntegerRange.max"
-                                    :step="controlFilter('ExposureAbsolute').IntegerRange.step">
+                                <input type="range" class="slider-input" id="exposure-range" v-model.number="newExposureAbsolute.value"
+                                :min="newExposureAbsolute.min"
+                                    :max="newExposureAbsolute.max"
+                                    :step="newExposureAbsolute.step">
+                                <input type="number" class="number-input" id="exposure-number" v-model.number="newExposureAbsolute.value"
+                                    :min="newExposureAbsolute.min"
+                                    :max="newExposureAbsolute.max"
+                                    :step="newExposureAbsolute.step">
                                 <button type="button" class="btn submit-btn" @click="setDefault('ExposureAbsolute')">Reset</button>
                             </div>
                         </div>
@@ -766,9 +810,10 @@ onMounted(() => {
                         <div v-if="saveState === 'error'" class="text-center p-1">
                             <p>Failed to save settings. Please try again.</p>
                         </div> -->
-                        <hr class="line-break" v-if="selectedCamera && !isLive">
-                        <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera && !isLive">Refresh Rate</h4>
-                        <div v-if="selectedConfig">
+                        <!-- fps probs be handled by a another route and not with the control filters -->
+                        <hr class="line-break" v-if="controlFilter('fps')">
+                        <h4 class="pt-3 pb-2 config-subtitle" v-if="controlFilter('fps')">Refresh Rate</h4>
+                        <div v-if="controlFilter('fps')">
                             <label for="fps-range" class="config-label">Frame Rate</label>
                             <div class="form-element">
                                 <input type="range" class="slider-input" id="fps-range" v-model.number="newFPS" min="1" max="5" step="1">
@@ -793,8 +838,8 @@ onMounted(() => {
                         <div v-if="selectedConfig">
                             <label for="fps-range" class="config-label">Alert Threshold</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="critical-range" v-model.number="newCriticalThreshold" min="1" max="99" step="1">
-                                <input type="number" class="number-input" id= "critical-number" v-model.number="newCriticalThreshold" min="1" max="99" step="1">
+                                <input type="range" class="slider-input" id="critical-range" v-model.number="newAlertThreshold" min="1" max="99" step="1">
+                                <input type="number" class="number-input" id= "critical-number" v-model.number="newAlertThreshold" min="1" max="99" step="1">
                             </div>
                         </div>
                         <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">

@@ -23,7 +23,7 @@ const {
   setpoint,
   viewCamera,
   stopViewingCamera
-} = useWebSocket('ws://localhost:8080/gui_ws')
+} = useWebSocket('ws://'+ location.hostname +':8080/gui_ws')
 
 //  Check if the websocket is connected
 const isLive = computed(() => status.value === 'CONNECTED')
@@ -71,7 +71,7 @@ const deviationAlerts = computed(() => {
 
     return Object.values(activeMergedData.value).flatMap(section => {
         if (!section.activeCameras) return []
-        
+
         return section.activeCameras.map(analysis => {
                 let alertMsg = ''
                 let alertType = ''
@@ -317,7 +317,7 @@ async function postSetpointTrue() {
 }
 const updateSetpoint = () => {
     if (!selectedCameraId.value || !selectedCameraInfo.value) return
-    
+
     const [conn_id, camera_id] = selectedCameraId.value.split('-')
     const targetSetpoint = selectedCameraInfo.value.intensity
     cameraSetpoints.value[selectedCameraId.value] = targetSetpoint
@@ -503,9 +503,9 @@ onUnmounted(() => {
                             <div v-if="selectedCameraInfo">
                                 <p><strong>ID:</strong> {{ selectedCameraInfo.camera_id }}</p>
                                 <p><strong>Name:</strong> {{ selectedCameraInfo.name }}</p>
-                                <!--<p><strong>Intensity:</strong> {{ selectedCameraInfo.intensity }}</p>-->
+                                <!-- <p><strong>Intensity:</strong> {{ selectedCameraInfo.intensity }}</p> -->
                                 <p><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) + '%' }}</p>
-                                <!--<p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p>-->
+                                <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
                                 <table class="table border border-2 hardware-info">
                                     <tbody>
                                         <tr>

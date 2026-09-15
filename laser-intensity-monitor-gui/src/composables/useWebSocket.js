@@ -172,6 +172,7 @@ export function useWebSocket(url) {
   function handleImageFrame(blob) {
     const newURL = URL.createObjectURL(blob)
     const img = new Image()
+    // make sure that the image has loaded before clearing the blob before.
     img.onload = () => {
       if (currentObjectUrl) {
         URL.revokeObjectURL(currentObjectUrl)
@@ -225,8 +226,8 @@ export function useWebSocket(url) {
     if (typeof data !== 'string') return data ?? null
     try {
       return JSON.parse(data)
-    } catch {
-      console.error('Failed to parse Configuration.configuration JSON', e, data)
+    } catch (e) {
+      console.error('Failed to parse Configuration JSON', e, data)
       return null
     }
   }
@@ -299,7 +300,7 @@ export function useWebSocket(url) {
       case 'Configuration':
         controlConfig.value = { ... data, configuration: parseConfigurationPayload(data?.configuration) }
         break
-      // GUI Image Analysis (reading the deviation and intensity)
+      // GUI Image Analysis (reading the deviation)
       case 'ImageAnalysis':
         analysis.value = data
         break
@@ -418,7 +419,7 @@ export function useWebSocket(url) {
     send('Setpoint', { conn_id: connId, camera_id: cameraId })
   }
 
-  // Setpoint function for all ListCameras (no json attached)
+  // Setpoint function for all Cameras (no json attached)
   function setpointAll() {
     send('Setpoint')
   }
