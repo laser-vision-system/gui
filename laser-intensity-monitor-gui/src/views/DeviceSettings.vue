@@ -657,6 +657,7 @@ onMounted(() => {
                                 <div class="form-element">
                                     <select class="menu-input" id="vision-process" v-model.number="newVisionProcessing">
                                         <!-- TODO: change from static data to server hosted data-->
+                                        <option value="" disabled selected>Please select a Vision Processing Method</option>
                                         <option v-for="(item,index) in visionTech" :key="item" :value="item">
                                             [{{index + 1}}] : {{item}}
                                         </option>
