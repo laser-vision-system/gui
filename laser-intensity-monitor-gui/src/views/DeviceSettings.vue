@@ -158,7 +158,7 @@ function submitVisionProcessing() {
   if (isLive.value) {
     // API function for submiting the chosen vision processing
     setEdgeProcessingType(selectedMicroComputer.value.conn_id, newVisionProcessing.value)
-    listEdges()
+    // listEdges() ( not requried)
   } else {
     selectedMicroComputer.value.Menu.value.ConValueMenu = newVisionProcessing.value
   }
@@ -169,7 +169,7 @@ function renameCamera() {
   if (!selectedCamera.value || !newName.value) return
   if (isLive.value) {
     setCameraName(selectedCamera.value.conn_id, selectedCamera.value.camera_id, newName.value)
-    listCameras() // refresh camera list
+    //listCameras() // refresh camera list (not needed)
   } else {
     selectedCamera.value.name = newName.value
   }
@@ -186,6 +186,7 @@ function checkBlank(newValue, currentValue) {
 // build camera control payload does not include the fps (we will figure that out later)
 function buildControlsPayload() {
   if (!selectedConfig.value) return null
+
   const original = selectedConfig.value.configuration
   const payload = {}
 
@@ -196,14 +197,14 @@ function buildControlsPayload() {
   }
   for (const [name, valueRef] of Object.entries(integerControls)) {
     if (!original?.[name]) continue // camera doesn't support this control
-    const current = original[name].IntegerRange?.value?.ConValueInteger
-    const resolved = checkBlank(valueRef.value, current)
+    const current = original[name].IntegerRange?.value
+    const resolved = checkBlank(valueRef.value?.value, current)
     if (resolved === null || resolved === undefined) continue
     payload[name] = {
-      IntegerRange: {...original[name].IntegerRange, value: { ConValueInteger: resolved },},
+      IntegerRange: {...original[name].IntegerRange, value:  resolved,},
     }
   }
-
+  // NOT IN CURRENT SPRINT BUT MAY NEED TO BE FIXED DEPENDING ON HOW THE CONTROLS ARE SET THROUGH
   if (original?.AutoExposure) {
     const current = original.AutoExposure.Menu?.value?.ConValueMenu
     payload.AutoExposure = {
@@ -220,8 +221,8 @@ function saveChanges() {
   try {
     const controlsPayload = buildControlsPayload()
     if (isLive.value) {
-      updateConfiguration(selectedCamera.value.conn_id, selectedCamera.value.camera_id, controlsPayload)
-      listCameras()
+      updateConfiguration(selectedCamera.value.conn_id, selectedCamera.value.camera_id, JSON.stringify(controlsPayload))
+      // listCameras()
     } else {
       //  the sample data does model fps
       selectedConfig.value = {
@@ -234,6 +235,8 @@ function saveChanges() {
     saveState.value = 'error'
   }
 }
+
+console.log(controlConfig)
 //------------------------------------------------------------------------------------------------
 // All REST-ful api methods and variables have been commented out but not deleted as a redundancy
 //------------------------------------------------------------------------------------------------
@@ -327,13 +330,15 @@ function findConfig(conn_id, camera_id) {
   )
 }
 
+// ------------------------------
+//          Methods
+// ------------------------------
+
 // control filter function for selected camera
 function controlFilter(controlName) {
   return selectedConfig.value?.configuration?.[controlName] ?? null
 }
-// ------------------------------
-//          Methods
-// ------------------------------
+
 // Load current values from the matched config. must be used after select config is set
 function loadCameraValues() {
   if (!selectedConfig.value) {
@@ -348,17 +353,21 @@ function loadCameraValues() {
     newAutoExposure.value = null
     return
   }
+
   const config = selectedConfig.value.configuration
 
-  newFPS.value = selectedConfig.value.fps ?? null
-  newBrightness.value = config.Brightness?.IntegerRange?.value?.ConValueInteger ?? null
-  newContrast.value = config.Contrast?.IntegerRange?.value?.ConValueInteger ?? null
-  newHue.value = config.Hue?.IntegerRange?.value?.ConValueInteger ?? null
-  newSaturation.value = config.Saturation?.IntegerRange?.value?.ConValueInteger ?? null
-  newGamma.value = config.Gamma?.IntegerRange?.value?.ConValueInteger ?? null
-  newGain.value = config.Gain?.IntegerRange?.value?.ConValueInteger ?? null
-  newExposureAbsolute.value = config.ExposureAbsolute?.IntegerRange?.value?.ConValueInteger ?? null
-  newAutoExposure.value = config.AutoExposure?.Menu?.value?.ConValueMenu ?? null
+  // load values
+  newBrightness.value = config.Brightness?.IntegerRange ?? null
+  newContrast.value = config.Contrast?.IntegerRange ?? null
+  newHue.value = config.Hue?.IntegerRange ?? null
+  newSaturation.value = config.Saturation?.IntegerRange ?? null
+  newGamma.value = config.Gamma?.IntegerRange ?? null
+  newGain.value = config.Gain?.IntegerRange ?? null
+  newExposureAbsolute.value = config.ExposureAbsolute?.IntegerRange ?? null
+  newAutoExposure.value = config.AutoExposure?.Menu ?? null
+  if (!isLive.value) {
+    newFPS.value = selectedConfig.value.fps ?? null
+  }
 }
 // set selected control values to the defualt settings
 function setDefault(controlName) {
@@ -369,13 +378,13 @@ function setDefault(controlName) {
   if (defualtValue === undefined) return
 
   switch (controlName) {
-    case 'Brightness': newBrightness.value = defualtValue; break
-    case 'Contrast': newContrast.value = defualtValue; break
-    case 'Hue': newHue.value = defualtValue; break
-    case 'Saturation': newSaturation.value = defualtValue; break
-    case 'Gamma': newGamma.value = defualtValue; break
-    case 'Gain': newGain.value = defualtValue; break
-    case 'ExposureAbsolute': newExposureAbsolute.value = defualtValue; break
+    case 'Brightness': newBrightness.value = { ...newBrightness.value, value: defualtValue}; break
+    case 'Contrast': newContrast.value = { ...newContrast.value, value: defualtValue};; break
+    case 'Hue': newHue.value = { ...newHue.value, value: defualtValue};; break
+    case 'Saturation': newSaturation.value = { ...newSaturation.value, value: defualtValue};; break
+    case 'Gamma': newGamma.value = { ...newGamma.value, value: defualtValue};; break
+    case 'Gain': newGain.value = { ...newGain.value, value: defualtValue}; break
+    case 'ExposureAbsolute': newExposureAbsolute.value = { ...newExposureAbsolute.value, value: defualtValue}; break
     case 'AutoExposure': newAutoExposure.value = defualtValue; break
   }
 }
@@ -429,7 +438,7 @@ function resetControlConfig() {
     const def = control.IntegerRange?.default ?? control.Menu?.default
     if (def === undefined) continue
 
-    targetRef.value = def
+    targetRef.value = control.IntegerRange ? {...targetRef.value, value:def} : def
   }
 }
 
@@ -607,7 +616,7 @@ watch(newAlertThreshold, (newValue) => {
 onMounted(() => {
     //fetchCameraConfig()
     connect() // gets the edge list and camera list in its function
-    getDefaultThresholds()
+    getDefaultThresholds() // get the default deviation thresholds on load
 });
 </script>
 <template>
@@ -681,84 +690,84 @@ onMounted(() => {
                         <div v-if="controlFilter('Brightness')">
                             <label for="brightness-range" class="config-label">Brightness</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="brightness-range" v-model.number="newBrightness"
-                                    :min="controlFilter('Brightness').IntegerRange.min"
-                                    :max="controlFilter('Brightness').IntegerRange.max"
-                                    :step="controlFilter('Brightness').IntegerRange.step">
-                                <input type="number" class="number-input" id="brightness-number" v-model.number="newBrightness"
-                                    :min="controlFilter('Brightness').IntegerRange.min"
-                                    :max="controlFilter('Brightness').IntegerRange.max"
-                                    :step="controlFilter('Brightness').IntegerRange.step">
+                                <input type="range" class="slider-input" id="brightness-range" v-model.number="newBrightness.value"
+                                    :min="newBrightness.min"
+                                    :max="newBrightness.max"
+                                    :step="newBrightness.step">
+                                <input type="number" class="number-input" id="brightness-number" v-model.number="newBrightness.value"
+                                    :min="newBrightness.min"
+                                    :max="newBrightness.max"
+                                    :step="newBrightness.step">
                                 <button type="button" class="btn submit-btn" @click="setDefault('Brightness')">Reset</button>
                             </div>
                         </div>
                         <div v-if="controlFilter('Contrast')">
                             <label for="contrast-range" class="config-label">Contrast</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="contrast-range" v-model.number="newContrast"
-                                    :min="controlFilter('Contrast').IntegerRange.min"
-                                    :max="controlFilter('Contrast').IntegerRange.max"
-                                    :step="controlFilter('Contrast').IntegerRange.step">
-                                <input type="number" class="number-input" id="contrast-number" v-model.number="newContrast"
-                                    :min="controlFilter('Contrast').IntegerRange.min"
-                                    :max="controlFilter('Contrast').IntegerRange.max"
-                                    :step="controlFilter('Contrast').IntegerRange.step">
+                                <input type="range" class="slider-input" id="contrast-range" v-model.number="newContrast.value"
+                                    :min="newContrast.min"
+                                    :max="newContrast.max"
+                                    :step="newContrast.step">
+                                <input type="number" class="number-input" id="contrast-number" v-model.number="newContrast.value"
+                                    :min="newContrast.min"
+                                    :max="newContrast.max"
+                                    :step="newContrast.step">
                                 <button type="button" class="btn submit-btn" @click="setDefault('Contrast')">Reset</button>
                             </div>
                         </div>
                         <div v-if="controlFilter('Hue')">
                             <label for="hue-range" class="config-label">Hue</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="hue-range" v-model.number="newHue"
-                                    :min="controlFilter('Hue').IntegerRange.min"
-                                    :max="controlFilter('Hue').IntegerRange.max"
-                                    :step="controlFilter('Hue').IntegerRange.step">
-                                <input type="number" class="number-input" id="hue-number" v-model.number="newHue"
-                                    :min="controlFilter('Hue').IntegerRange.min"
-                                    :max="controlFilter('Hue').IntegerRange.max"
-                                    :step="controlFilter('Hue').IntegerRange.step">
+                                <input type="range" class="slider-input" id="hue-range" v-model.number="newHue.value"
+                                    :min="newHue.min"
+                                    :max="newHue.max"
+                                    :step="newHue.step">
+                                <input type="number" class="number-input" id="hue-number" v-model.number="newHue.value"
+                                    :min="newHue.min"
+                                    :max="newHue.max"
+                                    :step="newHue.step">
                                 <button type="button" class="btn submit-btn" @click="setDefault('Hue')">Reset</button>
                             </div>
                         </div>
                         <div v-if="controlFilter('Saturation')">
                             <label for="saturation-range" class="config-label">Saturation</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="saturation-range" v-model.number="newSaturation"
-                                    :min="controlFilter('Saturation').IntegerRange.min"
-                                    :max="controlFilter('Saturation').IntegerRange.max"
-                                    :step="controlFilter('Saturation').IntegerRange.step">
-                                <input type="number" class="number-input" id="saturation-number" v-model.number="newSaturation"
-                                    :min="controlFilter('Saturation').IntegerRange.min"
-                                    :max="controlFilter('Saturation').IntegerRange.max"
-                                    :step="controlFilter('Saturation').IntegerRange.step">
+                                <input type="range" class="slider-input" id="saturation-range" v-model.number="newSaturation.value"
+                                    :min="newSaturation.min"
+                                    :max="newSaturation.max"
+                                    :step="newSaturation.step">
+                                <input type="number" class="number-input" id="saturation-number" v-model.number="newSaturation.value"
+                                    :min="newSaturation.min"
+                                    :max="newSaturation.max"
+                                    :step="newSaturation.step">
                                 <button type="button" class="btn submit-btn" @click="setDefault('Saturation')">Reset</button>
                             </div>
                         </div>
                         <div v-if="controlFilter('Gamma')">
                             <label for="gamma-range" class="config-label">Gamma</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="gamma-range" v-model.number="newGamma"
-                                    :min="controlFilter('Gamma').IntegerRange.min"
-                                    :max="controlFilter('Gamma').IntegerRange.max"
-                                    :step="controlFilter('Gamma').IntegerRange.step">
-                                <input type="number" class="number-input" id="gamma-number" v-model.number="newGamma"
-                                    :min="controlFilter('Gamma').IntegerRange.min"
-                                    :max="controlFilter('Gamma').IntegerRange.max"
-                                    :step="controlFilter('Gamma').IntegerRange.step">
+                                <input type="range" class="slider-input" id="gamma-range" v-model.number="newGamma.value"
+                                    :min="newGamma.min"
+                                    :max="newGamma.max"
+                                    :step="newGamma.step">
+                                <input type="number" class="number-input" id="gamma-number" v-model.number="newGamma.value"
+                                    :min="newGamma.min"
+                                    :max="newGamma.max"
+                                    :step="newGamma.step">
                                 <button type="button" class="btn submit-btn" @click="setDefault('Gamma')">Reset</button>
                             </div>
                         </div>
                         <div v-if="controlFilter('Gain')">
                             <label for="gain-range" class="config-label">Gain</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="gain-range" v-model.number="newGain"
-                                    :min="controlFilter('Gain').IntegerRange.min"
-                                    :max="controlFilter('Gain').IntegerRange.max"
-                                    :step="controlFilter('Gain').IntegerRange.step">
-                                <input type="number" class="number-input" id="gain-number" v-model.number="newGain"
-                                    :min="controlFilter('Gain').IntegerRange.min"
-                                    :max="controlFilter('Gain').IntegerRange.max"
-                                    :step="controlFilter('Gain').IntegerRange.step">
+                                <input type="range" class="slider-input" id="gain-range" v-model.number="newGain.value"
+                                    :min="newGain.min"
+                                    :max="newGain.max"
+                                    :step="newGain.step">
+                                <input type="number" class="number-input" id="gain-number" v-model.number="newGain.value"
+                                    :min="newGain.min"
+                                    :max="newGain.max"
+                                    :step="newGain.step">
                                 <button type="button" class="btn submit-btn" @click="setDefault('Gain')">Reset</button>
                             </div>
                         </div>
@@ -776,14 +785,14 @@ onMounted(() => {
                         <div v-if="controlFilter('ExposureAbsolute')">
                             <label for="exposure-range" class="config-label">Exposure (Absolute)</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="exposure-range" v-model.number="newExposureAbsolute"
-                                :min="controlFilter('ExposureAbsolute').IntegerRange.min"
-                                    :max="controlFilter('ExposureAbsolute').IntegerRange.max"
-                                    :step="controlFilter('ExposureAbsolute').IntegerRange.step">
-                                <input type="number" class="number-input" id="exposure-number" v-model.number="newExposureAbsolute"
-                                    :min="controlFilter('ExposureAbsolute').IntegerRange.min"
-                                    :max="controlFilter('ExposureAbsolute').IntegerRange.max"
-                                    :step="controlFilter('ExposureAbsolute').IntegerRange.step">
+                                <input type="range" class="slider-input" id="exposure-range" v-model.number="newExposureAbsolute.value"
+                                :min="newExposureAbsolute.min"
+                                    :max="newExposureAbsolute.max"
+                                    :step="newExposureAbsolute.step">
+                                <input type="number" class="number-input" id="exposure-number" v-model.number="newExposureAbsolute.value"
+                                    :min="newExposureAbsolute.min"
+                                    :max="newExposureAbsolute.max"
+                                    :step="newExposureAbsolute.step">
                                 <button type="button" class="btn submit-btn" @click="setDefault('ExposureAbsolute')">Reset</button>
                             </div>
                         </div>

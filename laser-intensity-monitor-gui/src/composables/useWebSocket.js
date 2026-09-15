@@ -226,8 +226,8 @@ export function useWebSocket(url) {
     if (typeof data !== 'string') return data ?? null
     try {
       return JSON.parse(data)
-    } catch {
-      console.error('Failed to parse Configuration.configuration JSON', e, data)
+    } catch (e) {
+      console.error('Failed to parse Configuration JSON', e, data)
       return null
     }
   }
