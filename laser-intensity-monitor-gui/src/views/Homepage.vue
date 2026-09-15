@@ -76,14 +76,14 @@ const deviationAlerts = computed(() => {
                 let alertMsg = ''
                 let alertType = ''
 
-                if (analysis.deviation > analysis.warning_threshold) {
+                if (analysis.deviation > analysis.warn_below_threshold) {
                     alertMsg = `[LOW] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                     alertType = 'success'
                 }
-                else if (analysis.deviation <= analysis.warning_threshold && analysis.deviation > analysis.critical_threshold) {
+                else if (analysis.deviation <= analysis.warn_below_threshold && analysis.deviation > analysis.alert_below_threshold) {
                     alertMsg = `[MODERATE] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                     alertType = 'warning'
-                } else if (analysis.deviation <= analysis.critical_threshold) {
+                } else if (analysis.deviation <= analysis.alert_below_threshold) {
                     alertMsg = `[HIGH] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                     alertType = 'danger'
                 }
@@ -336,8 +336,8 @@ function getCardColour(cam) {
     if (!cam) return 'bg-dark'
 
     const deviation = cam.deviation
-    const warning = cam.warning_threshold
-    const critical = cam.critical_threshold
+    const warning = cam.warn_below_threshold
+    const critical = cam.alert_below_threshold
 
     if (deviation > warning) {
         return 'bg-success'
@@ -510,11 +510,11 @@ onUnmounted(() => {
                                     <tbody>
                                         <tr>
                                             <th class="bg-warning text-dark">Warning Threshold:</th>
-                                            <td>{{Math.round(selectedCameraInfo.warning_threshold * 100)}}-{{ Math.round(selectedCameraInfo.critical_threshold * 100) + '%' }}</td>
+                                            <td>{{Math.round(selectedCameraInfo.warn_below_threshold * 100)}}-{{ Math.round(selectedCameraInfo.alert_below_threshold * 100) + '%' }}</td>
                                         </tr>
                                         <tr>
                                             <th class="bg-danger text-white">Critical Threshold:</th>
-                                            <td>Below {{ Math.round(selectedCameraInfo.critical_threshold * 100) + '%' }}</td>
+                                            <td>Below {{ Math.round(selectedCameraInfo.alert_below_threshold_threshold * 100) + '%' }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
