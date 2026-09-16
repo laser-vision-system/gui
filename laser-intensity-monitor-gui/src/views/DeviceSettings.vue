@@ -235,8 +235,7 @@ function saveChanges() {
     saveState.value = 'error'
   }
 }
-
-console.log(controlConfig)
+//console.log(controlConfig)
 //------------------------------------------------------------------------------------------------
 // All REST-ful api methods and variables have been commented out but not deleted as a redundancy
 //------------------------------------------------------------------------------------------------
@@ -438,7 +437,7 @@ function resetControlConfig() {
     const def = control.IntegerRange?.default ?? control.Menu?.default
     if (def === undefined) continue
 
-    targetRef.value = control.IntegerRange ? {...targetRef.value, value:def} : def
+    targetRef.value = control.IntegerRange ? {...targetRef.value, value: def} : def
   }
 }
 
@@ -589,7 +588,7 @@ watch(selectedMicroComputer, () => {
   if (selectedMicroComputer.value && selectedMicroComputer.value !== 'all') {
     newMicroComputerName.value = selectedMicroComputer.value.name
     // add auto select current vision processing when value is availbe
-    // newVisionProcessing.value = selectedMicroComputer.value
+    // newVisionProcessing.value =
     if (isLive.value) {
       // add vision processing when api has a path for its value
     } else {
@@ -635,7 +634,7 @@ onMounted(() => {
                             <h2 class="config-title">µ-Computer Configuration</h2>
                             <label for="microCompSelect" class="config-label"><h3 class="config-label">Select µ-Computer</h3></label>
                             <div class="form-element">
-                                <select class="w-100" id="microCompSelect" required v-model="selectedMicroComputer">
+                                <select class="w-100" id="microCompSelect" v-model="selectedMicroComputer">
                                     <option value="" disabled selected>Please select a µ-computer</option>
                                     <option value="all">Select All µ-computers</option>
                                     <option v-for="(com, index) in activeMicroComputers" :key="`${com.conn_id}`" :value="com">
