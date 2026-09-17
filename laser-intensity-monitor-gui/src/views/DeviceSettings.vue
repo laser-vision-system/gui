@@ -214,15 +214,27 @@ function buildControlsPayload() {
   return payload
 }
 
+// Timeout timer function
+function coundownTimer(time) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve("resolved");
+    }, time);
+  });
+}
+
 // Save the changes made to the camera controls
-function saveChanges() {
+async function saveChanges() {
   if (!selectedCamera.value || !selectedConfig.value) return
   saveState.value = ''
   try {
     const controlsPayload = buildControlsPayload()
     if (isLive.value) {
       updateConfiguration(selectedCamera.value.conn_id, selectedCamera.value.camera_id, JSON.stringify(controlsPayload))
-      // listCameras()
+      // one second await timer
+      await coundownTimer(1000)
+      // request to view the camera config.
+      viewCameraConfig(selectedCamera.value.conn_id, selectedCamera.value.camera_id)
     } else {
       //  the sample data does model fps
       selectedConfig.value = {
