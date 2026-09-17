@@ -150,7 +150,7 @@ const mergedCameraData = computed(() => {
 
     for (const camera of camDataList) {
         const matchingData = imageAnalysisData.find(
-            analysis => analysis.conn_id === camera.conn_id && analysis.camera_id === camera.camera_id
+            analysis => analysis.conn_id === JSON.stringify(camera.conn_id) && analysis.camera_id === camera.camera_id
         )
         const matchingComData = edgeDataList.find(
             connection => connection.conn_id === camera.conn_id
