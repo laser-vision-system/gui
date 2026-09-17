@@ -214,15 +214,27 @@ function buildControlsPayload() {
   return payload
 }
 
+// Timeout timer function
+function coundownTimer(time) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve("resolved");
+    }, time);
+  });
+}
+
 // Save the changes made to the camera controls
-function saveChanges() {
+async function saveChanges() {
   if (!selectedCamera.value || !selectedConfig.value) return
   saveState.value = ''
   try {
     const controlsPayload = buildControlsPayload()
     if (isLive.value) {
       updateConfiguration(selectedCamera.value.conn_id, selectedCamera.value.camera_id, JSON.stringify(controlsPayload))
-      // listCameras()
+      // one second await timer
+      await coundownTimer(1000)
+      // request to view the camera config.
+      viewCameraConfig(selectedCamera.value.conn_id, selectedCamera.value.camera_id)
     } else {
       //  the sample data does model fps
       selectedConfig.value = {
@@ -235,8 +247,7 @@ function saveChanges() {
     saveState.value = 'error'
   }
 }
-
-console.log(controlConfig)
+//console.log(controlConfig)
 //------------------------------------------------------------------------------------------------
 // All REST-ful api methods and variables have been commented out but not deleted as a redundancy
 //------------------------------------------------------------------------------------------------
@@ -438,7 +449,7 @@ function resetControlConfig() {
     const def = control.IntegerRange?.default ?? control.Menu?.default
     if (def === undefined) continue
 
-    targetRef.value = control.IntegerRange ? {...targetRef.value, value:def} : def
+    targetRef.value = control.IntegerRange ? {...targetRef.value, value: def} : def
   }
 }
 
@@ -589,7 +600,7 @@ watch(selectedMicroComputer, () => {
   if (selectedMicroComputer.value && selectedMicroComputer.value !== 'all') {
     newMicroComputerName.value = selectedMicroComputer.value.name
     // add auto select current vision processing when value is availbe
-    // newVisionProcessing.value = selectedMicroComputer.value
+    // newVisionProcessing.value =
     if (isLive.value) {
       // add vision processing when api has a path for its value
     } else {
@@ -635,7 +646,7 @@ onMounted(() => {
                             <h2 class="config-title">µ-Computer Configuration</h2>
                             <label for="microCompSelect" class="config-label"><h3 class="config-label">Select µ-Computer</h3></label>
                             <div class="form-element">
-                                <select class="w-100" id="microCompSelect" required v-model="selectedMicroComputer">
+                                <select class="w-100" id="microCompSelect" v-model="selectedMicroComputer">
                                     <option value="" disabled selected>Please select a µ-computer</option>
                                     <option value="all">Select All µ-computers</option>
                                     <option v-for="(com, index) in activeMicroComputers" :key="`${com.conn_id}`" :value="com">
@@ -831,15 +842,15 @@ onMounted(() => {
                         <div v-if="selectedConfig">
                             <label for="fps-range" class="config-label">Warning Threshold</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="warning-range" v-model.number="newWarningThreshold" min="2" max="100" step="1">
-                                <input type="number" class="number-input" id= "warning-number" v-model.number="newWarningThreshold" min="2" max="100" step="1">
+                                <input type="range" class="slider-input" id="warning-range" v-model.number="newWarningThreshold" min="2" max="99" step="1">
+                                <input type="number" class="number-input" id= "warning-number" v-model.number="newWarningThreshold" min="2" max="99" step="1">
                             </div>
                         </div>
                         <div v-if="selectedConfig">
                             <label for="fps-range" class="config-label">Alert Threshold</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="critical-range" v-model.number="newAlertThreshold" min="1" max="99" step="1">
-                                <input type="number" class="number-input" id= "critical-number" v-model.number="newAlertThreshold" min="1" max="99" step="1">
+                                <input type="range" class="slider-input" id="critical-range" v-model.number="newAlertThreshold" min="1" max="98" step="1">
+                                <input type="number" class="number-input" id= "critical-number" v-model.number="newAlertThreshold" min="1" max="98" step="1">
                             </div>
                         </div>
                         <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
