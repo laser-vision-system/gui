@@ -830,15 +830,15 @@ onMounted(() => {
                         <div v-if="selectedConfig">
                             <label for="fps-range" class="config-label">Warning Threshold</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="warning-range" v-model.number="newWarningThreshold" min="2" max="100" step="1">
-                                <input type="number" class="number-input" id= "warning-number" v-model.number="newWarningThreshold" min="2" max="100" step="1">
+                                <input type="range" class="slider-input" id="warning-range" v-model.number="newWarningThreshold" min="2" max="99" step="1">
+                                <input type="number" class="number-input" id= "warning-number" v-model.number="newWarningThreshold" min="2" max="99" step="1">
                             </div>
                         </div>
                         <div v-if="selectedConfig">
                             <label for="fps-range" class="config-label">Alert Threshold</label>
                             <div class="form-element">
-                                <input type="range" class="slider-input" id="critical-range" v-model.number="newAlertThreshold" min="1" max="99" step="1">
-                                <input type="number" class="number-input" id= "critical-number" v-model.number="newAlertThreshold" min="1" max="99" step="1">
+                                <input type="range" class="slider-input" id="critical-range" v-model.number="newAlertThreshold" min="1" max="98" step="1">
+                                <input type="number" class="number-input" id= "critical-number" v-model.number="newAlertThreshold" min="1" max="98" step="1">
                             </div>
                         </div>
                         <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
