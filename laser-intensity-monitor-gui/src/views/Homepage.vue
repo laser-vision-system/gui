@@ -138,7 +138,7 @@ const loadCameraList = computed(() => {
 })
 // grab image analysis from websocket or sample data
 const loadImageAnalysis = computed(() => {
-    const source = isLive.value && analysis.value.length > 0 ? analysis.value : sampleImageAnalysis.GUIImageAnalysis
+    const source = isLive.value && analysis.value !== null > 0 ? analysis.value : null
     return source
 })
 // merge camera list with microcomputer, image analysis & selection details
@@ -149,9 +149,12 @@ const mergedCameraData = computed(() => {
     const result = []
 
     for (const camera of camDataList) {
-        const matchingData = imageAnalysisData.find(
-            analysis => analysis.conn_id === JSON.stringify(camera.conn_id) && analysis.camera_id === camera.camera_id
-        )
+		let matchingData = ref(null)
+		if (imageAnalysisData !== null) {
+			if( imageAnalysisData.conn_id === camera.conn_id && imageAnalysisData.camera_id === camera.camera_id)	 {
+				matchingData = imageAnalysisData
+			} 
+		}
         const matchingComData = edgeDataList.find(
             connection => connection.conn_id === camera.conn_id
         )
