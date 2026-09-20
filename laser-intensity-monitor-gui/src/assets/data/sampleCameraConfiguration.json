@@ -5,112 +5,65 @@
       "camera_id": 0,
       "fps" : 5,
       "configuration" : {
+        "Saturation" : {
+          "IntegerRange" : {
+            "control_type":"Saturation",
+            "value":64,
+            "default":64,
+            "step":1,
+            "min":0,
+            "max":128
+          }
+        },
         "Brightness": {
-          "IntegerRange": {
-            "control_type": "Brightness",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": -64,
-            "max": 64
+          "IntegerRange" : {
+            "control_type":"Brightness",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":-64,
+            "max":64
           }
         },
         "Contrast": {
-          "IntegerRange": {
-            "control_type": "Contrast",
-            "value": {
-              "ConValueInteger": 32
-            },
-            "default": 32,
-            "step": 1,
-            "min": 0,
-            "max": 64
+          "IntegerRange" : {
+            "control_type":"Contrast",
+            "value":32,
+            "default":32,
+            "step":1,
+            "min":0,
+            "max":64
           }
         },
-        "Saturation": {
-          "IntegerRange": {
-            "control_type": "Saturation",
-            "value": {
-              "ConValueInteger": 64
-            },
-            "default": 64,
-            "step": 1,
-            "min": 0,
-            "max": 128
+        "Gain" : {
+          "IntegerRange" : {
+            "control_type":"Gain",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":0,
+            "max":100
           }
         },
-        "Hue": {
-          "IntegerRange": {
-            "control_type": "Hue",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": -40,
-            "max": 40
+        "Gamma" : {
+          "IntegerRange" : {
+            "control_type":"Gamma",
+            "value":100,
+            "default":100,
+            "step":1,
+            "min":72,
+            "max":500
           }
         },
-        "Gamma": {
-          "IntegerRange": {
-            "control_type": "Gamma",
-            "value": {
-              "ConValueInteger": 100
-            },
-            "default": 100,
-            "step": 1,
-            "min": 72,
-            "max": 500
-          }
-        },
-        "Gain": {
-          "IntegerRange": {
-            "control_type": "Gain",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": 0,
-            "max": 100
-          }
-        },
-        "AutoExposure": {
-          "Menu": {
-            "control_type": "AutoExposure",
-            "value": {
-              "ConValueMenu": 3
-            },
-            "default": 3,
-            "items": [
-              {
-                "id": 1,
-                "item": {
-                  "Name": "Manual Mode"
-                }
-              },
-              {
-                "id": 3,
-                "item": {
-                  "Name": "Aperture Priority Mode"
-                }
-              }
-            ]
-          }
-        },
-        "ExposureAbsolute": {
-          "IntegerRange": {
-            "control_type": "ExposureAbsolute",
-            "value": {
-              "ConValueInteger": 156
-            },
-            "default": 156,
-            "step": 1,
-            "min": 1,
-            "max": 5000
-          }
+        "Hue" : {
+           "IntegerRange" : {
+             "control_type":"Hue",
+             "value":0,
+             "default":0,
+             "step":1,
+             "min":-40,
+             "max":40
+           }
         }
       }
     },
@@ -119,100 +72,55 @@
       "camera_id": 1,
       "fps" : 5,
       "configuration" : {
+        "Saturation" : {
+          "IntegerRange" : {
+            "control_type":"Saturation",
+            "value":64,
+            "default":64,
+            "step":1,
+            "min":0,
+            "max":128
+          }
+        },
         "Contrast": {
-          "IntegerRange": {
-            "control_type": "Contrast",
-            "value": {
-              "ConValueInteger": 32
-            },
-            "default": 32,
-            "step": 1,
-            "min": 0,
-            "max": 64
+          "IntegerRange" : {
+            "control_type":"Contrast",
+            "value":32,
+            "default":32,
+            "step":1,
+            "min":0,
+            "max":64
           }
         },
-        "Saturation": {
-          "IntegerRange": {
-            "control_type": "Saturation",
-            "value": {
-              "ConValueInteger": 64
-            },
-            "default": 64,
-            "step": 1,
-            "min": 0,
-            "max": 128
+        "Gain" : {
+          "IntegerRange" : {
+            "control_type":"Gain",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":0,
+            "max":100
           }
         },
-        "Hue": {
-          "IntegerRange": {
-            "control_type": "Hue",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": -40,
-            "max": 40
+        "Gamma" : {
+          "IntegerRange" : {
+            "control_type":"Gamma",
+            "value":100,
+            "default":100,
+            "step":1,
+            "min":72,
+            "max":500
           }
         },
-        "Gamma": {
-          "IntegerRange": {
-            "control_type": "Gamma",
-            "value": {
-              "ConValueInteger": 100
-            },
-            "default": 100,
-            "step": 1,
-            "min": 72,
-            "max": 500
-          }
-        },
-        "Gain": {
-          "IntegerRange": {
-            "control_type": "Gain",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": 0,
-            "max": 100
-          }
-        },
-        "AutoExposure": {
-          "Menu": {
-            "control_type": "AutoExposure",
-            "value": {
-              "ConValueMenu": 3
-            },
-            "default": 3,
-            "items": [
-              {
-                "id": 1,
-                "item": {
-                  "Name": "Manual Mode"
-                }
-              },
-              {
-                "id": 3,
-                "item": {
-                  "Name": "Aperture Priority Mode"
-                }
-              }
-            ]
-          }
-        },
-        "ExposureAbsolute": {
-          "IntegerRange": {
-            "control_type": "ExposureAbsolute",
-            "value": {
-              "ConValueInteger": 156
-            },
-            "default": 156,
-            "step": 1,
-            "min": 1,
-            "max": 5000
-          }
+        "Hue" : {
+           "IntegerRange" : {
+             "control_type":"Hue",
+             "value":0,
+             "default":0,
+             "step":1,
+             "min":-40,
+             "max":40
+           }
         }
       }
     },
@@ -221,100 +129,55 @@
       "camera_id": 2,
       "fps" : 5,
       "configuration" : {
+        "Saturation" : {
+          "IntegerRange" : {
+            "control_type":"Saturation",
+            "value":64,
+            "default":64,
+            "step":1,
+            "min":0,
+            "max":128
+          }
+        },
         "Brightness": {
-          "IntegerRange": {
-            "control_type": "Brightness",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": -64,
-            "max": 64
+          "IntegerRange" : {
+            "control_type":"Brightness",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":-64,
+            "max":64
           }
         },
-        "Saturation": {
-          "IntegerRange": {
-            "control_type": "Saturation",
-            "value": {
-              "ConValueInteger": 64
-            },
-            "default": 64,
-            "step": 1,
-            "min": 0,
-            "max": 128
+        "Gain" : {
+          "IntegerRange" : {
+            "control_type":"Gain",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":0,
+            "max":100
           }
         },
-        "Hue": {
-          "IntegerRange": {
-            "control_type": "Hue",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": -40,
-            "max": 40
+        "Gamma" : {
+          "IntegerRange" : {
+            "control_type":"Gamma",
+            "value":100,
+            "default":100,
+            "step":1,
+            "min":72,
+            "max":500
           }
         },
-        "Gamma": {
-          "IntegerRange": {
-            "control_type": "Gamma",
-            "value": {
-              "ConValueInteger": 100
-            },
-            "default": 100,
-            "step": 1,
-            "min": 72,
-            "max": 500
-          }
-        },
-        "Gain": {
-          "IntegerRange": {
-            "control_type": "Gain",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": 0,
-            "max": 100
-          }
-        },
-        "AutoExposure": {
-          "Menu": {
-            "control_type": "AutoExposure",
-            "value": {
-              "ConValueMenu": 3
-            },
-            "default": 3,
-            "items": [
-              {
-                "id": 1,
-                "item": {
-                  "Name": "Manual Mode"
-                }
-              },
-              {
-                "id": 3,
-                "item": {
-                  "Name": "Aperture Priority Mode"
-                }
-              }
-            ]
-          }
-        },
-        "ExposureAbsolute": {
-          "IntegerRange": {
-            "control_type": "ExposureAbsolute",
-            "value": {
-              "ConValueInteger": 156
-            },
-            "default": 156,
-            "step": 1,
-            "min": 1,
-            "max": 5000
-          }
+        "Hue" : {
+           "IntegerRange" : {
+             "control_type":"Hue",
+             "value":0,
+             "default":0,
+             "step":1,
+             "min":-40,
+             "max":40
+           }
         }
       }
     },
@@ -324,99 +187,54 @@
       "fps" : 5,
       "configuration" : {
         "Brightness": {
-          "IntegerRange": {
-            "control_type": "Brightness",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": -64,
-            "max": 64
+          "IntegerRange" : {
+            "control_type":"Brightness",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":-64,
+            "max":64
           }
         },
         "Contrast": {
-          "IntegerRange": {
-            "control_type": "Contrast",
-            "value": {
-              "ConValueInteger": 32
-            },
-            "default": 32,
-            "step": 1,
-            "min": 0,
-            "max": 64
+          "IntegerRange" : {
+            "control_type":"Contrast",
+            "value":32,
+            "default":32,
+            "step":1,
+            "min":0,
+            "max":64
           }
         },
-        "Hue": {
-          "IntegerRange": {
-            "control_type": "Hue",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": -40,
-            "max": 40
+        "Gain" : {
+          "IntegerRange" : {
+            "control_type":"Gain",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":0,
+            "max":100
           }
         },
-        "Gamma": {
-          "IntegerRange": {
-            "control_type": "Gamma",
-            "value": {
-              "ConValueInteger": 100
-            },
-            "default": 100,
-            "step": 1,
-            "min": 72,
-            "max": 500
+        "Gamma" : {
+          "IntegerRange" : {
+            "control_type":"Gamma",
+            "value":100,
+            "default":100,
+            "step":1,
+            "min":72,
+            "max":500
           }
         },
-        "Gain": {
-          "IntegerRange": {
-            "control_type": "Gain",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": 0,
-            "max": 100
-          }
-        },
-        "AutoExposure": {
-          "Menu": {
-            "control_type": "AutoExposure",
-            "value": {
-              "ConValueMenu": 3
-            },
-            "default": 3,
-            "items": [
-              {
-                "id": 1,
-                "item": {
-                  "Name": "Manual Mode"
-                }
-              },
-              {
-                "id": 3,
-                "item": {
-                  "Name": "Aperture Priority Mode"
-                }
-              }
-            ]
-          }
-        },
-        "ExposureAbsolute": {
-          "IntegerRange": {
-            "control_type": "ExposureAbsolute",
-            "value": {
-              "ConValueInteger": 156
-            },
-            "default": 156,
-            "step": 1,
-            "min": 1,
-            "max": 5000
-          }
+        "Hue" : {
+           "IntegerRange" : {
+             "control_type":"Hue",
+             "value":0,
+             "default":0,
+             "step":1,
+             "min":-40,
+             "max":40
+           }
         }
       }
     },
@@ -425,99 +243,54 @@
       "camera_id": 4,
       "fps" : 5,
       "configuration" : {
+        "Saturation" : {
+          "IntegerRange" : {
+            "control_type":"Saturation",
+            "value":64,
+            "default":64,
+            "step":1,
+            "min":0,
+            "max":128
+          }
+        },
         "Brightness": {
-          "IntegerRange": {
-            "control_type": "Brightness",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": -64,
-            "max": 64
+          "IntegerRange" : {
+            "control_type":"Brightness",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":-64,
+            "max":64
           }
         },
         "Contrast": {
-          "IntegerRange": {
-            "control_type": "Contrast",
-            "value": {
-              "ConValueInteger": 32
-            },
-            "default": 32,
-            "step": 1,
-            "min": 0,
-            "max": 64
+          "IntegerRange" : {
+            "control_type":"Contrast",
+            "value":32,
+            "default":32,
+            "step":1,
+            "min":0,
+            "max":64
           }
         },
-        "Saturation": {
-          "IntegerRange": {
-            "control_type": "Saturation",
-            "value": {
-              "ConValueInteger": 64
-            },
-            "default": 64,
-            "step": 1,
-            "min": 0,
-            "max": 128
+        "Gain" : {
+          "IntegerRange" : {
+            "control_type":"Gain",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":0,
+            "max":100
           }
         },
-        "Gamma": {
-          "IntegerRange": {
-            "control_type": "Gamma",
-            "value": {
-              "ConValueInteger": 100
-            },
-            "default": 100,
-            "step": 1,
-            "min": 72,
-            "max": 500
-          }
-        },
-        "Gain": {
-          "IntegerRange": {
-            "control_type": "Gain",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": 0,
-            "max": 100
-          }
-        },
-        "AutoExposure": {
-          "Menu": {
-            "control_type": "AutoExposure",
-            "value": {
-              "ConValueMenu": 3
-            },
-            "default": 3,
-            "items": [
-              {
-                "id": 1,
-                "item": {
-                  "Name": "Manual Mode"
-                }
-              },
-              {
-                "id": 3,
-                "item": {
-                  "Name": "Aperture Priority Mode"
-                }
-              }
-            ]
-          }
-        },
-        "ExposureAbsolute": {
-          "IntegerRange": {
-            "control_type": "ExposureAbsolute",
-            "value": {
-              "ConValueInteger": 156
-            },
-            "default": 156,
-            "step": 1,
-            "min": 1,
-            "max": 5000
+        "Gamma" : {
+          "IntegerRange" : {
+            "control_type":"Gamma",
+            "value":100,
+            "default":100,
+            "step":1,
+            "min":72,
+            "max":500
           }
         }
       }
@@ -527,100 +300,55 @@
       "camera_id": 0,
       "fps" : 5,
       "configuration" : {
+        "Saturation" : {
+          "IntegerRange" : {
+            "control_type":"Saturation",
+            "value":64,
+            "default":64,
+            "step":1,
+            "min":0,
+            "max":128
+          }
+        },
         "Brightness": {
-          "IntegerRange": {
-            "control_type": "Brightness",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": -64,
-            "max": 64
+          "IntegerRange" : {
+            "control_type":"Brightness",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":-64,
+            "max":64
           }
         },
         "Contrast": {
-          "IntegerRange": {
-            "control_type": "Contrast",
-            "value": {
-              "ConValueInteger": 32
-            },
-            "default": 32,
-            "step": 1,
-            "min": 0,
-            "max": 64
+          "IntegerRange" : {
+            "control_type":"Contrast",
+            "value":32,
+            "default":32,
+            "step":1,
+            "min":0,
+            "max":64
           }
         },
-        "Saturation": {
-          "IntegerRange": {
-            "control_type": "Saturation",
-            "value": {
-              "ConValueInteger": 64
-            },
-            "default": 64,
-            "step": 1,
-            "min": 0,
-            "max": 128
+        "Gain" : {
+          "IntegerRange" : {
+            "control_type":"Gain",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":0,
+            "max":100
           }
         },
-        "Hue": {
-          "IntegerRange": {
-            "control_type": "Hue",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": -40,
-            "max": 40
-          }
-        },
-        "Gain": {
-          "IntegerRange": {
-            "control_type": "Gain",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": 0,
-            "max": 100
-          }
-        },
-        "AutoExposure": {
-          "Menu": {
-            "control_type": "AutoExposure",
-            "value": {
-              "ConValueMenu": 3
-            },
-            "default": 3,
-            "items": [
-              {
-                "id": 1,
-                "item": {
-                  "Name": "Manual Mode"
-                }
-              },
-              {
-                "id": 3,
-                "item": {
-                  "Name": "Aperture Priority Mode"
-                }
-              }
-            ]
-          }
-        },
-        "ExposureAbsolute": {
-          "IntegerRange": {
-            "control_type": "ExposureAbsolute",
-            "value": {
-              "ConValueInteger": 156
-            },
-            "default": 156,
-            "step": 1,
-            "min": 1,
-            "max": 5000
-          }
+        "Hue" : {
+           "IntegerRange" : {
+             "control_type":"Hue",
+             "value":0,
+             "default":0,
+             "step":1,
+             "min":-40,
+             "max":40
+           }
         }
       }
     },
@@ -629,100 +357,55 @@
       "camera_id": 1,
       "fps" : 5,
       "configuration" : {
+        "Saturation" : {
+          "IntegerRange" : {
+            "control_type":"Saturation",
+            "value":64,
+            "default":64,
+            "step":1,
+            "min":0,
+            "max":128
+          }
+        },
         "Brightness": {
-          "IntegerRange": {
-            "control_type": "Brightness",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": -64,
-            "max": 64
+          "IntegerRange" : {
+            "control_type":"Brightness",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":-64,
+            "max":64
           }
         },
         "Contrast": {
-          "IntegerRange": {
-            "control_type": "Contrast",
-            "value": {
-              "ConValueInteger": 32
-            },
-            "default": 32,
-            "step": 1,
-            "min": 0,
-            "max": 64
+          "IntegerRange" : {
+            "control_type":"Contrast",
+            "value":32,
+            "default":32,
+            "step":1,
+            "min":0,
+            "max":64
           }
         },
-        "Saturation": {
-          "IntegerRange": {
-            "control_type": "Saturation",
-            "value": {
-              "ConValueInteger": 64
-            },
-            "default": 64,
-            "step": 1,
-            "min": 0,
-            "max": 128
+        "Gamma" : {
+          "IntegerRange" : {
+            "control_type":"Gamma",
+            "value":100,
+            "default":100,
+            "step":1,
+            "min":72,
+            "max":500
           }
         },
-        "Hue": {
-          "IntegerRange": {
-            "control_type": "Hue",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": -40,
-            "max": 40
-          }
-        },
-        "Gamma": {
-          "IntegerRange": {
-            "control_type": "Gamma",
-            "value": {
-              "ConValueInteger": 100
-            },
-            "default": 100,
-            "step": 1,
-            "min": 72,
-            "max": 500
-          }
-        },
-        "AutoExposure": {
-          "Menu": {
-            "control_type": "AutoExposure",
-            "value": {
-              "ConValueMenu": 3
-            },
-            "default": 3,
-            "items": [
-              {
-                "id": 1,
-                "item": {
-                  "Name": "Manual Mode"
-                }
-              },
-              {
-                "id": 3,
-                "item": {
-                  "Name": "Aperture Priority Mode"
-                }
-              }
-            ]
-          }
-        },
-        "ExposureAbsolute": {
-          "IntegerRange": {
-            "control_type": "ExposureAbsolute",
-            "value": {
-              "ConValueInteger": 156
-            },
-            "default": 156,
-            "step": 1,
-            "min": 1,
-            "max": 5000
-          }
+        "Hue" : {
+           "IntegerRange" : {
+             "control_type":"Hue",
+             "value":0,
+             "default":0,
+             "step":1,
+             "min":-40,
+             "max":40
+           }
         }
       }
     },
@@ -731,89 +414,65 @@
       "camera_id": 2,
       "fps" : 5,
       "configuration" : {
+        "Saturation" : {
+          "IntegerRange" : {
+            "control_type":"Saturation",
+            "value":64,
+            "default":64,
+            "step":1,
+            "min":0,
+            "max":128
+          }
+        },
         "Brightness": {
-          "IntegerRange": {
-            "control_type": "Brightness",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": -64,
-            "max": 64
+          "IntegerRange" : {
+            "control_type":"Brightness",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":-64,
+            "max":64
           }
         },
         "Contrast": {
-          "IntegerRange": {
-            "control_type": "Contrast",
-            "value": {
-              "ConValueInteger": 32
-            },
-            "default": 32,
-            "step": 1,
-            "min": 0,
-            "max": 64
+          "IntegerRange" : {
+            "control_type":"Contrast",
+            "value":32,
+            "default":32,
+            "step":1,
+            "min":0,
+            "max":64
           }
         },
-        "Saturation": {
-          "IntegerRange": {
-            "control_type": "Saturation",
-            "value": {
-              "ConValueInteger": 64
-            },
-            "default": 64,
-            "step": 1,
-            "min": 0,
-            "max": 128
+        "Gain" : {
+          "IntegerRange" : {
+            "control_type":"Gain",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":0,
+            "max":100
           }
         },
-        "Hue": {
-          "IntegerRange": {
-            "control_type": "Hue",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": -40,
-            "max": 40
+        "Gamma" : {
+          "IntegerRange" : {
+            "control_type":"Gamma",
+            "value":100,
+            "default":100,
+            "step":1,
+            "min":72,
+            "max":500
           }
         },
-        "Gamma": {
-          "IntegerRange": {
-            "control_type": "Gamma",
-            "value": {
-              "ConValueInteger": 100
-            },
-            "default": 100,
-            "step": 1,
-            "min": 72,
-            "max": 500
-          }
-        },
-        "Gain": {
-          "IntegerRange": {
-            "control_type": "Gain",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": 0,
-            "max": 100
-          }
-        },
-        "ExposureAbsolute": {
-          "IntegerRange": {
-            "control_type": "ExposureAbsolute",
-            "value": {
-              "ConValueInteger": 156
-            },
-            "default": 156,
-            "step": 1,
-            "min": 1,
-            "max": 5000
-          }
+        "Hue" : {
+           "IntegerRange" : {
+             "control_type":"Hue",
+             "value":0,
+             "default":0,
+             "step":1,
+             "min":-40,
+             "max":40
+           }
         }
       }
     },
@@ -822,100 +481,65 @@
       "camera_id": 3,
       "fps" : 5,
       "configuration" : {
+        "Saturation" : {
+          "IntegerRange" : {
+            "control_type":"Saturation",
+            "value":64,
+            "default":64,
+            "step":1,
+            "min":0,
+            "max":128
+          }
+        },
         "Brightness": {
-          "IntegerRange": {
-            "control_type": "Brightness",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": -64,
-            "max": 64
+          "IntegerRange" : {
+            "control_type":"Brightness",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":-64,
+            "max":64
           }
         },
         "Contrast": {
-          "IntegerRange": {
-            "control_type": "Contrast",
-            "value": {
-              "ConValueInteger": 32
-            },
-            "default": 32,
-            "step": 1,
-            "min": 0,
-            "max": 64
+          "IntegerRange" : {
+            "control_type":"Contrast",
+            "value":32,
+            "default":32,
+            "step":1,
+            "min":0,
+            "max":64
           }
         },
-        "Saturation": {
-          "IntegerRange": {
-            "control_type": "Saturation",
-            "value": {
-              "ConValueInteger": 64
-            },
-            "default": 64,
-            "step": 1,
-            "min": 0,
-            "max": 128
+        "Gain" : {
+          "IntegerRange" : {
+            "control_type":"Gain",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":0,
+            "max":100
           }
         },
-        "Hue": {
-          "IntegerRange": {
-            "control_type": "Hue",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": -40,
-            "max": 40
+        "Gamma" : {
+          "IntegerRange" : {
+            "control_type":"Gamma",
+            "value":100,
+            "default":100,
+            "step":1,
+            "min":72,
+            "max":500
           }
         },
-        "Gamma": {
-          "IntegerRange": {
-            "control_type": "Gamma",
-            "value": {
-              "ConValueInteger": 100
-            },
-            "default": 100,
-            "step": 1,
-            "min": 72,
-            "max": 500
-          }
-        },
-        "Gain": {
-          "IntegerRange": {
-            "control_type": "Gain",
-            "value": {
-              "ConValueInteger": 0
-            },
-            "default": 0,
-            "step": 1,
-            "min": 0,
-            "max": 100
-          }
-        },
-        "AutoExposure": {
-          "Menu": {
-            "control_type": "AutoExposure",
-            "value": {
-              "ConValueMenu": 3
-            },
-            "default": 3,
-            "items": [
-              {
-                "id": 1,
-                "item": {
-                  "Name": "Manual Mode"
-                }
-              },
-              {
-                "id": 3,
-                "item": {
-                  "Name": "Aperture Priority Mode"
-                }
-              }
-            ]
-          }
+        "Hue" : {
+           "IntegerRange" : {
+             "control_type":"Hue",
+             "value":0,
+             "default":0,
+             "step":1,
+             "min":-40,
+             "max":40
+           }
         }
       }
     }
