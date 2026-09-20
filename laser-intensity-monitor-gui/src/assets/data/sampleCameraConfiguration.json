@@ -1,7 +1,7 @@
 {
   "configurations" : [
     {
-      "conn_id" : 1,
+      "conn_id" : "1",
       "camera_id": 0,
       "fps" : 5,
       "configuration" : {
@@ -68,7 +68,7 @@
       }
     },
     {
-      "conn_id" : 1,
+      "conn_id" : "1",
       "camera_id": 1,
       "fps" : 5,
       "configuration" : {
@@ -125,7 +125,7 @@
       }
     },
     {
-      "conn_id" : 1,
+      "conn_id" : "1",
       "camera_id": 2,
       "fps" : 5,
       "configuration" : {
@@ -182,7 +182,7 @@
       }
     },
     {
-      "conn_id" : 1,
+      "conn_id" : "1",
       "camera_id": 3,
       "fps" : 5,
       "configuration" : {
@@ -239,7 +239,7 @@
       }
     },
     {
-      "conn_id" : 1,
+      "conn_id" : "1",
       "camera_id": 4,
       "fps" : 5,
       "configuration" : {
@@ -296,7 +296,7 @@
       }
     },
     {
-      "conn_id" : 2,
+      "conn_id" : "2",
       "camera_id": 0,
       "fps" : 5,
       "configuration" : {
@@ -353,7 +353,7 @@
       }
     },
     {
-      "conn_id" : 2,
+      "conn_id" : "2",
       "camera_id": 1,
       "fps" : 5,
       "configuration" : {
@@ -410,7 +410,7 @@
       }
     },
     {
-      "conn_id" : 2,
+      "conn_id" : "2",
       "camera_id": 2,
       "fps" : 5,
       "configuration" : {
@@ -477,7 +477,7 @@
       }
     },
     {
-      "conn_id" : 2,
+      "conn_id" : "2",
       "camera_id": 3,
       "fps" : 5,
       "configuration" : {
