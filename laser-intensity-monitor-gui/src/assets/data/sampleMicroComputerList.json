@@ -1,7 +1,7 @@
 {
   "microComputers": [
     {
-      "conn_id": 1,
+      "conn_id": "1",
       "name": "Raspberry Pi 5 8GB (main Pi)",
       "state": "Active",
       "Menu": {
@@ -27,7 +27,7 @@
       }
     },
     {
-      "conn_id": 2,
+      "conn_id": "2",
       "name": "Raspberry Pi 5 8GB (sub Pi)",
       "state": "Active",
       "Menu": {
