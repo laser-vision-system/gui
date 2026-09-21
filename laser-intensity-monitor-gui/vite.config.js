@@ -4,7 +4,11 @@ import { viteSingleFile } from 'vite-plugin-singlefile'
 
 export default defineConfig({
   base: "",
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    // uncoment below for single file build
+    //viteSingleFile()
+  ],
   server: {
     proxy: {
       '/api': {

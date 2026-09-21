@@ -1,0 +1,547 @@
+{
+  "configurations" : [
+    {
+      "conn_id" : "1",
+      "camera_id": 0,
+      "fps" : 5,
+      "configuration" : {
+        "Saturation" : {
+          "IntegerRange" : {
+            "control_type":"Saturation",
+            "value":64,
+            "default":64,
+            "step":1,
+            "min":0,
+            "max":128
+          }
+        },
+        "Brightness": {
+          "IntegerRange" : {
+            "control_type":"Brightness",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":-64,
+            "max":64
+          }
+        },
+        "Contrast": {
+          "IntegerRange" : {
+            "control_type":"Contrast",
+            "value":32,
+            "default":32,
+            "step":1,
+            "min":0,
+            "max":64
+          }
+        },
+        "Gain" : {
+          "IntegerRange" : {
+            "control_type":"Gain",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":0,
+            "max":100
+          }
+        },
+        "Gamma" : {
+          "IntegerRange" : {
+            "control_type":"Gamma",
+            "value":100,
+            "default":100,
+            "step":1,
+            "min":72,
+            "max":500
+          }
+        },
+        "Hue" : {
+           "IntegerRange" : {
+             "control_type":"Hue",
+             "value":0,
+             "default":0,
+             "step":1,
+             "min":-40,
+             "max":40
+           }
+        }
+      }
+    },
+    {
+      "conn_id" : "1",
+      "camera_id": 1,
+      "fps" : 5,
+      "configuration" : {
+        "Saturation" : {
+          "IntegerRange" : {
+            "control_type":"Saturation",
+            "value":64,
+            "default":64,
+            "step":1,
+            "min":0,
+            "max":128
+          }
+        },
+        "Contrast": {
+          "IntegerRange" : {
+            "control_type":"Contrast",
+            "value":32,
+            "default":32,
+            "step":1,
+            "min":0,
+            "max":64
+          }
+        },
+        "Gain" : {
+          "IntegerRange" : {
+            "control_type":"Gain",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":0,
+            "max":100
+          }
+        },
+        "Gamma" : {
+          "IntegerRange" : {
+            "control_type":"Gamma",
+            "value":100,
+            "default":100,
+            "step":1,
+            "min":72,
+            "max":500
+          }
+        },
+        "Hue" : {
+           "IntegerRange" : {
+             "control_type":"Hue",
+             "value":0,
+             "default":0,
+             "step":1,
+             "min":-40,
+             "max":40
+           }
+        }
+      }
+    },
+    {
+      "conn_id" : "1",
+      "camera_id": 2,
+      "fps" : 5,
+      "configuration" : {
+        "Saturation" : {
+          "IntegerRange" : {
+            "control_type":"Saturation",
+            "value":64,
+            "default":64,
+            "step":1,
+            "min":0,
+            "max":128
+          }
+        },
+        "Brightness": {
+          "IntegerRange" : {
+            "control_type":"Brightness",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":-64,
+            "max":64
+          }
+        },
+        "Gain" : {
+          "IntegerRange" : {
+            "control_type":"Gain",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":0,
+            "max":100
+          }
+        },
+        "Gamma" : {
+          "IntegerRange" : {
+            "control_type":"Gamma",
+            "value":100,
+            "default":100,
+            "step":1,
+            "min":72,
+            "max":500
+          }
+        },
+        "Hue" : {
+           "IntegerRange" : {
+             "control_type":"Hue",
+             "value":0,
+             "default":0,
+             "step":1,
+             "min":-40,
+             "max":40
+           }
+        }
+      }
+    },
+    {
+      "conn_id" : "1",
+      "camera_id": 3,
+      "fps" : 5,
+      "configuration" : {
+        "Brightness": {
+          "IntegerRange" : {
+            "control_type":"Brightness",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":-64,
+            "max":64
+          }
+        },
+        "Contrast": {
+          "IntegerRange" : {
+            "control_type":"Contrast",
+            "value":32,
+            "default":32,
+            "step":1,
+            "min":0,
+            "max":64
+          }
+        },
+        "Gain" : {
+          "IntegerRange" : {
+            "control_type":"Gain",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":0,
+            "max":100
+          }
+        },
+        "Gamma" : {
+          "IntegerRange" : {
+            "control_type":"Gamma",
+            "value":100,
+            "default":100,
+            "step":1,
+            "min":72,
+            "max":500
+          }
+        },
+        "Hue" : {
+           "IntegerRange" : {
+             "control_type":"Hue",
+             "value":0,
+             "default":0,
+             "step":1,
+             "min":-40,
+             "max":40
+           }
+        }
+      }
+    },
+    {
+      "conn_id" : "1",
+      "camera_id": 4,
+      "fps" : 5,
+      "configuration" : {
+        "Saturation" : {
+          "IntegerRange" : {
+            "control_type":"Saturation",
+            "value":64,
+            "default":64,
+            "step":1,
+            "min":0,
+            "max":128
+          }
+        },
+        "Brightness": {
+          "IntegerRange" : {
+            "control_type":"Brightness",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":-64,
+            "max":64
+          }
+        },
+        "Contrast": {
+          "IntegerRange" : {
+            "control_type":"Contrast",
+            "value":32,
+            "default":32,
+            "step":1,
+            "min":0,
+            "max":64
+          }
+        },
+        "Gain" : {
+          "IntegerRange" : {
+            "control_type":"Gain",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":0,
+            "max":100
+          }
+        },
+        "Gamma" : {
+          "IntegerRange" : {
+            "control_type":"Gamma",
+            "value":100,
+            "default":100,
+            "step":1,
+            "min":72,
+            "max":500
+          }
+        }
+      }
+    },
+    {
+      "conn_id" : "2",
+      "camera_id": 0,
+      "fps" : 5,
+      "configuration" : {
+        "Saturation" : {
+          "IntegerRange" : {
+            "control_type":"Saturation",
+            "value":64,
+            "default":64,
+            "step":1,
+            "min":0,
+            "max":128
+          }
+        },
+        "Brightness": {
+          "IntegerRange" : {
+            "control_type":"Brightness",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":-64,
+            "max":64
+          }
+        },
+        "Contrast": {
+          "IntegerRange" : {
+            "control_type":"Contrast",
+            "value":32,
+            "default":32,
+            "step":1,
+            "min":0,
+            "max":64
+          }
+        },
+        "Gain" : {
+          "IntegerRange" : {
+            "control_type":"Gain",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":0,
+            "max":100
+          }
+        },
+        "Hue" : {
+           "IntegerRange" : {
+             "control_type":"Hue",
+             "value":0,
+             "default":0,
+             "step":1,
+             "min":-40,
+             "max":40
+           }
+        }
+      }
+    },
+    {
+      "conn_id" : "2",
+      "camera_id": 1,
+      "fps" : 5,
+      "configuration" : {
+        "Saturation" : {
+          "IntegerRange" : {
+            "control_type":"Saturation",
+            "value":64,
+            "default":64,
+            "step":1,
+            "min":0,
+            "max":128
+          }
+        },
+        "Brightness": {
+          "IntegerRange" : {
+            "control_type":"Brightness",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":-64,
+            "max":64
+          }
+        },
+        "Contrast": {
+          "IntegerRange" : {
+            "control_type":"Contrast",
+            "value":32,
+            "default":32,
+            "step":1,
+            "min":0,
+            "max":64
+          }
+        },
+        "Gamma" : {
+          "IntegerRange" : {
+            "control_type":"Gamma",
+            "value":100,
+            "default":100,
+            "step":1,
+            "min":72,
+            "max":500
+          }
+        },
+        "Hue" : {
+           "IntegerRange" : {
+             "control_type":"Hue",
+             "value":0,
+             "default":0,
+             "step":1,
+             "min":-40,
+             "max":40
+           }
+        }
+      }
+    },
+    {
+      "conn_id" : "2",
+      "camera_id": 2,
+      "fps" : 5,
+      "configuration" : {
+        "Saturation" : {
+          "IntegerRange" : {
+            "control_type":"Saturation",
+            "value":64,
+            "default":64,
+            "step":1,
+            "min":0,
+            "max":128
+          }
+        },
+        "Brightness": {
+          "IntegerRange" : {
+            "control_type":"Brightness",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":-64,
+            "max":64
+          }
+        },
+        "Contrast": {
+          "IntegerRange" : {
+            "control_type":"Contrast",
+            "value":32,
+            "default":32,
+            "step":1,
+            "min":0,
+            "max":64
+          }
+        },
+        "Gain" : {
+          "IntegerRange" : {
+            "control_type":"Gain",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":0,
+            "max":100
+          }
+        },
+        "Gamma" : {
+          "IntegerRange" : {
+            "control_type":"Gamma",
+            "value":100,
+            "default":100,
+            "step":1,
+            "min":72,
+            "max":500
+          }
+        },
+        "Hue" : {
+           "IntegerRange" : {
+             "control_type":"Hue",
+             "value":0,
+             "default":0,
+             "step":1,
+             "min":-40,
+             "max":40
+           }
+        }
+      }
+    },
+    {
+      "conn_id" : "2",
+      "camera_id": 3,
+      "fps" : 5,
+      "configuration" : {
+        "Saturation" : {
+          "IntegerRange" : {
+            "control_type":"Saturation",
+            "value":64,
+            "default":64,
+            "step":1,
+            "min":0,
+            "max":128
+          }
+        },
+        "Brightness": {
+          "IntegerRange" : {
+            "control_type":"Brightness",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":-64,
+            "max":64
+          }
+        },
+        "Contrast": {
+          "IntegerRange" : {
+            "control_type":"Contrast",
+            "value":32,
+            "default":32,
+            "step":1,
+            "min":0,
+            "max":64
+          }
+        },
+        "Gain" : {
+          "IntegerRange" : {
+            "control_type":"Gain",
+            "value":0,
+            "default":0,
+            "step":1,
+            "min":0,
+            "max":100
+          }
+        },
+        "Gamma" : {
+          "IntegerRange" : {
+            "control_type":"Gamma",
+            "value":100,
+            "default":100,
+            "step":1,
+            "min":72,
+            "max":500
+          }
+        },
+        "Hue" : {
+           "IntegerRange" : {
+             "control_type":"Hue",
+             "value":0,
+             "default":0,
+             "step":1,
+             "min":-40,
+             "max":40
+           }
+        }
+      }
+    }
+  ]
+}

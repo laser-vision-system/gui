@@ -1,0 +1,76 @@
+{
+  "cameras": [
+    {
+      "conn_id": "1",
+      "camera_id": 0,
+      "name": "OV7725 USB Camera: All Controls",
+      "state": "Active",
+      "warn_below_threshold":0.95,
+      "alert_below_threshold": 0.80
+    },
+    {
+      "conn_id": "1",
+      "camera_id": 1,
+      "name": "OV7725 USB Camera: Missing Brightness",
+      "state": "Active",
+      "warn_below_threshold":0.95,
+      "alert_below_threshold": 0.80
+    },
+    {
+      "conn_id": "1",
+      "camera_id": 2,
+      "name": "OV7725 USB Camera: Missing Contrast",
+      "state": "Active",
+      "warn_below_threshold":0.95,
+      "alert_below_threshold": 0.80
+    },
+    {
+      "conn_id": "1",
+      "camera_id": 3,
+      "name": "OV7725 USB Camera: Missing Saturation",
+      "state": "Active",
+      "warn_below_threshold":0.95,
+      "alert_below_threshold": 0.80
+    },
+    {
+      "conn_id": "1",
+      "camera_id": 4,
+      "name": "OV7725 USB Camera: Missing Hue",
+      "state": "Active",
+      "warn_below_threshold":0.95,
+      "alert_below_threshold": 0.80
+    },
+    {
+      "conn_id": "2",
+      "camera_id": 0,
+      "name": "OV7725 USB Camera: Missing Gamma",
+      "state": "Active",
+      "warn_below_threshold":0.95,
+      "alert_below_threshold": 0.80
+    },
+    {
+      "conn_id": "2",
+      "camera_id": 1,
+      "name": "OV7725 USB Camera: Missing Gain",
+      "state": "Active",
+      "warn_below_threshold":0.95,
+      "alert_below_threshold": 0.80
+    },
+    {
+      "conn_id": "2",
+      "camera_id": 2,
+      "name": "OV7725 USB Camera: Missing AutoExposure",
+      "state": "Disconnected",
+      "warn_below_threshold":0.95,
+      "alert_below_threshold": 0.80
+    },
+    {
+      "conn_id": "2",
+      "camera_id": 3,
+      "name": "OV7725 USB Camera: Missing ExposureAbsolute",
+      "state": "Disconnected",
+      "warn_below_threshold":0.95,
+      "alert_below_threshold": 0.80
+    }
+  ]
+}

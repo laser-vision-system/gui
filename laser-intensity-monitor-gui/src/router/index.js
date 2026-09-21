@@ -1,10 +1,10 @@
 import { createRouter, createWebHashHistory, createWebHistory } from "vue-router";
 import Homepage from "../views/Homepage.vue";
-import CameraConfig from "../views/CameraConfig.vue";
+import DeviceSettings from "../views/DeviceSettings.vue";
 import Settings from "../views/Settings.vue";
 const routes = [
   { path: "/", component: Homepage },
-  { path: "/camera-config", component: CameraConfig },
+  { path: "/device-settings", component: DeviceSettings },
   { path: "/settings", component: Settings }
 ];
 const router = createRouter({
