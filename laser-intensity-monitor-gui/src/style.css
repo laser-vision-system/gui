@@ -12,6 +12,10 @@
     --cam-bg: aliceblue;
     --button-hover: mediumslateblue;
     --line-break-color: lightslategray;
+    /*Multi Thumb Slider colour values*/
+    --range-safe: green;
+    --range-warn: yellow;
+    --range-alert: red;
 }
 
 /* Light Mode Table Overrides */
@@ -35,6 +39,11 @@
     --cam-bg: SlateGray;
     --button-hover: slateblue;
     --line-break-color: white;
+    /*Multi Thumb Slider colour values*/
+    --range-safe: darkgreen;
+    /* FIND A BETTER COLOR WHEN HAVE TIME */
+    --range-warn: #8B8000;
+    --range-alert: darkred;
 }
 
 /* Dark Mode Table Overrides */

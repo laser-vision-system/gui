@@ -1,11 +1,17 @@
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
-import { useWebSocket } from '../composables/useWebSocket'
+import { ref, onMounted, watch, computed } from 'vue';
+
+
+// -----------------------------
+//   Multi Thumb range slider
+// -----------------------------
+import MultiThumbSlider from '../components/MultiThumbRangeSlider.vue';
 
 // -------------------------
 //   Confrimation pop up
 // -------------------------
-import ConfirmationBox from '../components/ConfirmationBox.vue'
+import ConfirmationBox from '../components/ConfirmationBox.vue';
+
 const showRenameMicroCompConfrim = ref(false)
 const showSelectVisionProcessingConfrim = ref(false)
 const showRenameCameraConfrim = ref(false)
@@ -20,6 +26,7 @@ const showSetDefaultThresholdConfrim = ref(false)
 // --------------------
 //   WebSocket
 // --------------------
+import { useWebSocket } from '../composables/useWebSocket'
 // Point this at your server's websocket endpoint
 const {
   // state
@@ -840,10 +847,10 @@ onMounted(() => {
                         <hr class="line-break" v-if="selectedCamera">
                         <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">Deviation Thresholds</h4>
                         <div v-if="selectedConfig">
-                            <label for="fps-range" class="config-label">Warning Threshold</label>
-                            <div class="form-element">
-                                <input type="range" class="slider-input" id="warning-range" v-model.number="newWarningThreshold" min="2" max="99" step="1">
-                                <input type="number" class="number-input" id= "warning-number" v-model.number="newWarningThreshold" min="2" max="99" step="1">
+                            <div class="multi-thumb-slider">
+                                <h3 class="config-label">Multi Thumb Slider</h3>
+                                <p>Slider value: {{newWarningThreshold.value}}</p>
+                                <MultiThumbSlider :max="100" v-model="newWarningThreshold" />
                             </div>
                         </div>
                         <div v-if="selectedConfig">
