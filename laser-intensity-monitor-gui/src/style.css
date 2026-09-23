@@ -12,6 +12,12 @@
     --cam-bg: aliceblue;
     --button-hover: mediumslateblue;
     --line-break-color: lightslategray;
+    /*Multi Thumb Slider colour values*/
+    --range-safe: #7EC151;
+    --range-warn: #FFF449;
+    --range-alert: #FF5656;
+    --thumb-bg-alert: lightgray;
+    --thumb-bg-warn: lightgray;
 }
 
 /* Light Mode Table Overrides */
@@ -32,9 +38,15 @@
     --nav-title: white;
     --camera-tab-text: white;
     --config-title: white;
-    --cam-bg: SlateGray;
+    --cam-bg: slategray;
     --button-hover: slateblue;
     --line-break-color: white;
+    /*Multi Thumb Slider colour values*/
+    --range-safe: #1E5128;
+    --range-warn: #F6C90E;
+    --range-alert: #C3110C;
+    --thumb-bg-alert: #CD1818;
+    --thumb-bg-warn: #FFCC00;
 }
 
 /* Dark Mode Table Overrides */
