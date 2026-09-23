@@ -1,6 +1,6 @@
 <script setup>
-// Time spent on task: 3hr
-import { ref, computed } from "vue";
+// Time spent on task: 3hrs + 5hrs
+import { ref, computed, watch } from "vue";
 
 // --------------------
 //   Props
@@ -9,7 +9,7 @@ import { ref, computed } from "vue";
 const props = defineProps({
   min: { type: Number, default: 0 },
   max: { type: Number, default: 200 },
-  step: { type: Number, default: 1 },
+  step: { type: Number, default: 0.1 },
 });
 
 // -----------------------
@@ -35,7 +35,7 @@ const activeThumb = ref(null);
 // function to get the progress of the slider
 function toPercentage(value) {
   return ((value - props.min) / (props.max - props.min)) * 100;
-}
+};
 
 // function to set the css variable for the progress
 function setCSSProgress (progress) {
@@ -46,7 +46,7 @@ function setCSSProgress (progress) {
 // used by the thumb handeler function to block overlap between thumbs.
 function clampRange(value, low, high) {
   return Math.min(Math.max(value, low), high)
-}
+};
 
 // Thumb manager  / input event handler
 function thumbManager(modelReference, rangeReference) {
@@ -109,6 +109,44 @@ const onAlertBelowInput = thumbManager(alertBelow, alertBelowRange);
 const onWarnBelowInput = thumbManager(warnBelow, warnBelowRange);
 const onWarnAboveInput = thumbManager(warnAbove, warnAboveRange);
 const onAlertAboveInput = thumbManager(alertAbove, alertAboveRange);
+
+// ---------------------------
+//   Watchers
+// ---------------------------
+
+// alert below watcher
+watch(alertBelow, (newValue) => {
+  if (newValue >= warnBelow.value) {
+    warnBelow.value = newValue + 1;
+  };
+})
+
+// warn below watcher
+watch(warnBelow, (newValue) => {
+  if (newValue <= alertBelow.value) {
+    alertBelow.value = newValue - 0.5;
+  }
+  if (newValue >= warnAbove.value) {
+    warnAbove.value = newValue + 1;
+  }
+})
+
+// warn above watcher
+watch(warnAbove, (newValue) => {
+  if (newValue <= warnBelow.value) {
+    warnBelow.value = newValue - 0.5;
+  }
+  if (newValue >= alertAbove.value) {
+    alertAbove.value = newValue + 1;
+  }
+})
+
+// alert above watcher
+watch(alertAbove, (newValue) => {
+  if (newValue <= warnAbove.value) {
+    warnAbove.value = newValue - 0.5;
+  }
+})
 
 </script>
 <template>
@@ -173,63 +211,67 @@ const onAlertAboveInput = thumbManager(alertAbove, alertAboveRange);
                 @focus="activeThumb = 'alertAbove'"
                 aria-label="Alert Above"
             />
-            <!-- Number Inputs for each thumb on the same line -->
-            <div class="number-row">
-                <!-- Alert Below number input -->
-                <label class="number-input">
-                    <span>Alert Below</span>
-                    <input
-                        type="number"
-                        :min="alertBelowRange.min"
-                        :max="alertBelowRange.max"
-                        :step="step"
-                        :value="alertBelow"
-                        @change="onAlertBelowInput"
-                    />
-                </label>
-                <!-- Warn Below number input -->
-                <label class="number-input">
-                    <input
-                        type="number"
-                        :min="warnBelowRange.min"
-                        :max="warnBelowRange.max"
-                        :step="step"
-                        :value="warnBelow"
-                        @change="onWarnBelowInput"
-                    />
-                </label>
-                <!-- Warn Above number input -->
-                <label class="number-input">
-                    <input
+        </div>
+        <!-- Number Inputs for each thumb on the same line -->
+        <div class="number-row">
+
+            <!-- Alert Below number input -->
+            <label class="number-input alert-number">
+                <span>Alert Below</span>
+                <input
                     type="number"
-                    :min="warnAboveRange.min"
-                    :max="warnAboveRange.max"
+                    :min="alertBelowRange.min"
+                    :max="alertBelowRange.max"
                     :step="step"
-                    :value="warnAbove"
-                    @change="onWarnAboveInput"
-                    />
-                </label>
-                <!-- Alert Above number input -->
-                <label class="number-input">
-                    <input
-                        type="number"
-                        :min="alertAboveRange.min"
-                        :max="alertAboveRange.max"
-                        :step="step"
-                        :value="alertAbove"
-                        @change="onAlertAboveInput"
-                    />
-                </label>
-            </div>
+                    :value="alertBelow"
+                    @change="onAlertBelowInput"
+                />
+            </label>
+            <!-- Warn Below number input -->
+            <label class="number-input warn-number">
+                <span>Warn Below</span>
+                <input
+                    type="number"
+                    :min="warnBelowRange.min"
+                    :max="warnBelowRange.max"
+                    :step="step"
+                    :value="warnBelow"
+                    @change="onWarnBelowInput"
+                />
+            </label>
+            <!-- Warn Above number input -->
+            <label class="number-input warn-number">
+                <span>Warn Above</span>
+                <input
+                type="number"
+                :min="warnAboveRange.min"
+                :max="warnAboveRange.max"
+                :step="step"
+                :value="warnAbove"
+                @change="onWarnAboveInput"
+                />
+            </label>
+            <!-- Alert Above number input -->
+            <label class="number-input alert-number">
+                <span>Alert Above</span>
+                <input
+                    type="number"
+                    :min="alertAboveRange.min"
+                    :max="alertAboveRange.max"
+                    :step="step"
+                    :value="alertAbove"
+                    @change="onAlertAboveInput"
+                />
+            </label>
         </div>
     </div>
 </template>
 <style scoped>
-
     .multi-thumb-slider {
         --track-height: 0.5rem;
         --thumb-size: 1rem;
         width: 100%;
+        padding-bottom: 2rem;
     }
 
     .track-section{
@@ -238,6 +280,7 @@ const onAlertAboveInput = thumbManager(alertAbove, alertAboveRange);
         display: flex;
         align-items: center;
     }
+
     /* Shares on visable track and makes the other ones Invisible */
     .track {
         position: absolute;
@@ -299,8 +342,8 @@ const onAlertAboveInput = thumbManager(alertAbove, alertAboveRange);
         height: var(--thumb-size);
         margin-top: calc((var(--track-height) - var(--thumb-size))/ 2);
         border-radius: 999px;
-        background: #fff;
-        border: 2px solid var(--range-safe);
+        background: var(--thumb-bg);
+        border: 2px solid var(--button-hover);
         cursor: grab;
     }
 
@@ -310,8 +353,8 @@ const onAlertAboveInput = thumbManager(alertAbove, alertAboveRange);
         width: var(--thumb-size);
         height: var(--thumb-size);
         border-radius: 999px;
-        background: #fff;
-        border: 2px solid var(--range-safe);
+
+        border: 2px solid var(--button-hover);
         cursor: grab;
     }
 
@@ -319,25 +362,59 @@ const onAlertAboveInput = thumbManager(alertAbove, alertAboveRange);
     .thumb.is-active::-webkit-slider-thumb,
     .thumb.is-active::-moz-range-thumb {
       cursor: grabbing;
-      box-shadow: 0 0 0 4px var(--nav-bg);
+      border: 2px solid var(--nav-bg);
+      box-shadow: 0 0 0 2px var(--nav-bg);
+    }
+    /* Thumb background*/
+    /*Chrome and Safari*/
+    .thumb-alert-below::-webkit-slider-thumb, .thumb-alert-above::-webkit-slider-thumb,
+    .thumb-alert-below::-moz-range-thumb, .thumb-alert-above::-moz-range-thumb {
+        background: var(--thumb-bg-alert);
+    }
+
+    /*Firefox*/
+    .thumb-warn-below::-webkit-slider-thumb, .thumb-warn-above::-webkit-slider-thumb,
+    .thumb-warn-below::-moz-range-thumb, .thumb-warn-above::-moz-range-thumb {
+        background: var(--thumb-bg-warn);
     }
 
     .number-row {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.75rem;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
         margin-top: 1rem;
+        margin-left: 2rem;
+        margin-right: 2rem;
     }
 
     .number-input {
         display: flex;
         flex-direction: column;
-        font-size: 0.75rem;
-        gap: 0.75rem;
+        justify-content: center;
+        align-items: center;
+        font-size: 10pt;
+        font-weight: 600;
+        gap: 0.3rem;
+
     }
 
     .number-input input {
-        width: 5rem;
-        padding: 0.25rem 0.4rem;
+        width: 4.5rem;
+        padding: 0.25rem;
+        border-radius: 0.5rem;
+        background-color: var(--bs-body-bg);
+        color: var(--bs-body-color);
     }
+
+    .alert-number input {
+        border: 3px solid var(--range-alert);
+    }
+
+    .warn-number input {
+        border: 3px solid var(--range-warn);
+    }
+
+
 </style>

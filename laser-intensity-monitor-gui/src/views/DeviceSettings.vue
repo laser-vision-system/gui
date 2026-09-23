@@ -7,26 +7,31 @@ import { ref, onMounted, watch, computed } from 'vue';
 // -----------------------------
 import MultiThumbSlider from '../components/MultiThumbRangeSlider.vue';
 
+// Diviation configration
+const newAlertBelow = ref(null);
+const newWarnBelow = ref(null);
+const newWarnAbove = ref(null);
+const newAlertAbove = ref(null);
 // -------------------------
 //   Confrimation pop up
 // -------------------------
 import ConfirmationBox from '../components/ConfirmationBox.vue';
 
-const showRenameMicroCompConfrim = ref(false)
-const showSelectVisionProcessingConfrim = ref(false)
-const showRenameCameraConfrim = ref(false)
-const showSaveAllControlsConfrim = ref(false)
-const showResetAllControlsConfrim = ref(false)
-const showSaveFrameRateConfrim = ref(false)
-const showResetFrameRateConfrim = ref(false) // probably not needed will get rid of in sprint 6 :]
-const showSaveThresholdsConfrim = ref(false)
-const showResetThresholdsConfrim = ref(false)
-const showSetDefaultThresholdConfrim = ref(false)
+const showRenameMicroCompConfrim = ref(false);
+const showSelectVisionProcessingConfrim = ref(false);
+const showRenameCameraConfrim = ref(false);
+const showSaveAllControlsConfrim = ref(false);
+const showResetAllControlsConfrim = ref(false);
+const showSaveFrameRateConfrim = ref(false);
+const showResetFrameRateConfrim = ref(false);// probably not needed will get rid of in sprint 6 :]
+const showSaveThresholdsConfrim = ref(false);
+const showResetThresholdsConfrim = ref(false);
+const showSetDefaultThresholdConfrim = ref(false);
 
 // --------------------
 //   WebSocket
 // --------------------
-import { useWebSocket } from '../composables/useWebSocket'
+import { useWebSocket } from '../composables/useWebSocket';
 // Point this at your server's websocket endpoint
 const {
   // state
@@ -54,10 +59,10 @@ const {
   setCameraThresholds,
   setDefaultThreshold,
   getDefaultThresholds,
-} = useWebSocket('ws://'+ location.hostname +':8080/gui_ws')
+} = useWebSocket('ws://' + location.hostname + ':8080/gui_ws');
 
 //  Check if the websocket is connected
-const isLive = computed(() => status.value === 'CONNECTED')
+const isLive = computed(() => status.value === 'CONNECTED');
 
 // --------------------
 //        Data
@@ -68,47 +73,45 @@ const isLive = computed(() => status.value === 'CONNECTED')
 // Cnn,
 // Diff,
 // Demonstration,
-const visionTech = ['Empty', 'Cnn', 'Diff', 'Demonstration']
+const visionTech = ['Empty', 'Cnn', 'Diff', 'Demonstration'];
 
 // --------------------
 //     Sample Data
 // --------------------
 // mirrors the output of listcameras in websocket
-import sampleCameraList from '../assets/data/sampleCameraList.json'
+import sampleCameraList from '../assets/data/sampleCameraList.json';
 // mirrors the Configuration or control config value from websocket
-import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.json'
+import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.json';
 // list of micro computers
-import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json'
+import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json';
 // -------------------------
 //     V model vairables
 // -------------------------
 // User selected variables
-const selectedMicroComputer = ref('') // selected m comp
-const selectedCamera = ref('') // chosen from camera list
-const selectedConfig = ref(null) // matches choice from camera list using the conn_id and camera_id
+const selectedMicroComputer = ref(''); // selected m comp
+const selectedCamera = ref(''); // chosen from camera list
+const selectedConfig = ref(null); // matches choice from camera list using the conn_id and camera_id
 // Form section toggles
 // MicroComputer Configurables Rename
-const newMicroComputerName = ref(null)
+const newMicroComputerName = ref(null);
 // MicroComputer Configurables Select vision processing
-const newVisionProcessing = ref(null)
+const newVisionProcessing = ref(null);
 // Camera Configuration Rename
-const newName = ref(null)
-// Diviation configration
-const newAlertThreshold = ref(null)
-const newWarningThreshold = ref(null)
+const newName = ref(null);
+
 // FPS (not added yet)
-const newFPS = ref(null)
+const newFPS = ref(null);
 // camera controls
-const newBrightness = ref(null)
-const newContrast = ref(null)
-const newHue = ref(null)
-const newSaturation = ref(null)
-const newGamma = ref(null)
-const newGain = ref(null)
-const newExposureAbsolute = ref(null)
-const newAutoExposure = ref(null)
+const newBrightness = ref(null);
+const newContrast = ref(null);
+const newHue = ref(null);
+const newSaturation = ref(null);
+const newGamma = ref(null);
+const newGain = ref(null);
+const newExposureAbsolute = ref(null);
+const newAutoExposure = ref(null);
 // for save message e.g. success | error
-const saveState = ref('')
+const saveState = ref('');
 
 // --------------------
 //        Computed
@@ -117,10 +120,10 @@ const saveState = ref('')
 const activeMicroComputers = computed(() => {
   const source = isLive.value ? wsEdgeList.value : sampleMicroComputerList.microComputers
   return source.filter((com) => com.state === 'Active')
-})
+});
 // filter out the cameras that are not active
 const activeCameras = computed(() => {
-  const source = isLive.value  ? wsCameraList.value : sampleCameraList.cameras
+  const source = isLive.value ? wsCameraList.value : sampleCameraList.cameras
   const active = source.filter((cam) => cam.state === 'Active')
   // if no option is selecetd or the all option is selected.
   if (!selectedMicroComputer.value || selectedMicroComputer.value === 'all') {
@@ -128,7 +131,7 @@ const activeCameras = computed(() => {
   }
   // else a micro computer is selected filter only the cameras for that computer
   return active.filter((cam) => cam.conn_id === selectedMicroComputer.value.conn_id)
-})
+});
 
 // --------------------
 //        Methods
@@ -466,12 +469,12 @@ function resetAlertThreshold() {
   if (isLive.value) {
     // add APi function when avaible
     if (!defaultThresholds.value) {
-      console.warn('Default thresholds have not loaded from the server yet.')
+      console.warn('Default thresholds have not loaded from the server yet.');
       return
     }
-    newAlertThreshold.value = defaultThresholds.value.alert_below_threshold * 100
+    newAlertBelow.value = defaultThresholds.value.alert_below_threshold * 100;
   } else {
-    newAlertThreshold.value = 80
+    newAlertBelow.value = 80;
   }
 
 }
@@ -484,9 +487,9 @@ function resetWarningThreshold() {
       console.warn('Default thresholds have not loaded from the server yet.')
       return
     }
-    newWarningThreshold.value = defaultThresholds.value.warn_below_threshold * 100
+    newWarnBelow.value = defaultThresholds.value.warn_below_threshold * 100;
   } else {
-    newWarningThreshold.value = 95
+    newWarnBelow.value = 95;
   }
 }
 
@@ -494,36 +497,45 @@ function resetWarningThreshold() {
 function resetAllThresholds() {
   if (isLive.value) {
     if (!defaultThresholds.value) {
-      console.warn('Default thresholds have not loaded from the server yet.')
+      console.warn('Default thresholds have not loaded from the server yet.');
       return
     }
-    newWarningThreshold.value = defaultThresholds.value.warn_below_threshold * 100
-    newAlertThreshold.value = defaultThresholds.value.alert_below_threshold * 100
+    newAlertBelow.value = defaultThresholds.value.alert_below_threshold * 100;
+    newWarnBelow.value = defaultThresholds.value.warn_below_threshold * 100;
+    // add alert and warn above thresholds when routes are added
+    //newWarnAbove.value = defaultThresholds.value.
+    //newAlertAbove.value = defaultThresholds.value.
   } else {
-    resetAlertThreshold()
-    resetWarningThreshold()
+    newAlertBelow.value = 80;
+    newWarnBelow.value = 95;
+    newWarnAbove.value = 105;
+    newAlertAbove.value = 120;
   }
 }
 
 // save thresholds
 function saveThresholds() {
   if (!selectedCamera.value) return
-  saveState.value = ''
 
-  const warning = newWarningThreshold.value / 100
-  const alert = newAlertThreshold.value / 100
+  const alertBelow = newAlertBelow.value / 100;
+  const warningBelow = newWarnBelow.value / 100;
+  // add routes when api comes
+  const warningAbove = newWarnAbove.value / 100;
+  const alertAbove = newAlertAbove.value / 100;
 
   if (isLive.value) {
     try {
+      // UPDATE: when the route is Updated to 4 diiation values
       setCameraThresholds(selectedCamera.value.conn_id, selectedCamera.value.camera_id, warning, alert)
-      listCameras() // refresh camera list
+      listCameras(); // refresh camera list
     } catch (e) {
-      console.error('Error updating thresholds:', e)
+      console.error('Error updating thresholds:', e);
     }
   } else {
-    selectedCamera.value.warn_below_threshold = warning
-    selectedCamera.value.alert_below_threshold = alert
-    saveState.value = 'success'
+    selectedCamera.value.alert_below_threshold = alertBelow;
+    selectedCamera.value.warn_below_threshold = warningBelow;
+    selectedCamera.value.warn_above_threshold = warningAbove;
+    selectedCamera.value.alert_above_threshold = alertAbove;
   }
 }
 
@@ -531,16 +543,19 @@ function saveThresholds() {
 function setServerDefaultThreshold() {
   if (!selectedCamera.value) return
 
-  const warning = newWarningThreshold.value / 100
-  const alert = newAlertThreshold.value / 100
+  const alertBelow = newAlertBelow.value / 100;
+  const warningBelow = newWarnBelow.value / 100;
+  // add routes when api comes
+  const warningAbove = newWarnAbove.value / 100;
+  const alertAbove = newAlertAbove.value / 100;
 
   if (isLive.value) {
     try {
-      setDefaultThreshold(warning, alert)
+      setDefaultThreshold(warningBelow, alertBelow);
       // update the default values
-      getDefaultThresholds()
+      getDefaultThresholds();
     } catch(e) {
-      console.error('Error setting default thresholds:', e)
+      console.error('Error setting default thresholds:', e);
     }
   }
 }
@@ -563,8 +578,10 @@ watch(selectedCamera, (cam, oldCam) => {
   }
   // load camera list values
   newName.value = cam.name
-  newAlertThreshold.value = cam.alert_below_threshold * 100
-  newWarningThreshold.value = cam.warn_below_threshold * 100
+  newAlertBelow.value = cam.alert_below_threshold * 100;
+  newWarnBelow.value = cam.warn_below_threshold * 100;
+  newWarnAbove.value = cam.warn_above_threshold * 100;
+  newAlertAbove.value = cam.alert_above_threshold * 100;
 
   if (isLive.value) {
     viewCamera(cam.conn_id, cam.camera_id)
@@ -613,18 +630,6 @@ watch(selectedMicroComputer, () => {
     } else {
       newVisionProcessing.value = selectedMicroComputer.value.Menu.value.ConValueMenu
     }
-  }
-})
-
-watch(newWarningThreshold, (newValue) => {
-  if (newValue <= newAlertThreshold.value) {
-    newAlertThreshold.value = newValue - 1
-  }
-})
-
-watch(newAlertThreshold, (newValue) => {
-  if (newValue >= newWarningThreshold.value) {
-    newWarningThreshold.value = newValue + 2
   }
 })
 
@@ -847,19 +852,15 @@ onMounted(() => {
                         <hr class="line-break" v-if="selectedCamera">
                         <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">Deviation Thresholds</h4>
                         <div v-if="selectedConfig">
-                            <div class="multi-thumb-slider">
-                                <h3 class="config-label">Multi Thumb Slider</h3>
-                                <p>Slider value: {{newWarningThreshold.value}}</p>
-                                <MultiThumbSlider :max="100" v-model="newWarningThreshold" />
-                            </div>
+                            <MultiThumbSlider
+                                v-model:alertBelow="newAlertBelow"
+                                v-model:warnBelow="newWarnBelow"
+                                v-model:warnAbove="newWarnAbove"
+                                v-model:alertAbove="newAlertAbove"
+                                :min="0" :max="200"
+                            />
                         </div>
-                        <div v-if="selectedConfig">
-                            <label for="fps-range" class="config-label">Alert Threshold</label>
-                            <div class="form-element">
-                                <input type="range" class="slider-input" id="critical-range" v-model.number="newAlertThreshold" min="1" max="98" step="1">
-                                <input type="number" class="number-input" id= "critical-number" v-model.number="newAlertThreshold" min="1" max="98" step="1">
-                            </div>
-                        </div>
+
                         <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
                             <button class="btn submit-btn" @click="showSaveThresholdsConfrim = true">Save Thresholds</button>
                             <ConfirmationBox v-model="showSaveThresholdsConfrim" message="Would you like to save the Deviation Thresholds?" :onConfirmFunction="saveThresholds" />
