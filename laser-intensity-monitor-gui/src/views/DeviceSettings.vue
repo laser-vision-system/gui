@@ -207,6 +207,27 @@ function validateDivation() {
   // reset varables both global and local
   let result = true;
   divationErrors.value = [];
+  // if (!Number.isInteger(value)) {
+  //   cameraControlErrors.value.push(`Warning: ${name} must be a whole number`);
+  //   return false;
+  // }
+
+  if (!Number.isFinite(newAlertBelow.value) || !Number) {
+    divationErrors.value.push(`Warning: Alert Below must be a percentage and not ${newAlertBelow.value}`);
+    result = false;
+  }
+  if (!Number.isFinite(newWarnBelow.value)) {
+    divationErrors.value.push(`Warning: Warn Below must be a percentage and not ${newWarnBelow.value}`);
+    result = false;
+  }
+  if (!Number.isFinite(newWarnAbove.value)) {
+    divationErrors.value.push(`Warning: Warn Above must be a percentage and not ${newWarnAbove.value}`);
+    result = false;
+  }
+  if (!Number.isFinite(newAlertAbove.value)) {
+    divationErrors.value.push(`Warning: Alert Above must be a percentage and not ${newAlertAbove.value}`);
+    result = false;
+  }
 
   if (newAlertBelow.value < THRESHOLD_MIN) { // Alert Below Validation
     divationErrors.value.push(`Warning: Alert Below threshold of ${newAlertBelow.value}% is under the allowed limit of ${THRESHOLD_MIN}%`);

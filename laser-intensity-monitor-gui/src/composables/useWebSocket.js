@@ -55,24 +55,38 @@ export function useWebSocket(url) {
 
   // Encoder: builds the "Type:{JSON}" String the server expects.
   function encodeMessage(type, data) {
-    if (data === undefined || data === null) return type
-    if (typeof data === 'object' && Object.keys(data).length === 0) return type
-    return `${type}:${unquoteIds(JSON.stringify(data))}`
+    if (data === undefined || data === null) return JSON.stringify(type);
+    if (typeof data === 'object' && Object.keys(data).length === 0) return JSON.stringify(type);
+    return unquoteIds(JSON.stringify({ [type]: data }));
   }
 
   // Decoder: Breaks down string into Type and JSON
   function decodeServerMessage(raw) {
-    const text = String(raw).trim()
-    const sep = text.indexOf(':')
-    if (sep === -1) { return {type: text, data:null} }
-    const type = text.slice(0, sep)
-    const jsonData = text.slice(sep + 1)
+    const text = String(raw).trim();
+
+    let parsed;
     try {
-      return {type, data: JSON.parse(enquoteIds(jsonData))}
+      parsed = JSON.parse(enquoteIds(text));
     } catch (e) {
-      console.error(`Failed to parse JSON payload for message type: "${type}"`, e, jsonData)
-      return {type: null, data:null}
+      console.error('Failed to parse server message', e, text);
+      return { type: null, data: null };
     }
+    // if the message doesnt have a payload
+    if (typeof parsed === 'string') {
+      return { type: parsed, data: null };
+    }
+
+    // if the mesasge is has a type and payload (e.g. configuration or camera maps) most messages
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      const keys = Object.keys(parsed);
+      if (keys.length === 1) {
+        const type = keys[0];
+        return { type, data: parsed[type] ?? null };
+      }
+    }
+    // MESSAGE COULD NOT BE HANDLEDED
+    console.error('Unexpected server message shape', parsed);
+    return { type: null, data: null };
   }
   // ---------------------------
   //   Send Message to Sever
