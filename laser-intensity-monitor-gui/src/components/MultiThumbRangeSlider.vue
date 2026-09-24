@@ -1,5 +1,4 @@
 <script setup>
-// Time spent on task: 3hrs + 5hrs
 import { ref, computed, watch } from "vue";
 
 // --------------------

@@ -97,22 +97,26 @@ const newMicroComputerName = ref(null);
 // MicroComputer Configurables Select vision processing
 const newVisionProcessing = ref(null);
 // Camera Configuration Rename
-const newName = ref(null);
+const newCameraName = ref(null); // needs validation
 
 // FPS (not added yet)
-const newFPS = ref(null);
-// camera controls
-const newBrightness = ref(null);
-const newContrast = ref(null);
-const newHue = ref(null);
-const newSaturation = ref(null);
-const newGamma = ref(null);
-const newGain = ref(null);
-const newExposureAbsolute = ref(null);
+const newFPS = ref(null); // needs validation
+// camera controls (control = selectedConfig.configuration.conrtolName.IntergerRange)
+const newBrightness = ref(null); // needs validation
+const newContrast = ref(null); // needs validation
+const newHue = ref(null); // needs validation
+const newSaturation = ref(null); // needs validation
+const newGamma = ref(null); // needs validation
+const newGain = ref(null); // needs validation
+const newExposureAbsolute = ref(null); // needs validation
 const newAutoExposure = ref(null);
 // for save message e.g. success | error
 const saveState = ref('');
-
+// Validation Errors
+const divationErrors = ref([]);
+const cameraControlErrors = ref([]);
+const cameraNameErrors = ref([]);
+const microComputerNameErrors = ref([]);
 // --------------------
 //        Computed
 // --------------------
@@ -136,6 +140,123 @@ const activeCameras = computed(() => {
 // --------------------
 //        Methods
 // --------------------
+
+
+// CUSTOM VALDIATION
+// All validate function return a bool, either true (is valid) or false (failed the validation)
+// global cosntants
+const THRESHOLD_MIN = 0; // this should always be zero but who knows with this project.
+const THRESHOLD_MAX = 200;
+
+function isBlank(v) {
+  return v === '' || v === null || v === undefined || Number.isNaN(v);
+}
+// Camera Controls
+function validateCameraControlMinMax(name, range, value) {
+  if (isBlank(value)) return true;
+
+  let result = true;
+
+  if (!Number.isInteger(value)) {
+    cameraControlErrors.value.push(`Warning: ${name} must be a whole number`);
+    return false;
+  }
+
+  if (value < range.min) {
+    cameraControlErrors.value.push(`Warning: ${name} at ${value}, is under the minimum value of ${range.min}`);
+    return false;
+  }
+  if (value > range.max) {
+    cameraControlErrors.value.push(`Warning: ${name} at ${value} is over the maximum value of ${range.max}`);
+    return false;
+  }
+
+  return true;
+}
+
+function validateAllCameraControlsMinMax() {
+  cameraControlErrors.value = [];
+  if (!selectedConfig.value) return false;
+
+  const original = selectedConfig.value.configuration;
+  const integerControls = {
+    Brightness: newBrightness, Contrast: newContrast, Hue: newHue,
+    Saturation: newSaturation, Gamma: newGamma, Gain: newGain,
+    ExposureAbsolute: newExposureAbsolute,
+  }
+  let result = true;
+  for (const [name, valueRef] of Object.entries(integerControls)) {
+    if (!original?.[name]) continue; // camera doesn't support this control
+    const range = original[name].IntegerRange;
+    if (!range) continue;
+    if (!validateCameraControlMinMax(name, range, valueRef.value?.value)) {
+      result = false;
+    }
+  }
+  return result;
+}
+
+// Validate Camera name
+function validateCameraName() {
+
+}
+
+// Validate Divation Thresholds:
+// ASK IF WE NEED A DYNAMIC MAX VALUE FOR THE THRESHOLDS and add it to the api route
+function validateDivation() {
+  // reset varables both global and local
+  let result = true;
+  divationErrors.value = [];
+
+  if (newAlertBelow.value < THRESHOLD_MIN) { // Alert Below Validation
+    divationErrors.value.push(`Warning: Alert Below threshold of ${newAlertBelow.value}% is under the allowed limit of ${THRESHOLD_MIN}%`);
+    result = false;
+  }
+  if (newAlertBelow.value > newWarnBelow.value) {
+    divationErrors.value.push(`Warning: Alert Below threshold of ${newAlertBelow.value}% is more than the Warn Below threshold of ${newWarnBelow.value}%`);
+    result = false;
+  }
+  if (newWarnBelow.value < newAlertBelow.value) { // Warn Below Validation
+    divationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is less than the Alert Below threshold of ${newAlertBelow.value}%`);
+    result = false;
+  }
+  if (newWarnBelow.value > newWarnAbove.value) {
+    divationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is more than the Warn Above threshold of ${newWarnAbove.value}%`);
+    result = false;
+  }
+  if (newWarnAbove.value < newWarnBelow.value) { // Warn Above Validation
+    divationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is less than the Warn Below threshold of ${newWarnBelow.value}%`);
+    result = false;
+  }
+  if (newWarnAbove.value > newAlertAbove.value) {
+    divationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is more than the Alert Above threshold of ${newWarnBelow.value}%`);
+    result = false;
+  }
+  if (newAlertAbove.value < newWarnAbove.value) { // Alert Above Validation
+    divationErrors.value.push(`Warning: Alert Above threshold of ${newAlertAbove.value}% is less than the Warn Above threshold of ${newWarnAbove.value}%`);
+    result = false;
+  }
+  if (newAlertAbove.value > THRESHOLD_MAX) {
+    divationErrors.value.push(`Warning: Alert Above threshold of ${newAlertAbove.value}% is over the allowed limit of ${THRESHOLD_MAX}%`);
+    result = false;
+  }
+  return result;
+}
+
+// Validate MicroComputer name
+function validateMicroComputerName() {
+
+}
+
+function requestSaveControls() {
+  if (validateAllCameraControlsMinMax()) showSaveAllControlsConfrim.value = true;
+}
+function requestSaveThresholds() {
+  if (validateDivation()) showSaveThresholdsConfrim.value = true;
+}
+function requestSaveDefaultThresholds() {
+  if (validateDivation()) showSetDefaultThresholdConfrim.value = true;
+}
 
 // when micro comp is clicked/ selected clear the value for selected camera to aviod errors.
 function clearSelectedCamera() {
@@ -176,12 +297,13 @@ function submitVisionProcessing() {
 
 // Rename Selected camera
 function renameCamera() {
-  if (!selectedCamera.value || !newName.value) return
+  if (!selectedCamera.value || !newCameraName.value) return
+  // ADD VALIDATION FOR CAMERA RENAME
   if (isLive.value) {
-    setCameraName(selectedCamera.value.conn_id, selectedCamera.value.camera_id, newName.value)
+    setCameraName(selectedCamera.value.conn_id, selectedCamera.value.camera_id, newCameraName.value)
     //listCameras() // refresh camera list (not needed)
   } else {
-    selectedCamera.value.name = newName.value
+    selectedCamera.value.name = newCameraName.value
   }
 }
 
@@ -233,11 +355,13 @@ function coundownTimer(time) {
   });
 }
 
+
 // Save the changes made to the camera controls
 async function saveChanges() {
   if (!selectedCamera.value || !selectedConfig.value) return
   saveState.value = ''
   try {
+    // ADD VALIDATION FOR CONTROLS
     const controlsPayload = buildControlsPayload()
     if (isLive.value) {
       updateConfiguration(selectedCamera.value.conn_id, selectedCamera.value.camera_id, JSON.stringify(controlsPayload))
@@ -418,6 +542,8 @@ function setDefaultFPS() {
     newFPS.value = 1
   }
 }
+
+// ADD VALIDATION
 function saveFrameRate() {
   if (!selectedCamera.value || !selectedConfig.value) return
   saveState.value = ''
@@ -513,10 +639,10 @@ function resetAllThresholds() {
   }
 }
 
+
 // save thresholds
 function saveThresholds() {
-  if (!selectedCamera.value) return
-
+  if (!selectedCamera.value) return;
   const alertBelow = newAlertBelow.value / 100;
   const warningBelow = newWarnBelow.value / 100;
   // add routes when api comes
@@ -568,7 +694,9 @@ function setServerDefaultThreshold() {
 watch(selectedCamera, (cam, oldCam) => {
   saveState.value = ''
   selectedConfig.value = null
-
+  cameraControlErrors.value = []
+  divationErrors.value = []
+  cameraNameErrors.value = []
   if (!cam) {
     if (isLive.value && oldCam) {
       stopViewingCamera(oldCam.conn_id, oldCam.camera_id)
@@ -577,7 +705,7 @@ watch(selectedCamera, (cam, oldCam) => {
     return
   }
   // load camera list values
-  newName.value = cam.name
+  newCameraName.value = cam.name
   newAlertBelow.value = cam.alert_below_threshold * 100;
   newWarnBelow.value = cam.warn_below_threshold * 100;
   newWarnAbove.value = cam.warn_above_threshold * 100;
@@ -672,7 +800,11 @@ onMounted(() => {
                                 <div class="form-element">
                                     <input type="text" id="rename" class="w-100" v-model="newMicroComputerName">
                                     <button type="button" class="btn submit-btn" @click="showRenameMicroCompConfrim = true">Rename</button>
-                                    <ConfirmationBox v-model="showRenameMicroCompConfrim" :message="'Rename the selected micro-computer to ' + newMicroComputerName + '?'" :onConfirmFunction="renameMicroComputer"/>
+                                    <ConfirmationBox
+                                        v-model="showRenameMicroCompConfrim"
+                                        :message="'Rename the selected micro-computer to ' + newMicroComputerName + '?'"
+                                        :onConfirmFunction="renameMicroComputer"
+                                    />
                                 </div>
                             </div>
                             <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all'">
@@ -686,7 +818,11 @@ onMounted(() => {
                                         </option>
                                     </select>
                                     <button type="button" class="btn submit-btn" @click="showSelectVisionProcessingConfrim = true">Select</button>
-                                    <ConfirmationBox v-model="showSelectVisionProcessingConfrim" message="Please click Confrim to chanage the Vision Processing Method" :onConfirmFunction="submitVisionProcessing"/>
+                                    <ConfirmationBox
+                                    v-model="showSelectVisionProcessingConfrim"
+                                    message="Please click Confrim to chanage the Vision Processing Method"
+                                    :onConfirmFunction="submitVisionProcessing"
+                                    />
                                 </div>
                             </div>
                             <hr class="line-break">
@@ -704,9 +840,13 @@ onMounted(() => {
                         <div v-if="selectedConfig">
                             <label for="rename" class="config-label">Rename Camera</label>
                             <div class="form-element">
-                                <input type="text" id="rename" class="w-100" v-model="newName">
+                                <input type="text" id="rename" class="w-100" v-model="newCameraName">
                                 <button type="button" class="btn submit-btn" @click="showRenameCameraConfrim = true">Rename</button>
-                                <ConfirmationBox v-model="showRenameCameraConfrim" :message="'Rename the selected camera to ' + newName + '?'" :onConfirmFunction="renameCamera"/>
+                                <ConfirmationBox
+                                v-model="showRenameCameraConfrim"
+                                :message="'Rename the selected camera to ' + newCameraName + '?'"
+                                :onConfirmFunction="renameCamera"
+                                />
                             </div>
                         </div>
                         <hr class="line-break" v-if="selectedCamera">
@@ -821,11 +961,20 @@ onMounted(() => {
                             </div>
                         </div>
                         <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
-                            <button class="btn submit-btn" @click="showSaveAllControlsConfrim = true">Save Camera Controls</button>
-                            <ConfirmationBox v-model="showSaveAllControlsConfrim" message="Would you like to save all camera controls?" :onConfirmFunction="saveChanges"/>
+                            <button class="btn submit-btn" @click="requestSaveControls">Save Camera Controls</button>
+                            <ConfirmationBox
+                                v-model="showSaveAllControlsConfrim"
+                                message="Would you like to save all camera controls?"
+                                :onConfirmFunction="saveChanges"
+                            />
                             <button class="btn submit-btn" @click="showResetAllControlsConfrim = true">Reset Camera Controls</button>
-                            <ConfirmationBox v-model="showResetAllControlsConfrim" message="Would you like to reset all camera controls?" :onConfirmFunction="resetControlConfig"/>
+                            <ConfirmationBox
+                                v-model="showResetAllControlsConfrim"
+                                message="Would you like to reset all camera controls?"
+                                :onConfirmFunction="resetControlConfig"
+                            />
                         </div>
+                        <p v-for="e in cameraControlErrors" class="error">{{e}}</p>
                         <!-- added a success response needs extra logic as the websocket is a send a forget unlike restful -->
                         <!-- <div v-if="saveState === 'success'" class="text-center p-1">
                             <p>Settings saved successfully.</p>
@@ -844,9 +993,16 @@ onMounted(() => {
                             </div>
                             <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
                                 <button class="btn submit-btn" @click="showSaveFrameRateConfrim = true">Save Frame Rate</button>
-                                <ConfirmationBox v-model="showSaveFrameRateConfrim" message="Would you like to save the frame rate?" />
+                                <ConfirmationBox
+                                    v-model="showSaveFrameRateConfrim"
+                                    message="Would you like to save the frame rate?"
+                                />
                                 <button type="button" class="btn submit-btn" @click="showResetFrameRateConfrim = true">Reset Frame Rate</button>
-                                <ConfirmationBox v-model="showResetFrameRateConfrim" message="Would you like to reset the frame rate?" :onConfirmFunction="setDefaultFPS"/>
+                                <ConfirmationBox
+                                    v-model="showResetFrameRateConfrim"
+                                    message="Would you like to reset the frame rate?"
+                                    :onConfirmFunction="setDefaultFPS"
+                                />
                             </div>
                         </div>
                         <hr class="line-break" v-if="selectedCamera">
@@ -859,15 +1015,28 @@ onMounted(() => {
                                 v-model:alertAbove="newAlertAbove"
                                 :min="0" :max="200"
                             />
+                            <p v-for="e in divationErrors" class="error">{{e}}</p>
                         </div>
 
                         <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
-                            <button class="btn submit-btn" @click="showSaveThresholdsConfrim = true">Save Thresholds</button>
-                            <ConfirmationBox v-model="showSaveThresholdsConfrim" message="Would you like to save the Deviation Thresholds?" :onConfirmFunction="saveThresholds" />
+                            <button class="btn submit-btn" @click="requestSaveThresholds">Save Thresholds</button>
+                            <ConfirmationBox
+                                v-model="showSaveThresholdsConfrim"
+                                message="Would you like to save the Deviation Thresholds?"
+                                :onConfirmFunction="saveThresholds"
+                            />
                             <button type="button" class="btn submit-btn" @click="showResetThresholdsConfrim = true">Reset to Default</button>
-                            <ConfirmationBox v-model="showResetThresholdsConfrim" message="Would you like to reset all Devation Thresholds to default?" :onConfirmFunction="resetAllThresholds"/>
-                            <button type="button" class="btn submit-btn" @click="showSetDefaultThresholdConfrim = true">Set Global Default Thresholds</button>
-                            <ConfirmationBox v-model="showSetDefaultThresholdConfrim" message="Would you like to set the defualt value for the thresholds?" :onConfirmFunction="setServerDefaultThreshold"/>
+                            <ConfirmationBox
+                                v-model="showResetThresholdsConfrim"
+                                message="Would you like to reset all Devation Thresholds to default?"
+                                :onConfirmFunction="resetAllThresholds"
+                            />
+                            <button type="button" class="btn submit-btn" @click="requestSaveDefaultThresholds">Set Global Default Thresholds</button>
+                            <ConfirmationBox
+                                v-model="showSetDefaultThresholdConfrim"
+                                message="Would you like to set the defualt value for the thresholds?"
+                                :onConfirmFunction="setServerDefaultThreshold"
+                            />
                         </div>
                     </div>
                     <hr class="line-break" v-if="selectedCamera">
@@ -967,5 +1136,14 @@ option:hover{
     height: 3px;
     color: var(--config-title);
     background-color: var(--line-break-color);
+}
+.error {
+    background: var(--range-alert);
+    border-radius: 1rem;
+    padding: 0.35rem;
+    font-weight: 600;
+    margin: 1rem;
+    margin-bottom: 0;
+    text-align: center;
 }
 </style>
