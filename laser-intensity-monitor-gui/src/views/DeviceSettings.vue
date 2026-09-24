@@ -209,35 +209,35 @@ function validateDivation() {
   divationErrors.value = [];
 
   if (newAlertBelow.value < THRESHOLD_MIN) { // Alert Below Validation
-    divationErrors.value.push(`Alert Below threshold of ${newAlertBelow.value}% is under the allowed limit of 0%`);
+    divationErrors.value.push(`Warning: Alert Below threshold of ${newAlertBelow.value}% is under the allowed limit of ${THRESHOLD_MIN}%`);
     result = false;
   }
   if (newAlertBelow.value > newWarnBelow.value) {
-    divationErrors.value.push(`Alert Below threshold of ${newAlertBelow.value}% is more than the Warn Below threshold of ${newWarnBelow.value}%`);
+    divationErrors.value.push(`Warning: Alert Below threshold of ${newAlertBelow.value}% is more than the Warn Below threshold of ${newWarnBelow.value}%`);
     result = false;
   }
   if (newWarnBelow.value < newAlertBelow.value) { // Warn Below Validation
-    divationErrors.value.push(`Warn Above threshold of  ${newWarnBelow.value}% is less than the Alert Below threshold of ${newAlertBelow.value}%`);
+    divationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is less than the Alert Below threshold of ${newAlertBelow.value}%`);
     result = false;
   }
   if (newWarnBelow.value > newWarnAbove.value) {
-    divationErrors.value.push(`Warn Above threshold of  ${newWarnBelow.value}% is more than the Warn Above threshold of ${newWarnAbove.value}%`);
+    divationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is more than the Warn Above threshold of ${newWarnAbove.value}%`);
     result = false;
   }
   if (newWarnAbove.value < newWarnBelow.value) { // Warn Above Validation
-    divationErrors.value.push(`Warn Above threshold of ${newWarnAbove.value}% is less than the Warn Below threshold of ${newWarnBelow.value}%`);
+    divationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is less than the Warn Below threshold of ${newWarnBelow.value}%`);
     result = false;
   }
   if (newWarnAbove.value > newAlertAbove.value) {
-    divationErrors.value.push(`Warn Above threshold of ${newWarnAbove.value}% is more than the Alert Above threshold of ${newWarnBelow.value}%`);
+    divationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is more than the Alert Above threshold of ${newWarnBelow.value}%`);
     result = false;
   }
   if (newAlertAbove.value < newWarnAbove.value) { // Alert Above Validation
-    divationErrors.value.push(`Alert Above threshold of ${newAlertAbove.value}% is less than the Warn Above threshold of ${newWarnAbove.value}%`);
+    divationErrors.value.push(`Warning: Alert Above threshold of ${newAlertAbove.value}% is less than the Warn Above threshold of ${newWarnAbove.value}%`);
     result = false;
   }
   if (newAlertAbove.value > THRESHOLD_MAX) {
-    divationErrors.value.push(`Alert Above threshold of ${newAlertAbove.value}% is over the allowed limit of 200%`);
+    divationErrors.value.push(`Warning: Alert Above threshold of ${newAlertAbove.value}% is over the allowed limit of ${THRESHOLD_MAX}%`);
     result = false;
   }
   return result;
@@ -249,10 +249,13 @@ function validateMicroComputerName() {
 }
 
 function requestSaveControls() {
-  if (validateAllCameraControlsMinMax()) showSaveAllControlsConfrim.value = true
+  if (validateAllCameraControlsMinMax()) showSaveAllControlsConfrim.value = true;
 }
 function requestSaveThresholds() {
-  if (validateDivation()) showSaveThresholdsConfrim.value = true
+  if (validateDivation()) showSaveThresholdsConfrim.value = true;
+}
+function requestSaveDefaultThresholds() {
+  if (validateDivation()) showSetDefaultThresholdConfrim.value = true;
 }
 
 // when micro comp is clicked/ selected clear the value for selected camera to aviod errors.
@@ -797,7 +800,11 @@ onMounted(() => {
                                 <div class="form-element">
                                     <input type="text" id="rename" class="w-100" v-model="newMicroComputerName">
                                     <button type="button" class="btn submit-btn" @click="showRenameMicroCompConfrim = true">Rename</button>
-                                    <ConfirmationBox v-model="showRenameMicroCompConfrim" :message="'Rename the selected micro-computer to ' + newMicroComputerName + '?'" :onConfirmFunction="renameMicroComputer"/>
+                                    <ConfirmationBox
+                                        v-model="showRenameMicroCompConfrim"
+                                        :message="'Rename the selected micro-computer to ' + newMicroComputerName + '?'"
+                                        :onConfirmFunction="renameMicroComputer"
+                                    />
                                 </div>
                             </div>
                             <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all'">
@@ -811,7 +818,11 @@ onMounted(() => {
                                         </option>
                                     </select>
                                     <button type="button" class="btn submit-btn" @click="showSelectVisionProcessingConfrim = true">Select</button>
-                                    <ConfirmationBox v-model="showSelectVisionProcessingConfrim" message="Please click Confrim to chanage the Vision Processing Method" :onConfirmFunction="submitVisionProcessing"/>
+                                    <ConfirmationBox
+                                    v-model="showSelectVisionProcessingConfrim"
+                                    message="Please click Confrim to chanage the Vision Processing Method"
+                                    :onConfirmFunction="submitVisionProcessing"
+                                    />
                                 </div>
                             </div>
                             <hr class="line-break">
@@ -831,7 +842,11 @@ onMounted(() => {
                             <div class="form-element">
                                 <input type="text" id="rename" class="w-100" v-model="newCameraName">
                                 <button type="button" class="btn submit-btn" @click="showRenameCameraConfrim = true">Rename</button>
-                                <ConfirmationBox v-model="showRenameCameraConfrim" :message="'Rename the selected camera to ' + newCameraName + '?'" :onConfirmFunction="renameCamera"/>
+                                <ConfirmationBox
+                                v-model="showRenameCameraConfrim"
+                                :message="'Rename the selected camera to ' + newCameraName + '?'"
+                                :onConfirmFunction="renameCamera"
+                                />
                             </div>
                         </div>
                         <hr class="line-break" v-if="selectedCamera">
@@ -947,9 +962,17 @@ onMounted(() => {
                         </div>
                         <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
                             <button class="btn submit-btn" @click="requestSaveControls">Save Camera Controls</button>
-                            <ConfirmationBox v-model="showSaveAllControlsConfrim" message="Would you like to save all camera controls?" :onConfirmFunction="saveChanges"/>
+                            <ConfirmationBox
+                                v-model="showSaveAllControlsConfrim"
+                                message="Would you like to save all camera controls?"
+                                :onConfirmFunction="saveChanges"
+                            />
                             <button class="btn submit-btn" @click="showResetAllControlsConfrim = true">Reset Camera Controls</button>
-                            <ConfirmationBox v-model="showResetAllControlsConfrim" message="Would you like to reset all camera controls?" :onConfirmFunction="resetControlConfig"/>
+                            <ConfirmationBox
+                                v-model="showResetAllControlsConfrim"
+                                message="Would you like to reset all camera controls?"
+                                :onConfirmFunction="resetControlConfig"
+                            />
                         </div>
                         <p v-for="e in cameraControlErrors" class="error">{{e}}</p>
                         <!-- added a success response needs extra logic as the websocket is a send a forget unlike restful -->
@@ -970,9 +993,16 @@ onMounted(() => {
                             </div>
                             <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
                                 <button class="btn submit-btn" @click="showSaveFrameRateConfrim = true">Save Frame Rate</button>
-                                <ConfirmationBox v-model="showSaveFrameRateConfrim" message="Would you like to save the frame rate?" />
+                                <ConfirmationBox
+                                    v-model="showSaveFrameRateConfrim"
+                                    message="Would you like to save the frame rate?"
+                                />
                                 <button type="button" class="btn submit-btn" @click="showResetFrameRateConfrim = true">Reset Frame Rate</button>
-                                <ConfirmationBox v-model="showResetFrameRateConfrim" message="Would you like to reset the frame rate?" :onConfirmFunction="setDefaultFPS"/>
+                                <ConfirmationBox
+                                    v-model="showResetFrameRateConfrim"
+                                    message="Would you like to reset the frame rate?"
+                                    :onConfirmFunction="setDefaultFPS"
+                                />
                             </div>
                         </div>
                         <hr class="line-break" v-if="selectedCamera">
@@ -990,11 +1020,23 @@ onMounted(() => {
 
                         <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
                             <button class="btn submit-btn" @click="requestSaveThresholds">Save Thresholds</button>
-                            <ConfirmationBox v-model="showSaveThresholdsConfrim" message="Would you like to save the Deviation Thresholds?" :onConfirmFunction="saveThresholds" />
+                            <ConfirmationBox
+                                v-model="showSaveThresholdsConfrim"
+                                message="Would you like to save the Deviation Thresholds?"
+                                :onConfirmFunction="saveThresholds"
+                            />
                             <button type="button" class="btn submit-btn" @click="showResetThresholdsConfrim = true">Reset to Default</button>
-                            <ConfirmationBox v-model="showResetThresholdsConfrim" message="Would you like to reset all Devation Thresholds to default?" :onConfirmFunction="resetAllThresholds"/>
-                            <button type="button" class="btn submit-btn" @click="showSetDefaultThresholdConfrim = true">Set Global Default Thresholds</button>
-                            <ConfirmationBox v-model="showSetDefaultThresholdConfrim" message="Would you like to set the defualt value for the thresholds?" :onConfirmFunction="setServerDefaultThreshold"/>
+                            <ConfirmationBox
+                                v-model="showResetThresholdsConfrim"
+                                message="Would you like to reset all Devation Thresholds to default?"
+                                :onConfirmFunction="resetAllThresholds"
+                            />
+                            <button type="button" class="btn submit-btn" @click="requestSaveDefaultThresholds">Set Global Default Thresholds</button>
+                            <ConfirmationBox
+                                v-model="showSetDefaultThresholdConfrim"
+                                message="Would you like to set the defualt value for the thresholds?"
+                                :onConfirmFunction="setServerDefaultThreshold"
+                            />
                         </div>
                     </div>
                     <hr class="line-break" v-if="selectedCamera">

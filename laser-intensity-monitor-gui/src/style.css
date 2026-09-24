@@ -16,8 +16,8 @@
     --range-safe: #7EC151;
     --range-warn: #FFF449;
     --range-alert: #FF5656;
-    --thumb-bg-alert: lightgray;
-    --thumb-bg-warn: lightgray;
+    --thumb-bg-alert: #C3110C;
+    --thumb-bg-warn: #F6C90E;
 }
 
 /* Light Mode Table Overrides */
