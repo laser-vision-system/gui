@@ -138,7 +138,7 @@ const loadCameraList = computed(() => {
 })
 // grab image analysis from websocket or sample data
 const loadImageAnalysis = computed(() => {
-    const source = isLive.value && analysis.value !== null > 0 ? analysis.value : null
+    const source = isLive.value && analysis.value !== null > 0 ? analysis.value : sampleImageAnalysis.GUIImageAnalysis
     return source
 })
 // merge camera list with microcomputer, image analysis & selection details
@@ -151,9 +151,9 @@ const mergedCameraData = computed(() => {
     for (const camera of camDataList) {
 		let matchingData = ref(null)
 		if (imageAnalysisData !== null) {
-			if( imageAnalysisData.conn_id === camera.conn_id && imageAnalysisData.camera_id === camera.camera_id)	 {
-				matchingData = imageAnalysisData
-			} 
+            matchingData = imageAnalysisData.find(
+                analysis => analysis.conn_id === camera.conn_id && analysis.camera_id === camera.camera_id
+            )
 		}
         const matchingComData = edgeDataList.find(
             connection => connection.conn_id === camera.conn_id
@@ -345,7 +345,7 @@ function getCardColour(cam) {
     if (deviation > warning) {
         return 'bg-success'
     } else if (deviation <= warning && deviation > critical) {
-        return 'bg-warning'
+        return 'bg-warning text-dark'
     } else if (deviation <= critical) {
         return 'bg-danger'
     } else {
@@ -407,7 +407,7 @@ onUnmounted(() => {
 </script>
 <template>
     <div class="container">
-        <div class="row p-2 mt-2 mb-4">
+        <div class="row mt-2 mb-4">
                 <h3 class="cam-title">Alerts:
                     <button class="btn submit-btn" @click="toggleAlerts">
                         {{ alertsExpanded ? 'Collapse All' : 'Show All (' + (sortedDeviationAlerts.length + disconnectionAlerts.length) + ')' }}
@@ -417,7 +417,7 @@ onUnmounted(() => {
                     <div v-if="sortedDeviationAlerts.length > 0" class="text-center mt-2">
                         <div v-show="alertsExpanded">
                             <div v-for="alert in sortedDeviationAlerts" :key="alert.camera_id"
-                                :class="['alert mb-1', `alert-${alert.alertType}`, 'fade', 'show']" role="alert">
+                                :class="['alert mb-1', `alert-${alert.alertType}`]" role="alert">
                                 {{ alert.alertMsg }}
                             </div>
                         </div>
@@ -425,7 +425,7 @@ onUnmounted(() => {
                     <div v-if="disconnectionAlerts.length > 0" class="text-center mt-0">
                         <div v-show="alertsExpanded">
                             <div v-for="alert in disconnectionAlerts" :key="`${alert.conn_id}-${alert.camera_id}`"
-                                :class="['alert mb-1', `alert-${alert.alertType}`, 'fade', 'show']" role="alert">
+                                :class="['alert mb-1', `alert-${alert.alertType}`]" role="alert">
                                 {{ alert.alertMsg }}
                             </div>
                         </div>
@@ -550,7 +550,7 @@ onUnmounted(() => {
 .selected-camera {
     border: 0.5rem solid lightsteelblue;
     box-shadow: 0 0 0.2rem steelblue;
-    color: var(--nav-title);
+    color: var(--camera-tab-text);
 }
 
 .feedbox {
