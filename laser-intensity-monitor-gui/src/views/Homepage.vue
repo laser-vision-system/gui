@@ -76,14 +76,15 @@ const deviationAlerts = computed(() => {
                 let alertMsg = ''
                 let alertType = ''
 
-                if (analysis.deviation > analysis.warn_below_threshold) {
+                // green threshold
+                if (analysis.deviation >= analysis.warn_below_threshold && analysis.deviation <= analysis.warn_above_threshold) {
                     alertMsg = `[LOW] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                     alertType = 'success'
-                }
-                else if (analysis.deviation <= analysis.warn_below_threshold && analysis.deviation > analysis.alert_below_threshold) {
-                    alertMsg = `[MODERATE] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
-                    alertType = 'warning'
-                } else if (analysis.deviation <= analysis.alert_below_threshold) {
+                } else if ((analysis.deviation < analysis.warn_below_threshold && analysis.deviation >= analysis.alert_below_threshold) || 
+                            (analysis.deviation > analysis.warn_above_threshold && analysis.deviation <= analysis.alert_above_threshold)) {
+                                alertMsg = `[MODERATE] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
+                                alertType = 'warning'
+                } else if ((analysis.deviation < analysis.alert_below_threshold) || (analysis.deviation > analysis.alert_above_threshold)) {
                     alertMsg = `[HIGH] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                     alertType = 'danger'
                 }
@@ -104,7 +105,7 @@ const sortedDeviationAlerts = computed(() => {
             if (priority[a.alertType] !== priority[b.alertType]) {
                 return priority[a.alertType] - priority[b.alertType]
             }
-            return b.deviation - a.deviation
+            return a.deviation - b.deviation
         })
 })
 const disconnectionAlerts = computed(() => {
@@ -339,14 +340,17 @@ function getCardColour(cam) {
     if (!cam) return 'bg-dark'
 
     const deviation = cam.deviation
-    const warning = cam.warn_below_threshold
-    const critical = cam.alert_below_threshold
+    const warnBelow = cam.warn_below_threshold
+    const warnAbove = cam.warn_above_threshold
+    const alertBelow = cam.alert_below_threshold
+    const alertAbove = cam.alert_above_threshold
 
-    if (deviation > warning) {
+    if (deviation >= warnBelow && deviation <= warnAbove) {
         return 'bg-success'
-    } else if (deviation <= warning && deviation > critical) {
-        return 'bg-warning text-dark'
-    } else if (deviation <= critical) {
+    } else if ((deviation < warnBelow && deviation >= alertBelow) ||
+                (deviation > warnAbove && deviation <= alertAbove)) {
+                    return 'bg-warning text-dark'
+    } else if ((deviation < alertBelow) || (deviation > alertAbove)) {
         return 'bg-danger'
     } else {
         return 'bg-dark'
@@ -512,12 +516,24 @@ onUnmounted(() => {
                                 <table class="table border border-2 hardware-info">
                                     <tbody>
                                         <tr>
-                                            <th class="bg-warning text-dark">Warning Threshold:</th>
-                                            <td>{{Math.round(selectedCameraInfo.warn_below_threshold * 100)}}-{{ Math.round(selectedCameraInfo.alert_below_threshold * 100) + '%' }}</td>
+                                            <th class="bg-danger text-white">Alert below:</th>
+                                            <td>{{ Math.round(selectedCameraInfo.alert_below_threshold * 100) + '%' }}</td>
+                                        </tr>                                        
+                                        <tr>
+                                            <th class="bg-warning text-dark">Warn below:</th>
+                                            <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100) + '%' }}</td>
                                         </tr>
                                         <tr>
-                                            <th class="bg-danger text-white">Critical Threshold:</th>
-                                            <td>Below {{ Math.round(selectedCameraInfo.alert_below_threshold * 100) + '%' }}</td>
+                                            <th class="bg-success text-white">No alert:</th>
+                                            <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100)}}-{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="bg-warning text-dark">Warn above:</th>
+                                            <td>{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="bg-danger text-white">Alert above:</th>
+                                            <td>{{ Math.round(selectedCameraInfo.alert_above_threshold * 100) + '%' }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
