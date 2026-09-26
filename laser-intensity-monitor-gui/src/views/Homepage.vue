@@ -440,17 +440,19 @@ onUnmounted(() => {
             <div class="col-lg-8 col-12 ps-0">
                 <h3 class="cam-title">Connections:</h3>
                     <div v-for="(section, conn_id) in activeMergedData" :key="conn_id">
-                        <h4 class="microCom-title">{{ section.microComName }}
-                            <span class="badge bg-secondary">
-                                {{ section.microComState }}
-                            </span>
-                        </h4>
-                        <div class="row d-flex justify-content-start p-2 g-2">
-                            <div class="col-3 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
-                                <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
-                                    <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
-                                        <h5 class="card-title">{{ cam.name }}</h5>
-                                            <p class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
+                        <div v-if="section.microComState === 'Active'">
+                            <h4 class="microCom-title">{{ section.microComName }}
+                                <span class="badge bg-secondary">
+                                    {{ section.microComState }}
+                                </span>
+                            </h4>
+                            <div class="row d-flex justify-content-start p-2 g-2">
+                                <div class="col-3 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
+                                    <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
+                                        <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
+                                            <h5 class="card-title">{{ cam.name }}</h5>
+                                                <p class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -478,6 +480,16 @@ onUnmounted(() => {
                         </tr>
                         <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
                             <td v-if="cam.state === 'Disconnected'">{{ cam.name }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="table border border-2 hardware-info">
+                    <tbody>
+                        <tr>
+                            <th scope="col" class="table-dark">Broken Cameras</th>
+                        </tr>
+                        <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
+                            <td v-if="cam.state === 'Broken'">{{ cam.name }}</td>
                         </tr>
                     </tbody>
                 </table>
