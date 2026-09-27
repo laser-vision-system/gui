@@ -429,6 +429,11 @@ export function useWebSocket(url) {
     send('ForgetCamera', { conn_id: connId, camera_id: cameraId, confirm: true })
   }
 
+  // Force Retry Camera function
+  function forceRetry(connId, cameraId) {
+    send('ForceRetryCamera', { conn_id: connId, camera_id: cameraId })
+  }
+
   // ---------------
   //   UnMount
   // ---------------
@@ -470,5 +475,6 @@ export function useWebSocket(url) {
     setpoint,
     setpointAll,
     forgetCamera,
+    forceRetry
   }
 }
