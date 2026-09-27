@@ -207,10 +207,6 @@ function validateDivation() {
   // reset varables both global and local
   let result = true;
   divationErrors.value = [];
-  // if (!Number.isInteger(value)) {
-  //   cameraControlErrors.value.push(`Warning: ${name} must be a whole number`);
-  //   return false;
-  // }
 
   if (!Number.isFinite(newAlertBelow.value) || !Number) {
     divationErrors.value.push(`Warning: Alert Below must be a percentage and not ${newAlertBelow.value}`);
