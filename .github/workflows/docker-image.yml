@@ -14,6 +14,7 @@ on:
       - '**.rs'
       - 'Cargo.lock'
       - 'Dockerfile'
+      - 'docker-image.yml'
       - ...
 
 env:
