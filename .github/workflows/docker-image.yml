@@ -9,6 +9,7 @@ on:
     branches:
       - 'main'
       - 'dev'
+      - 'feat/docker-automated-workflow'
     paths:
       - '**.rs'
       - 'Cargo.lock'
