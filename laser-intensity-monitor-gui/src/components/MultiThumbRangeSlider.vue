@@ -117,7 +117,11 @@ const onAlertAboveInput = thumbManager(alertAbove, alertAboveRange);
 watch(alertBelow, (newValue) => {
   if (newValue >= warnBelow.value) {
     warnBelow.value = newValue + 1;
-  };
+  }
+  // hard limit
+  if (newValue < min) {
+    alertBelow.value = min;
+  }
 })
 
 // warn below watcher
@@ -127,6 +131,10 @@ watch(warnBelow, (newValue) => {
   }
   if (newValue >= warnAbove.value) {
     warnAbove.value = newValue + 1;
+  }
+  // hard limit
+  if (newValue >= 100) {
+    warnBelow.value = 99.99;
   }
 })
 
@@ -138,12 +146,20 @@ watch(warnAbove, (newValue) => {
   if (newValue >= alertAbove.value) {
     alertAbove.value = newValue + 1;
   }
+  // hard limit
+  if (newValue <= 100) {
+    warnAbove.value = 100.01;
+  }
 })
 
 // alert above watcher
 watch(alertAbove, (newValue) => {
   if (newValue <= warnAbove.value) {
     warnAbove.value = newValue - 0.5;
+  }
+  // hard limit
+  if (newValue > max) {
+    alertAbove.value = max;
   }
 })
 
