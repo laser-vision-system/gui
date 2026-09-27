@@ -167,7 +167,7 @@ function validateCameraControlMinMax(name, range, value) {
     return false;
   }
   if (value > range.max) {
-    cameraControlErrors.value.push(`Warning: ${name} at ${value} is over the maximum value of ${range.max}`);
+    cameraControlErrors.value.push(`Warning: ${name} at ${value}, is over the maximum value of ${range.max}`);
     return false;
   }
 
@@ -207,6 +207,23 @@ function validateDivation() {
   // reset varables both global and local
   let result = true;
   divationErrors.value = [];
+
+  if (!Number.isFinite(newAlertBelow.value) || !Number) {
+    divationErrors.value.push(`Warning: Alert Below must be a percentage and not ${newAlertBelow.value}`);
+    result = false;
+  }
+  if (!Number.isFinite(newWarnBelow.value)) {
+    divationErrors.value.push(`Warning: Warn Below must be a percentage and not ${newWarnBelow.value}`);
+    result = false;
+  }
+  if (!Number.isFinite(newWarnAbove.value)) {
+    divationErrors.value.push(`Warning: Warn Above must be a percentage and not ${newWarnAbove.value}`);
+    result = false;
+  }
+  if (!Number.isFinite(newAlertAbove.value)) {
+    divationErrors.value.push(`Warning: Alert Above must be a percentage and not ${newAlertAbove.value}`);
+    result = false;
+  }
 
   if (newAlertBelow.value < THRESHOLD_MIN) { // Alert Below Validation
     divationErrors.value.push(`Warning: Alert Below threshold of ${newAlertBelow.value}% is under the allowed limit of ${THRESHOLD_MIN}%`);
@@ -960,6 +977,7 @@ onMounted(() => {
                                 <button type="button" class="btn submit-btn" @click="setDefault('ExposureAbsolute')">Reset</button>
                             </div>
                         </div>
+                        <p v-for="e in cameraControlErrors" class="error">{{e}}</p>
                         <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
                             <button class="btn submit-btn" @click="requestSaveControls">Save Camera Controls</button>
                             <ConfirmationBox
@@ -974,7 +992,7 @@ onMounted(() => {
                                 :onConfirmFunction="resetControlConfig"
                             />
                         </div>
-                        <p v-for="e in cameraControlErrors" class="error">{{e}}</p>
+
                         <!-- added a success response needs extra logic as the websocket is a send a forget unlike restful -->
                         <!-- <div v-if="saveState === 'success'" class="text-center p-1">
                             <p>Settings saved successfully.</p>
@@ -1142,8 +1160,8 @@ option:hover{
     border-radius: 1rem;
     padding: 0.35rem;
     font-weight: 600;
-    margin: 1rem;
-    margin-bottom: 0;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
     text-align: center;
 }
 </style>
