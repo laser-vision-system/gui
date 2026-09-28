@@ -18,7 +18,8 @@ const props = defineProps({
 const alertBelow = defineModel("alertBelow", { type: Number, default: 70 });
 const warnBelow = defineModel("warnBelow", { type: Number, default: 95 });
 const warnAbove = defineModel("warnAbove", { type: Number, default: 105 });
-const alertAbove = defineModel("alertAbove", { type: Number, defualt: 130 });
+const alertAbove = defineModel("alertAbove", { type: Number, default: 120 });
+
 
 
 // --------------------
@@ -27,6 +28,8 @@ const alertAbove = defineModel("alertAbove", { type: Number, defualt: 130 });
 // ref verable to track the active thumb being moved
 const activeThumb = ref(null);
 
+// array size for the salced notches
+const NUMBER_OF_INTERVALS = 10;
 // --------------------
 //   Methods
 // --------------------
@@ -101,6 +104,24 @@ const trackCSS = computed(() => ({
   var(--range-alert) ${alertAbovePercentage.value}%, var(--range-alert) 100%)`,
 }));
 
+const scaledNotches = computed(() => {
+  const notches = [];
+  const increament = ((props.max - props.min) / NUMBER_OF_INTERVALS);
+  let counter = props.min;
+  notches.push({
+    value: Math.round(props.min * 100) / 100,
+    percent: toPercentage(props.min),
+  });
+  for (let i = 0; i <= (NUMBER_OF_INTERVALS - 1); i++) {
+    counter += increament;
+    notches.push({
+      value: Math.round(counter * 100) / 100,
+      percent: toPercentage(counter),
+    });
+  }
+  return notches;
+})
+
 // ---------------------------
 //   Thumb Input event vlaues
 // ---------------------------
@@ -109,59 +130,6 @@ const onWarnBelowInput = thumbManager(warnBelow, warnBelowRange);
 const onWarnAboveInput = thumbManager(warnAbove, warnAboveRange);
 const onAlertAboveInput = thumbManager(alertAbove, alertAboveRange);
 
-// ---------------------------
-//   Watchers
-// ---------------------------
-
-// alert below watcher
-watch(alertBelow, (newValue) => {
-  if (newValue >= warnBelow.value) {
-    warnBelow.value = newValue + 1;
-  }
-  // hard limit
-  if (newValue < min) {
-    alertBelow.value = min;
-  }
-})
-
-// warn below watcher
-watch(warnBelow, (newValue) => {
-  if (newValue <= alertBelow.value) {
-    alertBelow.value = newValue - 0.5;
-  }
-  if (newValue >= warnAbove.value) {
-    warnAbove.value = newValue + 1;
-  }
-  // hard limit
-  if (newValue >= 100) {
-    warnBelow.value = 99.99;
-  }
-})
-
-// warn above watcher
-watch(warnAbove, (newValue) => {
-  if (newValue <= warnBelow.value) {
-    warnBelow.value = newValue - 0.5;
-  }
-  if (newValue >= alertAbove.value) {
-    alertAbove.value = newValue + 1;
-  }
-  // hard limit
-  if (newValue <= 100) {
-    warnAbove.value = 100.01;
-  }
-})
-
-// alert above watcher
-watch(alertAbove, (newValue) => {
-  if (newValue <= warnAbove.value) {
-    warnAbove.value = newValue - 0.5;
-  }
-  // hard limit
-  if (newValue > max) {
-    alertAbove.value = max;
-  }
-})
 
 </script>
 <template>
@@ -227,6 +195,16 @@ watch(alertAbove, (newValue) => {
                 aria-label="Alert Above"
             />
         </div>
+        <div class="scale-labels">
+            <span
+                v-for="notch in scaledNotches"
+                :key="notch.value"
+                class="scale-notch"
+                :style="{ left: `${notch.percent}%` }"
+            >
+                {{notch.value}}
+            </span>
+        </div>
         <!-- Number Inputs for each thumb on the same line -->
         <div class="number-row">
 
@@ -285,6 +263,7 @@ watch(alertAbove, (newValue) => {
     .multi-thumb-slider {
         --track-height: 0.5rem;
         --thumb-size: 1rem;
+        --track-inset: calc(var(--thumb-size) / 2);
         width: 100%;
         padding-bottom: 2rem;
     }
@@ -299,8 +278,8 @@ watch(alertAbove, (newValue) => {
     /* Shares on visable track and makes the other ones Invisible */
     .track {
         position: absolute;
-        left: 0;
-        right: 0;
+        left: var(--track-inset);
+        right: var(--track-inset);
         height: var(--track-height);
         border-radius: 999px;
     }
@@ -353,6 +332,7 @@ watch(alertAbove, (newValue) => {
     .thumb::-webkit-slider-thumb {
         appearance: none;
         pointer-events: auto;
+        box-sizing: border-box;
         width: var(--thumb-size);
         height: var(--thumb-size);
         margin-top: calc((var(--track-height) - var(--thumb-size))/ 2);
@@ -365,10 +345,11 @@ watch(alertAbove, (newValue) => {
     /*Firefox*/
     .thumb::-moz-range-thumb {
         pointer-events: auto;
+        box-sizing: border-box;
         width: var(--thumb-size);
         height: var(--thumb-size);
         border-radius: 999px;
-
+        background: var(--thumb-bg);
         border: 2px solid var(--button-hover);
         cursor: grab;
     }
@@ -431,5 +412,27 @@ watch(alertAbove, (newValue) => {
         border: 3px solid var(--range-warn);
     }
 
+    .scale-labels {
+        position: relative;
+        height: 1.5rem;
+        margin: 0 var(--track-inset) 0;
+    }
+
+    .scale-notch {
+        position: absolute;
+        transform: translateX(-50%);
+        font-size: 1rem;
+        color: var(--bs-body-color);
+    }
+
+    .scale-notch::before {
+        content: "";
+        position: absolute;
+        top: -1rem;
+        left: 50%;
+        width: 2px;
+        height: 1rem;
+        background: currentColor;
+    }
 
 </style>
