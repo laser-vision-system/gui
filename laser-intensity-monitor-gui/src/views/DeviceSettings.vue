@@ -649,10 +649,10 @@ function resetAllThresholds() {
     //newWarnAbove.value = defaultThresholds.value.
     //newAlertAbove.value = defaultThresholds.value.
   } else {
-    newAlertBelow.value = 80;
-    newWarnBelow.value = 95;
-    newWarnAbove.value = 105;
-    newAlertAbove.value = 120;
+    newAlertBelow.value = 95;
+    newWarnBelow.value = 98;
+    newWarnAbove.value = 102;
+    newAlertAbove.value = 105;
   }
 }
 
@@ -1031,7 +1031,7 @@ onMounted(() => {
                                 v-model:warnBelow="newWarnBelow"
                                 v-model:warnAbove="newWarnAbove"
                                 v-model:alertAbove="newAlertAbove"
-                                :min="0" :max="200"
+                                :min="90" :max="110"
                             />
                             <p v-for="e in divationErrors" class="error">{{e}}</p>
                         </div>

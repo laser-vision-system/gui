@@ -6,8 +6,8 @@ import { ref, computed, watch } from "vue";
 // --------------------
 // Variables that are passed down from parent component
 const props = defineProps({
-  min: { type: Number, default: 0 },
-  max: { type: Number, default: 200 },
+  min: { type: Number, default: 80 },
+  max: { type: Number, default: 120 },
   step: { type: Number, default: 0.1 },
 });
 
@@ -15,7 +15,7 @@ const props = defineProps({
 //  2-way bound values
 //  (allows for one v-model per thumb)
 // -----------------------
-const alertBelow = defineModel("alertBelow", { type: Number, default: 70 });
+const alertBelow = defineModel("alertBelow", { type: Number, default: 80 });
 const warnBelow = defineModel("warnBelow", { type: Number, default: 95 });
 const warnAbove = defineModel("warnAbove", { type: Number, default: 105 });
 const alertAbove = defineModel("alertAbove", { type: Number, default: 120 });
@@ -25,11 +25,10 @@ const alertAbove = defineModel("alertAbove", { type: Number, default: 120 });
 // --------------------
 //   V-model Data
 // --------------------
+
 // ref verable to track the active thumb being moved
 const activeThumb = ref(null);
 
-// array size for the salced notches
-const NUMBER_OF_INTERVALS = 10;
 // --------------------
 //   Methods
 // --------------------
@@ -37,11 +36,6 @@ const NUMBER_OF_INTERVALS = 10;
 // function to get the progress of the slider
 function toPercentage(value) {
   return ((value - props.min) / (props.max - props.min)) * 100;
-};
-
-// function to set the css variable for the progress
-function setCSSProgress (progress) {
-  slider.value.style.setProperty("--ProgressPercent", `${progress}%`);
 };
 
 
@@ -104,6 +98,9 @@ const trackCSS = computed(() => ({
   var(--range-alert) ${alertAbovePercentage.value}%, var(--range-alert) 100%)`,
 }));
 
+// array size for the salced notches
+const NUMBER_OF_INTERVALS = 10;
+
 const scaledNotches = computed(() => {
   const notches = [];
   const increament = ((props.max - props.min) / NUMBER_OF_INTERVALS);
@@ -129,7 +126,6 @@ const onAlertBelowInput = thumbManager(alertBelow, alertBelowRange);
 const onWarnBelowInput = thumbManager(warnBelow, warnBelowRange);
 const onWarnAboveInput = thumbManager(warnAbove, warnAboveRange);
 const onAlertAboveInput = thumbManager(alertAbove, alertAboveRange);
-
 
 </script>
 <template>
@@ -195,6 +191,7 @@ const onAlertAboveInput = thumbManager(alertAbove, alertAboveRange);
                 aria-label="Alert Above"
             />
         </div>
+        <!-- Sacle Notches -->
         <div class="scale-labels">
             <span
                 v-for="notch in scaledNotches"
@@ -257,6 +254,7 @@ const onAlertAboveInput = thumbManager(alertAbove, alertAboveRange);
                 />
             </label>
         </div>
+
     </div>
 </template>
 <style scoped>
@@ -393,7 +391,6 @@ const onAlertAboveInput = thumbManager(alertAbove, alertAboveRange);
         font-size: 10pt;
         font-weight: 600;
         gap: 0.3rem;
-
     }
 
     .number-input input {
@@ -421,7 +418,7 @@ const onAlertAboveInput = thumbManager(alertAbove, alertAboveRange);
     .scale-notch {
         position: absolute;
         transform: translateX(-50%);
-        font-size: 1rem;
+        font-size: 10pt;
         color: var(--bs-body-color);
     }
 
@@ -434,5 +431,4 @@ const onAlertAboveInput = thumbManager(alertAbove, alertAboveRange);
         height: 1rem;
         background: currentColor;
     }
-
 </style>
