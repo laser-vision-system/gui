@@ -6,24 +6,26 @@ import { ref, computed, watch } from "vue";
 // --------------------
 // Variables that are passed down from parent component
 const props = defineProps({
-  min: { type: Number, default: 0 },
-  max: { type: Number, default: 200 },
-  step: { type: Number, default: 0.1 },
+  min: { type: Number, default: 90 },
+  max: { type: Number, default: 110 },
+  step: { type: Number, default: 0.01 },
 });
 
 // -----------------------
 //  2-way bound values
 //  (allows for one v-model per thumb)
 // -----------------------
-const alertBelow = defineModel("alertBelow", { type: Number, default: 70 });
+const alertBelow = defineModel("alertBelow", { type: Number, default: 80 });
 const warnBelow = defineModel("warnBelow", { type: Number, default: 95 });
 const warnAbove = defineModel("warnAbove", { type: Number, default: 105 });
-const alertAbove = defineModel("alertAbove", { type: Number, defualt: 130 });
+const alertAbove = defineModel("alertAbove", { type: Number, default: 120 });
+
 
 
 // --------------------
 //   V-model Data
 // --------------------
+
 // ref verable to track the active thumb being moved
 const activeThumb = ref(null);
 
@@ -34,11 +36,6 @@ const activeThumb = ref(null);
 // function to get the progress of the slider
 function toPercentage(value) {
   return ((value - props.min) / (props.max - props.min)) * 100;
-};
-
-// function to set the css variable for the progress
-function setCSSProgress (progress) {
-  slider.value.style.setProperty("--ProgressPercent", `${progress}%`);
 };
 
 
@@ -101,6 +98,27 @@ const trackCSS = computed(() => ({
   var(--range-alert) ${alertAbovePercentage.value}%, var(--range-alert) 100%)`,
 }));
 
+// array size for the salced notches
+const NUMBER_OF_INTERVALS = 10;
+
+const scaledNotches = computed(() => {
+  const notches = [];
+  const increament = ((props.max - props.min) / NUMBER_OF_INTERVALS);
+  let counter = props.min;
+  notches.push({
+    value: Math.round(props.min * 100) / 100,
+    percent: toPercentage(props.min),
+  });
+  for (let i = 0; i <= (NUMBER_OF_INTERVALS - 1); i++) {
+    counter += increament;
+    notches.push({
+      value: Math.round(counter * 100) / 100,
+      percent: toPercentage(counter),
+    });
+  }
+  return notches;
+})
+
 // ---------------------------
 //   Thumb Input event vlaues
 // ---------------------------
@@ -109,44 +127,21 @@ const onWarnBelowInput = thumbManager(warnBelow, warnBelowRange);
 const onWarnAboveInput = thumbManager(warnAbove, warnAboveRange);
 const onAlertAboveInput = thumbManager(alertAbove, alertAboveRange);
 
-// ---------------------------
-//   Watchers
-// ---------------------------
+// --------------
+//   watchers
+// --------------
 
-// alert below watcher
-watch(alertBelow, (newValue) => {
-  if (newValue >= warnBelow.value) {
-    warnBelow.value = newValue + 1;
-  };
-})
-
-// warn below watcher
 watch(warnBelow, (newValue) => {
-  if (newValue <= alertBelow.value) {
-    alertBelow.value = newValue - 0.5;
-  }
-  if (newValue >= warnAbove.value) {
-    warnAbove.value = newValue + 1;
+  if (newValue >= 100) {
+    warnBelow.value = 99.99;
   }
 })
 
-// warn above watcher
 watch(warnAbove, (newValue) => {
-  if (newValue <= warnBelow.value) {
-    warnBelow.value = newValue - 0.5;
-  }
-  if (newValue >= alertAbove.value) {
-    alertAbove.value = newValue + 1;
+  if (newValue <= 100) {
+    warnAbove.value = 100.01;
   }
 })
-
-// alert above watcher
-watch(alertAbove, (newValue) => {
-  if (newValue <= warnAbove.value) {
-    warnAbove.value = newValue - 0.5;
-  }
-})
-
 </script>
 <template>
     <div class="multi-thumb-slider">
@@ -211,6 +206,17 @@ watch(alertAbove, (newValue) => {
                 aria-label="Alert Above"
             />
         </div>
+        <!-- Sacle Notches -->
+        <div class="scale-labels">
+            <span
+                v-for="notch in scaledNotches"
+                :key="notch.value"
+                class="scale-notch"
+                :style="{ left: `${notch.percent}%` }"
+            >
+                {{notch.value}}
+            </span>
+        </div>
         <!-- Number Inputs for each thumb on the same line -->
         <div class="number-row">
 
@@ -263,14 +269,17 @@ watch(alertAbove, (newValue) => {
                 />
             </label>
         </div>
+
     </div>
 </template>
 <style scoped>
     .multi-thumb-slider {
         --track-height: 0.5rem;
         --thumb-size: 1rem;
+        --track-inset: calc(var(--thumb-size) / 2);
         width: 100%;
-        padding-bottom: 2rem;
+        padding-top: 2rem;
+        padding-bottom: 2.25rem;
     }
 
     .track-section{
@@ -283,8 +292,8 @@ watch(alertAbove, (newValue) => {
     /* Shares on visable track and makes the other ones Invisible */
     .track {
         position: absolute;
-        left: 0;
-        right: 0;
+        left: var(--track-inset);
+        right: var(--track-inset);
         height: var(--track-height);
         border-radius: 999px;
     }
@@ -337,6 +346,7 @@ watch(alertAbove, (newValue) => {
     .thumb::-webkit-slider-thumb {
         appearance: none;
         pointer-events: auto;
+        box-sizing: border-box;
         width: var(--thumb-size);
         height: var(--thumb-size);
         margin-top: calc((var(--track-height) - var(--thumb-size))/ 2);
@@ -349,10 +359,11 @@ watch(alertAbove, (newValue) => {
     /*Firefox*/
     .thumb::-moz-range-thumb {
         pointer-events: auto;
+        box-sizing: border-box;
         width: var(--thumb-size);
         height: var(--thumb-size);
         border-radius: 999px;
-
+        background: var(--thumb-bg);
         border: 2px solid var(--button-hover);
         cursor: grab;
     }
@@ -396,7 +407,6 @@ watch(alertAbove, (newValue) => {
         font-size: 10pt;
         font-weight: 600;
         gap: 0.3rem;
-
     }
 
     .number-input input {
@@ -415,5 +425,26 @@ watch(alertAbove, (newValue) => {
         border: 3px solid var(--range-warn);
     }
 
+    .scale-labels {
+        position: relative;
+        height: 1.5rem;
+        margin: 0 var(--track-inset) 0;
+    }
 
+    .scale-notch {
+        position: absolute;
+        transform: translateX(-50%);
+        font-size: 10pt;
+        color: var(--bs-body-color);
+    }
+
+    .scale-notch::before {
+        content: "";
+        position: absolute;
+        top: -1rem;
+        left: 50%;
+        width: 2px;
+        height: 1rem;
+        background: currentColor;
+    }
 </style>
