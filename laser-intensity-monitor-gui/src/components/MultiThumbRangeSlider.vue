@@ -6,9 +6,9 @@ import { ref, computed, watch } from "vue";
 // --------------------
 // Variables that are passed down from parent component
 const props = defineProps({
-  min: { type: Number, default: 80 },
-  max: { type: Number, default: 120 },
-  step: { type: Number, default: 0.1 },
+  min: { type: Number, default: 90 },
+  max: { type: Number, default: 110 },
+  step: { type: Number, default: 0.01 },
 });
 
 // -----------------------
@@ -127,6 +127,21 @@ const onWarnBelowInput = thumbManager(warnBelow, warnBelowRange);
 const onWarnAboveInput = thumbManager(warnAbove, warnAboveRange);
 const onAlertAboveInput = thumbManager(alertAbove, alertAboveRange);
 
+// --------------
+//   watchers
+// --------------
+
+watch(warnBelow, (newValue) => {
+  if (newValue >= 100) {
+    warnBelow.value = 99.99;
+  }
+})
+
+watch(warnAbove, (newValue) => {
+  if (newValue <= 100) {
+    warnAbove.value = 100.01;
+  }
+})
 </script>
 <template>
     <div class="multi-thumb-slider">

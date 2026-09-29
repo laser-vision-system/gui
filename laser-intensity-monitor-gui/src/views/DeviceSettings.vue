@@ -240,28 +240,28 @@ function validateDivation() {
     divationErrors.value.push(`Warning: Alert Below threshold of ${newAlertBelow.value}% is under the allowed limit of ${THRESHOLD_MIN}%`);
     result = false;
   }
-  if (newAlertBelow.value > newWarnBelow.value) {
-    divationErrors.value.push(`Warning: Alert Below threshold of ${newAlertBelow.value}% is more than the Warn Below threshold of ${newWarnBelow.value}%`);
+  if (newAlertBelow.value >= newWarnBelow.value) {
+    divationErrors.value.push(`Warning: Alert Below threshold of ${newAlertBelow.value}% is more than or equal to the Warn Below threshold of ${newWarnBelow.value}%`);
     result = false;
   }
-  if (newWarnBelow.value < newAlertBelow.value) { // Warn Below Validation
-    divationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is less than the Alert Below threshold of ${newAlertBelow.value}%`);
+  if (newWarnBelow.value <= newAlertBelow.value) { // Warn Below Validation
+    divationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is less than or equal to the Alert Below threshold of ${newAlertBelow.value}%`);
     result = false;
   }
-  if (newWarnBelow.value > newWarnAbove.value) {
-    divationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is more than the Warn Above threshold of ${newWarnAbove.value}%`);
+  if (newWarnBelow.value >= newWarnAbove.value) {
+    divationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is more than or equal to the Warn Above threshold of ${newWarnAbove.value}%`);
     result = false;
   }
-  if (newWarnAbove.value < newWarnBelow.value) { // Warn Above Validation
-    divationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is less than the Warn Below threshold of ${newWarnBelow.value}%`);
+  if (newWarnAbove.value <= newWarnBelow.value) { // Warn Above Validation
+    divationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is less than or equal to the Warn Below threshold of ${newWarnBelow.value}%`);
     result = false;
   }
-  if (newWarnAbove.value > newAlertAbove.value) {
-    divationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is more than the Alert Above threshold of ${newWarnBelow.value}%`);
+  if (newWarnAbove.value >= newAlertAbove.value) {
+    divationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is more than or equal to the Alert Above threshold of ${newWarnBelow.value}%`);
     result = false;
   }
-  if (newAlertAbove.value < newWarnAbove.value) { // Alert Above Validation
-    divationErrors.value.push(`Warning: Alert Above threshold of ${newAlertAbove.value}% is less than the Warn Above threshold of ${newWarnAbove.value}%`);
+  if (newAlertAbove.value <= newWarnAbove.value) { // Alert Above Validation
+    divationErrors.value.push(`Warning: Alert Above threshold of ${newAlertAbove.value}% is less than or equal to the Warn Above threshold of ${newWarnAbove.value}%`);
     result = false;
   }
   if (newAlertAbove.value > THRESHOLD_MAX) {
