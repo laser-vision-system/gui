@@ -263,7 +263,8 @@ const onAlertAboveInput = thumbManager(alertAbove, alertAboveRange);
         --thumb-size: 1rem;
         --track-inset: calc(var(--thumb-size) / 2);
         width: 100%;
-        padding-bottom: 2rem;
+        padding-top: 2rem;
+        padding-bottom: 2.25rem;
     }
 
     .track-section{
