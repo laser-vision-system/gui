@@ -484,6 +484,11 @@ export function useWebSocket(url) {
     });
   }
 
+  // Force Retry Camera function
+  function forceRetry(connId, cameraId) {
+    send('ForceRetryCamera', { conn_id: connId, camera_id: cameraId })
+  }
+
   // ---------------
   //   UnMount
   // ---------------

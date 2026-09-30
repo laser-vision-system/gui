@@ -22,7 +22,8 @@ const {
   listCameras,
   setpoint,
   viewCamera,
-  stopViewingCamera
+  stopViewingCamera,
+  forceRetry
 } = useWebSocket('ws://'+ location.hostname +':8080/gui_ws')
 
 //  Check if the websocket is connected
@@ -76,14 +77,15 @@ const deviationAlerts = computed(() => {
                 let alertMsg = ''
                 let alertType = ''
 
-                if (analysis.deviation > analysis.warn_below_threshold) {
+                // green threshold
+                if (analysis.deviation >= analysis.warn_below_threshold && analysis.deviation <= analysis.warn_above_threshold) {
                     alertMsg = `[LOW] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                     alertType = 'success'
-                }
-                else if (analysis.deviation <= analysis.warn_below_threshold && analysis.deviation > analysis.alert_below_threshold) {
-                    alertMsg = `[MODERATE] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
-                    alertType = 'warning'
-                } else if (analysis.deviation <= analysis.alert_below_threshold) {
+                } else if ((analysis.deviation < analysis.warn_below_threshold && analysis.deviation >= analysis.alert_below_threshold) || 
+                            (analysis.deviation > analysis.warn_above_threshold && analysis.deviation <= analysis.alert_above_threshold)) {
+                                alertMsg = `[MODERATE] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
+                                alertType = 'warning'
+                } else if ((analysis.deviation < analysis.alert_below_threshold) || (analysis.deviation > analysis.alert_above_threshold)) {
                     alertMsg = `[HIGH] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                     alertType = 'danger'
                 }
@@ -104,7 +106,7 @@ const sortedDeviationAlerts = computed(() => {
             if (priority[a.alertType] !== priority[b.alertType]) {
                 return priority[a.alertType] - priority[b.alertType]
             }
-            return b.deviation - a.deviation
+            return a.deviation - b.deviation
         })
 })
 const disconnectionAlerts = computed(() => {
@@ -138,7 +140,7 @@ const loadCameraList = computed(() => {
 })
 // grab image analysis from websocket or sample data
 const loadImageAnalysis = computed(() => {
-    const source = isLive.value && analysis.value !== null > 0 ? analysis.value : null
+    const source = isLive.value && analysis.value !== null > 0 ? analysis.value : sampleImageAnalysis.GUIImageAnalysis
     return source
 })
 // merge camera list with microcomputer, image analysis & selection details
@@ -151,9 +153,9 @@ const mergedCameraData = computed(() => {
     for (const camera of camDataList) {
 		let matchingData = ref(null)
 		if (imageAnalysisData !== null) {
-			if( imageAnalysisData.conn_id === camera.conn_id && imageAnalysisData.camera_id === camera.camera_id)	 {
-				matchingData = imageAnalysisData
-			} 
+            matchingData = imageAnalysisData.find(
+                analysis => analysis.conn_id === camera.conn_id && analysis.camera_id === camera.camera_id
+            )
 		}
         const matchingComData = edgeDataList.find(
             connection => connection.conn_id === camera.conn_id
@@ -334,19 +336,25 @@ const updateSetpoint = () => {
         console.error("The setpoint() function threw an error:", error)
     }*/
 }
+const forceRetryCamera = (connId, cameraId) => {
+    forceRetry(connId, cameraId)
+}
 // camera card traffic light system (using sample JSON data)
 function getCardColour(cam) {
     if (!cam) return 'bg-dark'
 
     const deviation = cam.deviation
-    const warning = cam.warn_below_threshold
-    const critical = cam.alert_below_threshold
+    const warnBelow = cam.warn_below_threshold
+    const warnAbove = cam.warn_above_threshold
+    const alertBelow = cam.alert_below_threshold
+    const alertAbove = cam.alert_above_threshold
 
-    if (deviation > warning) {
+    if (deviation >= warnBelow && deviation <= warnAbove) {
         return 'bg-success'
-    } else if (deviation <= warning && deviation > critical) {
-        return 'bg-warning'
-    } else if (deviation <= critical) {
+    } else if ((deviation < warnBelow && deviation >= alertBelow) ||
+                (deviation > warnAbove && deviation <= alertAbove)) {
+                    return 'bg-warning text-dark'
+    } else if ((deviation < alertBelow) || (deviation > alertAbove)) {
         return 'bg-danger'
     } else {
         return 'bg-dark'
@@ -407,7 +415,7 @@ onUnmounted(() => {
 </script>
 <template>
     <div class="container">
-        <div class="row p-2 mt-2 mb-4">
+        <div class="row mt-2 mb-4">
                 <h3 class="cam-title">Alerts:
                     <button class="btn submit-btn" @click="toggleAlerts">
                         {{ alertsExpanded ? 'Collapse All' : 'Show All (' + (sortedDeviationAlerts.length + disconnectionAlerts.length) + ')' }}
@@ -417,7 +425,7 @@ onUnmounted(() => {
                     <div v-if="sortedDeviationAlerts.length > 0" class="text-center mt-2">
                         <div v-show="alertsExpanded">
                             <div v-for="alert in sortedDeviationAlerts" :key="alert.camera_id"
-                                :class="['alert mb-1', `alert-${alert.alertType}`, 'fade', 'show']" role="alert">
+                                :class="['alert mb-1', `alert-${alert.alertType}`]" role="alert">
                                 {{ alert.alertMsg }}
                             </div>
                         </div>
@@ -425,7 +433,7 @@ onUnmounted(() => {
                     <div v-if="disconnectionAlerts.length > 0" class="text-center mt-0">
                         <div v-show="alertsExpanded">
                             <div v-for="alert in disconnectionAlerts" :key="`${alert.conn_id}-${alert.camera_id}`"
-                                :class="['alert mb-1', `alert-${alert.alertType}`, 'fade', 'show']" role="alert">
+                                :class="['alert mb-1', `alert-${alert.alertType}`]" role="alert">
                                 {{ alert.alertMsg }}
                             </div>
                         </div>
@@ -436,17 +444,19 @@ onUnmounted(() => {
             <div class="col-lg-8 col-12 ps-0">
                 <h3 class="cam-title">Connections:</h3>
                     <div v-for="(section, conn_id) in activeMergedData" :key="conn_id">
-                        <h4 class="microCom-title">{{ section.microComName }}
-                            <span class="badge bg-secondary">
-                                {{ section.microComState }}
-                            </span>
-                        </h4>
-                        <div class="row d-flex justify-content-start p-2 g-2">
-                            <div class="col-3 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
-                                <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
-                                    <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
-                                        <h5 class="card-title">{{ cam.name }}</h5>
-                                            <p class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
+                        <div v-if="section.microComState === 'Active'">
+                            <h4 class="microCom-title">{{ section.microComName }}
+                                <span class="badge bg-secondary">
+                                    {{ section.microComState }}
+                                </span>
+                            </h4>
+                            <div class="row d-flex justify-content-start p-2 g-2">
+                                <div class="col-3 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
+                                    <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
+                                        <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
+                                            <h5 class="card-title">{{ cam.name }}</h5>
+                                                <p class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -474,6 +484,18 @@ onUnmounted(() => {
                         </tr>
                         <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
                             <td v-if="cam.state === 'Disconnected'">{{ cam.name }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="table border border-2 hardware-info">
+                    <tbody>
+                        <tr>
+                            <th scope="col" class="table-dark">Broken Cameras</th>
+                        </tr>
+                        <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
+                            <td v-if="cam.state === 'Broken'">{{ cam.name }}
+                                <button class="btn submit-btn" @click="forceRetryCamera(cam.conn_id, camera_id)">Force Retry</button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -512,12 +534,24 @@ onUnmounted(() => {
                                 <table class="table border border-2 hardware-info">
                                     <tbody>
                                         <tr>
-                                            <th class="bg-warning text-dark">Warning Threshold:</th>
-                                            <td>{{Math.round(selectedCameraInfo.warn_below_threshold * 100)}}-{{ Math.round(selectedCameraInfo.alert_below_threshold * 100) + '%' }}</td>
+                                            <th class="bg-danger text-white">Alert below:</th>
+                                            <td>{{ Math.round(selectedCameraInfo.alert_below_threshold * 100) + '%' }}</td>
+                                        </tr>                                        
+                                        <tr>
+                                            <th class="bg-warning text-dark">Warn below:</th>
+                                            <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100) + '%' }}</td>
                                         </tr>
                                         <tr>
-                                            <th class="bg-danger text-white">Critical Threshold:</th>
-                                            <td>Below {{ Math.round(selectedCameraInfo.alert_below_threshold * 100) + '%' }}</td>
+                                            <th class="bg-success text-white">No alert:</th>
+                                            <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100)}}-{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="bg-warning text-dark">Warn above:</th>
+                                            <td>{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="bg-danger text-white">Alert above:</th>
+                                            <td>{{ Math.round(selectedCameraInfo.alert_above_threshold * 100) + '%' }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -550,7 +584,7 @@ onUnmounted(() => {
 .selected-camera {
     border: 0.5rem solid lightsteelblue;
     box-shadow: 0 0 0.2rem steelblue;
-    color: var(--nav-title);
+    color: var(--camera-tab-text);
 }
 
 .feedbox {

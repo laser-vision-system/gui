@@ -1,6 +1,9 @@
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, watch, computed, reactive } from 'vue';
 
+// icons
+import arrowUp from '../assets/images/arrow-up.svg';
+import arrowDown from '../assets/images/arrow-down.svg'
 
 // -----------------------------
 //   Multi Thumb range slider
@@ -13,7 +16,7 @@ const newWarnBelow = ref(null);
 const newWarnAbove = ref(null);
 const newAlertAbove = ref(null);
 // -------------------------
-//   Confrimation pop up
+//   Confrimation pop up values
 // -------------------------
 import ConfirmationBox from '../components/ConfirmationBox.vue';
 
@@ -27,6 +30,14 @@ const showResetFrameRateConfrim = ref(false);// probably not needed will get rid
 const showSaveThresholdsConfrim = ref(false);
 const showResetThresholdsConfrim = ref(false);
 const showSetDefaultThresholdConfrim = ref(false);
+
+// -------------------------
+//   Toggle section values
+// -------------------------
+const isMicroComputerSection = ref(true);
+const isCameraSection = ref(true);
+const isControlsSection = ref(true);
+const isDeviationSection = ref(true);
 
 // --------------------
 //   WebSocket
@@ -229,28 +240,28 @@ function validateDivation() {
     divationErrors.value.push(`Warning: Alert Below threshold of ${newAlertBelow.value}% is under the allowed limit of ${THRESHOLD_MIN}%`);
     result = false;
   }
-  if (newAlertBelow.value > newWarnBelow.value) {
-    divationErrors.value.push(`Warning: Alert Below threshold of ${newAlertBelow.value}% is more than the Warn Below threshold of ${newWarnBelow.value}%`);
+  if (newAlertBelow.value >= newWarnBelow.value) {
+    divationErrors.value.push(`Warning: Alert Below threshold of ${newAlertBelow.value}% is more than or equal to the Warn Below threshold of ${newWarnBelow.value}%`);
     result = false;
   }
-  if (newWarnBelow.value < newAlertBelow.value) { // Warn Below Validation
-    divationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is less than the Alert Below threshold of ${newAlertBelow.value}%`);
+  if (newWarnBelow.value <= newAlertBelow.value) { // Warn Below Validation
+    divationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is less than or equal to the Alert Below threshold of ${newAlertBelow.value}%`);
     result = false;
   }
-  if (newWarnBelow.value > newWarnAbove.value) {
-    divationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is more than the Warn Above threshold of ${newWarnAbove.value}%`);
+  if (newWarnBelow.value >= newWarnAbove.value) {
+    divationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is more than or equal to the Warn Above threshold of ${newWarnAbove.value}%`);
     result = false;
   }
-  if (newWarnAbove.value < newWarnBelow.value) { // Warn Above Validation
-    divationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is less than the Warn Below threshold of ${newWarnBelow.value}%`);
+  if (newWarnAbove.value <= newWarnBelow.value) { // Warn Above Validation
+    divationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is less than or equal to the Warn Below threshold of ${newWarnBelow.value}%`);
     result = false;
   }
-  if (newWarnAbove.value > newAlertAbove.value) {
-    divationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is more than the Alert Above threshold of ${newWarnBelow.value}%`);
+  if (newWarnAbove.value >= newAlertAbove.value) {
+    divationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is more than or equal to the Alert Above threshold of ${newWarnBelow.value}%`);
     result = false;
   }
-  if (newAlertAbove.value < newWarnAbove.value) { // Alert Above Validation
-    divationErrors.value.push(`Warning: Alert Above threshold of ${newAlertAbove.value}% is less than the Warn Above threshold of ${newWarnAbove.value}%`);
+  if (newAlertAbove.value <= newWarnAbove.value) { // Alert Above Validation
+    divationErrors.value.push(`Warning: Alert Above threshold of ${newAlertAbove.value}% is less than or equal to the Warn Above threshold of ${newWarnAbove.value}%`);
     result = false;
   }
   if (newAlertAbove.value > THRESHOLD_MAX) {
@@ -649,10 +660,10 @@ function resetAllThresholds() {
     //newWarnAbove.value = defaultThresholds.value.
     //newAlertAbove.value = defaultThresholds.value.
   } else {
-    newAlertBelow.value = 80;
-    newWarnBelow.value = 95;
-    newWarnAbove.value = 105;
-    newAlertAbove.value = 120;
+    newAlertBelow.value = 95;
+    newWarnBelow.value = 98;
+    newWarnAbove.value = 102;
+    newAlertAbove.value = 105;
   }
 }
 
@@ -709,11 +720,12 @@ function setServerDefaultThreshold() {
 
 // watch the seleceted camera to load it's values when it changes
 watch(selectedCamera, (cam, oldCam) => {
-  saveState.value = ''
-  selectedConfig.value = null
-  cameraControlErrors.value = []
-  divationErrors.value = []
-  cameraNameErrors.value = []
+
+  selectedConfig.value = null;
+  cameraControlErrors.value = [];
+  divationErrors.value = [];
+  cameraNameErrors.value = [];
+  microComputerNameErrors.value = [];
   if (!cam) {
     if (isLive.value && oldCam) {
       stopViewingCamera(oldCam.conn_id, oldCam.camera_id)
@@ -800,266 +812,309 @@ onMounted(() => {
                 <form @submit.prevent="">
                     <div class="form">
                         <div class="pb-3">
-                            <h2 class="config-title">µ-Computer Configuration</h2>
-                            <label for="microCompSelect" class="config-label"><h3 class="config-label">Select µ-Computer</h3></label>
-                            <div class="form-element">
-                                <select class="w-100" id="microCompSelect" v-model="selectedMicroComputer">
-                                    <option value="" disabled selected>Please select a µ-computer</option>
-                                    <option value="all">Select All µ-computers</option>
-                                    <option v-for="(com, index) in activeMicroComputers" :key="`${com.conn_id}`" :value="com">
-                                        [ {{index + 1}} ] : {{com.name}}
-                                    </option>
-                                </select>
-                            </div>
-
-                            <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all'">
-                                <label for="rename" class="config-label">Rename µ-Computer</label>
+                            <h2 class="config-title">
+                                µ-Computer Configuration
+                                <img
+                                :src="isMicroComputerSection ? arrowDown : arrowUp"
+                                alt="toggle button" width="30" height="30" class="toggle-button"
+                                @click="isMicroComputerSection = !isMicroComputerSection"
+                                >
+                            </h2>
+                            <div v-if="isMicroComputerSection">
+                                <label for="microCompSelect" class="config-label"><h3 class="config-label">Select µ-Computer</h3></label>
                                 <div class="form-element">
-                                    <input type="text" id="rename" class="w-100" v-model="newMicroComputerName">
-                                    <button type="button" class="btn submit-btn" @click="showRenameMicroCompConfrim = true">Rename</button>
-                                    <ConfirmationBox
-                                        v-model="showRenameMicroCompConfrim"
-                                        :message="'Rename the selected micro-computer to ' + newMicroComputerName + '?'"
-                                        :onConfirmFunction="renameMicroComputer"
-                                    />
-                                </div>
-                            </div>
-                            <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all'">
-                                <label for="vision-process" class="config-label">Select Vision Processing Method</label>
-                                <div class="form-element">
-                                    <select class="menu-input" id="vision-process" v-model.number="newVisionProcessing">
-                                        <!-- TODO: change from static data to server hosted data-->
-                                        <option value="" disabled selected>Please select a Vision Processing Method</option>
-                                        <option v-for="(item,index) in visionTech" :key="item" :value="item">
-                                            [{{index + 1}}] : {{item}}
+                                    <select class="w-100" id="microCompSelect" v-model="selectedMicroComputer">
+                                        <option value="" disabled selected>Please select a µ-computer</option>
+                                        <option value="all">Select All µ-computers</option>
+                                        <option v-for="(com, index) in activeMicroComputers" :key="`${com.conn_id}`" :value="com">
+                                            [ {{index + 1}} ] : {{com.name}}
                                         </option>
                                     </select>
-                                    <button type="button" class="btn submit-btn" @click="showSelectVisionProcessingConfrim = true">Select</button>
-                                    <ConfirmationBox
-                                    v-model="showSelectVisionProcessingConfrim"
-                                    message="Please click Confrim to chanage the Vision Processing Method"
-                                    :onConfirmFunction="submitVisionProcessing"
-                                    />
+                                </div>
+
+                                <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all'">
+                                    <label for="rename" class="config-label">Rename µ-Computer</label>
+                                    <div class="form-element">
+                                        <input type="text" id="rename" class="w-100" v-model="newMicroComputerName">
+                                        <button type="button" class="btn submit-btn" @click="showRenameMicroCompConfrim = true">Rename</button>
+                                        <ConfirmationBox
+                                            v-model="showRenameMicroCompConfrim"
+                                            :message="'Rename the selected micro-computer to ' + newMicroComputerName + '?'"
+                                            :onConfirmFunction="renameMicroComputer"
+                                        />
+                                    </div>
+                                </div>
+                                <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all'">
+                                    <label for="vision-process" class="config-label">Select Vision Processing Method</label>
+                                    <div class="form-element">
+                                        <select class="menu-input" id="vision-process" v-model.number="newVisionProcessing">
+                                            <!-- TODO: change from static data to server hosted data-->
+                                            <option value="" disabled selected>Please select a Vision Processing Method</option>
+                                            <option v-for="(item,index) in visionTech" :key="item" :value="item">
+                                                [{{index + 1}}] : {{item}}
+                                            </option>
+                                        </select>
+                                        <button type="button" class="btn submit-btn" @click="showSelectVisionProcessingConfrim = true">Select</button>
+                                        <ConfirmationBox
+                                        v-model="showSelectVisionProcessingConfrim"
+                                        message="Please click Confrim to chanage the Vision Processing Method"
+                                        :onConfirmFunction="submitVisionProcessing"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                             <hr class="line-break">
                         </div>
-                        <h2 class="config-title">Camera Configuration</h2>
-                        <label for="cameraSelect" class="config-label"><h3 class="config-label">Select Camera</h3></label>
-                        <div class="form-element">
-                            <select class="w-100" id="cameraSelect" required v-model="selectedCamera">
-                                <option value="" disabled selected>Please select a camera</option>
-                                <option v-for="(cam, index) in activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`" :value="cam">
-                                    [ {{selectedMicroComputer.name}} - {{index + 1}} ] : {{cam.name}}
-                                </option>
-                            </select>
-                        </div>
-                        <div v-if="selectedConfig">
-                            <label for="rename" class="config-label">Rename Camera</label>
+                        <h2 class="config-title">
+                            Camera Configuration
+                            <img
+                            :src="isCameraSection ? arrowDown : arrowUp"
+                            alt="toggle button" width="30" height="30" class="toggle-button"
+                            @click="isCameraSection = !isCameraSection"
+                            >
+                        </h2>
+                        <div v-if="isCameraSection">
+                        <!-- SELECT CAMERA -->
+                            <label for="cameraSelect" class="config-label"><h3 class="config-label">Select Camera</h3></label>
                             <div class="form-element">
-                                <input type="text" id="rename" class="w-100" v-model="newCameraName">
-                                <button type="button" class="btn submit-btn" @click="showRenameCameraConfrim = true">Rename</button>
-                                <ConfirmationBox
-                                v-model="showRenameCameraConfrim"
-                                :message="'Rename the selected camera to ' + newCameraName + '?'"
-                                :onConfirmFunction="renameCamera"
-                                />
-                            </div>
-                        </div>
-                        <hr class="line-break" v-if="selectedCamera">
-                        <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">Camera Controls</h4>
-                        <div v-if="controlFilter('Brightness')">
-                            <label for="brightness-range" class="config-label">Brightness</label>
-                            <div class="form-element">
-                                <input type="range" class="slider-input" id="brightness-range" v-model.number="newBrightness.value"
-                                    :min="newBrightness.min"
-                                    :max="newBrightness.max"
-                                    :step="newBrightness.step">
-                                <input type="number" class="number-input" id="brightness-number" v-model.number="newBrightness.value"
-                                    :min="newBrightness.min"
-                                    :max="newBrightness.max"
-                                    :step="newBrightness.step">
-                                <button type="button" class="btn submit-btn" @click="setDefault('Brightness')">Reset</button>
-                            </div>
-                        </div>
-                        <div v-if="controlFilter('Contrast')">
-                            <label for="contrast-range" class="config-label">Contrast</label>
-                            <div class="form-element">
-                                <input type="range" class="slider-input" id="contrast-range" v-model.number="newContrast.value"
-                                    :min="newContrast.min"
-                                    :max="newContrast.max"
-                                    :step="newContrast.step">
-                                <input type="number" class="number-input" id="contrast-number" v-model.number="newContrast.value"
-                                    :min="newContrast.min"
-                                    :max="newContrast.max"
-                                    :step="newContrast.step">
-                                <button type="button" class="btn submit-btn" @click="setDefault('Contrast')">Reset</button>
-                            </div>
-                        </div>
-                        <div v-if="controlFilter('Hue')">
-                            <label for="hue-range" class="config-label">Hue</label>
-                            <div class="form-element">
-                                <input type="range" class="slider-input" id="hue-range" v-model.number="newHue.value"
-                                    :min="newHue.min"
-                                    :max="newHue.max"
-                                    :step="newHue.step">
-                                <input type="number" class="number-input" id="hue-number" v-model.number="newHue.value"
-                                    :min="newHue.min"
-                                    :max="newHue.max"
-                                    :step="newHue.step">
-                                <button type="button" class="btn submit-btn" @click="setDefault('Hue')">Reset</button>
-                            </div>
-                        </div>
-                        <div v-if="controlFilter('Saturation')">
-                            <label for="saturation-range" class="config-label">Saturation</label>
-                            <div class="form-element">
-                                <input type="range" class="slider-input" id="saturation-range" v-model.number="newSaturation.value"
-                                    :min="newSaturation.min"
-                                    :max="newSaturation.max"
-                                    :step="newSaturation.step">
-                                <input type="number" class="number-input" id="saturation-number" v-model.number="newSaturation.value"
-                                    :min="newSaturation.min"
-                                    :max="newSaturation.max"
-                                    :step="newSaturation.step">
-                                <button type="button" class="btn submit-btn" @click="setDefault('Saturation')">Reset</button>
-                            </div>
-                        </div>
-                        <div v-if="controlFilter('Gamma')">
-                            <label for="gamma-range" class="config-label">Gamma</label>
-                            <div class="form-element">
-                                <input type="range" class="slider-input" id="gamma-range" v-model.number="newGamma.value"
-                                    :min="newGamma.min"
-                                    :max="newGamma.max"
-                                    :step="newGamma.step">
-                                <input type="number" class="number-input" id="gamma-number" v-model.number="newGamma.value"
-                                    :min="newGamma.min"
-                                    :max="newGamma.max"
-                                    :step="newGamma.step">
-                                <button type="button" class="btn submit-btn" @click="setDefault('Gamma')">Reset</button>
-                            </div>
-                        </div>
-                        <div v-if="controlFilter('Gain')">
-                            <label for="gain-range" class="config-label">Gain</label>
-                            <div class="form-element">
-                                <input type="range" class="slider-input" id="gain-range" v-model.number="newGain.value"
-                                    :min="newGain.min"
-                                    :max="newGain.max"
-                                    :step="newGain.step">
-                                <input type="number" class="number-input" id="gain-number" v-model.number="newGain.value"
-                                    :min="newGain.min"
-                                    :max="newGain.max"
-                                    :step="newGain.step">
-                                <button type="button" class="btn submit-btn" @click="setDefault('Gain')">Reset</button>
-                            </div>
-                        </div>
-                        <div v-if="controlFilter('AutoExposure')">
-                            <label for="autoExposure" class="config-label">Auto Exposure</label>
-                            <div class="form-element">
-                                <select class="menu-input" id="autoExposure" v-model.number="newAutoExposure">
-                                    <option v-for="item in controlFilter('AutoExposure').Menu.items" :key="item.id" :value="item.id">
-                                        {{ item.item.Name }}
+                                <select class="w-100" id="cameraSelect" required v-model="selectedCamera">
+                                    <option value="" disabled selected>Please select a camera</option>
+                                    <option v-for="(cam, index) in activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`" :value="cam">
+                                        [ {{selectedMicroComputer.name}} - {{index + 1}} ] : {{cam.name}}
                                     </option>
                                 </select>
-                                <button type="button" class="btn submit-btn" @click="setDefault('AutoExposure')">Reset</button>
                             </div>
-                        </div>
-                        <div v-if="controlFilter('ExposureAbsolute')">
-                            <label for="exposure-range" class="config-label">Exposure (Absolute)</label>
-                            <div class="form-element">
-                                <input type="range" class="slider-input" id="exposure-range" v-model.number="newExposureAbsolute.value"
-                                :min="newExposureAbsolute.min"
-                                    :max="newExposureAbsolute.max"
-                                    :step="newExposureAbsolute.step">
-                                <input type="number" class="number-input" id="exposure-number" v-model.number="newExposureAbsolute.value"
-                                    :min="newExposureAbsolute.min"
-                                    :max="newExposureAbsolute.max"
-                                    :step="newExposureAbsolute.step">
-                                <button type="button" class="btn submit-btn" @click="setDefault('ExposureAbsolute')">Reset</button>
+                            <!-- RENAME CAMERA -->
+                            <div v-if="selectedConfig">
+                                <label for="rename" class="config-label">Rename Camera</label>
+                                <div class="form-element">
+                                    <input type="text" id="rename" class="w-100" v-model="newCameraName">
+                                    <button type="button" class="btn submit-btn" @click="showRenameCameraConfrim = true">Rename</button>
+                                    <ConfirmationBox
+                                    v-model="showRenameCameraConfrim"
+                                    :message="'Rename the selected camera to ' + newCameraName + '?'"
+                                    :onConfirmFunction="renameCamera"
+                                    />
+                                </div>
                             </div>
-                        </div>
-                        <p v-for="e in cameraControlErrors" class="error">{{e}}</p>
-                        <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
-                            <button class="btn submit-btn" @click="requestSaveControls">Save Camera Controls</button>
-                            <ConfirmationBox
-                                v-model="showSaveAllControlsConfrim"
-                                message="Would you like to save all camera controls?"
-                                :onConfirmFunction="saveChanges"
-                            />
-                            <button class="btn submit-btn" @click="showResetAllControlsConfrim = true">Reset Camera Controls</button>
-                            <ConfirmationBox
-                                v-model="showResetAllControlsConfrim"
-                                message="Would you like to reset all camera controls?"
-                                :onConfirmFunction="resetControlConfig"
-                            />
-                        </div>
+                            <hr class="line-break" v-if="selectedCamera">
+                            <!-- CAMERA CONTROLS -->
+                            <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">
+                                Camera Controls
+                                <img
+                                :src="isControlsSection ? arrowDown : arrowUp"
+                                alt="toggle button" width="25" height="25" class="toggle-button"
+                                @click="isControlsSection = !isControlsSection"
+                                >
+                            </h4>
 
-                        <!-- added a success response needs extra logic as the websocket is a send a forget unlike restful -->
-                        <!-- <div v-if="saveState === 'success'" class="text-center p-1">
-                            <p>Settings saved successfully.</p>
-                        </div>
-                        <div v-if="saveState === 'error'" class="text-center p-1">
-                            <p>Failed to save settings. Please try again.</p>
-                        </div> -->
-                        <!-- fps probs be handled by a another route and not with the control filters -->
-                        <hr class="line-break" v-if="controlFilter('fps')">
-                        <h4 class="pt-3 pb-2 config-subtitle" v-if="controlFilter('fps')">Refresh Rate</h4>
-                        <div v-if="controlFilter('fps')">
-                            <label for="fps-range" class="config-label">Frame Rate</label>
-                            <div class="form-element">
-                                <input type="range" class="slider-input" id="fps-range" v-model.number="newFPS" min="1" max="5" step="1">
-                                <input type="number" class="number-input" id="fps-number" v-model.number="newFPS" min="1" max="5" step="1">
-                            </div>
-                            <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
-                                <button class="btn submit-btn" @click="showSaveFrameRateConfrim = true">Save Frame Rate</button>
-                                <ConfirmationBox
-                                    v-model="showSaveFrameRateConfrim"
-                                    message="Would you like to save the frame rate?"
-                                />
-                                <button type="button" class="btn submit-btn" @click="showResetFrameRateConfrim = true">Reset Frame Rate</button>
-                                <ConfirmationBox
-                                    v-model="showResetFrameRateConfrim"
-                                    message="Would you like to reset the frame rate?"
-                                    :onConfirmFunction="setDefaultFPS"
-                                />
-                            </div>
-                        </div>
-                        <hr class="line-break" v-if="selectedCamera">
-                        <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">Deviation Thresholds</h4>
-                        <div v-if="selectedConfig">
-                            <MultiThumbSlider
-                                v-model:alertBelow="newAlertBelow"
-                                v-model:warnBelow="newWarnBelow"
-                                v-model:warnAbove="newWarnAbove"
-                                v-model:alertAbove="newAlertAbove"
-                                :min="0" :max="200"
-                            />
-                            <p v-for="e in divationErrors" class="error">{{e}}</p>
-                        </div>
+                            <div v-if="isControlsSection">
+                                <div v-if="controlFilter('Brightness')">
+                                    <label for="brightness-range" class="config-label">Brightness</label>
+                                    <div class="form-element">
+                                        <input type="range" class="slider-input" id="brightness-range" v-model.number="newBrightness.value"
+                                            :min="newBrightness.min"
+                                            :max="newBrightness.max"
+                                            :step="newBrightness.step">
+                                        <input type="number" class="number-input" id="brightness-number" v-model.number="newBrightness.value"
+                                            :min="newBrightness.min"
+                                            :max="newBrightness.max"
+                                            :step="newBrightness.step">
+                                        <button type="button" class="btn submit-btn" @click="setDefault('Brightness')">Reset</button>
+                                    </div>
+                                </div>
+                                <div v-if="controlFilter('Contrast')">
+                                    <label for="contrast-range" class="config-label">Contrast</label>
+                                    <div class="form-element">
+                                        <input type="range" class="slider-input" id="contrast-range" v-model.number="newContrast.value"
+                                            :min="newContrast.min"
+                                            :max="newContrast.max"
+                                            :step="newContrast.step">
+                                        <input type="number" class="number-input" id="contrast-number" v-model.number="newContrast.value"
+                                            :min="newContrast.min"
+                                            :max="newContrast.max"
+                                            :step="newContrast.step">
+                                        <button type="button" class="btn submit-btn" @click="setDefault('Contrast')">Reset</button>
+                                    </div>
+                                </div>
+                                <div v-if="controlFilter('Hue')">
+                                    <label for="hue-range" class="config-label">Hue</label>
+                                    <div class="form-element">
+                                        <input type="range" class="slider-input" id="hue-range" v-model.number="newHue.value"
+                                            :min="newHue.min"
+                                            :max="newHue.max"
+                                            :step="newHue.step">
+                                        <input type="number" class="number-input" id="hue-number" v-model.number="newHue.value"
+                                            :min="newHue.min"
+                                            :max="newHue.max"
+                                            :step="newHue.step">
+                                        <button type="button" class="btn submit-btn" @click="setDefault('Hue')">Reset</button>
+                                    </div>
+                                </div>
+                                <div v-if="controlFilter('Saturation')">
+                                    <label for="saturation-range" class="config-label">Saturation</label>
+                                    <div class="form-element">
+                                        <input type="range" class="slider-input" id="saturation-range" v-model.number="newSaturation.value"
+                                            :min="newSaturation.min"
+                                            :max="newSaturation.max"
+                                            :step="newSaturation.step">
+                                        <input type="number" class="number-input" id="saturation-number" v-model.number="newSaturation.value"
+                                            :min="newSaturation.min"
+                                            :max="newSaturation.max"
+                                            :step="newSaturation.step">
+                                        <button type="button" class="btn submit-btn" @click="setDefault('Saturation')">Reset</button>
+                                    </div>
+                                </div>
+                                <div v-if="controlFilter('Gamma')">
+                                    <label for="gamma-range" class="config-label">Gamma</label>
+                                    <div class="form-element">
+                                        <input type="range" class="slider-input" id="gamma-range" v-model.number="newGamma.value"
+                                            :min="newGamma.min"
+                                            :max="newGamma.max"
+                                            :step="newGamma.step">
+                                        <input type="number" class="number-input" id="gamma-number" v-model.number="newGamma.value"
+                                            :min="newGamma.min"
+                                            :max="newGamma.max"
+                                            :step="newGamma.step">
+                                        <button type="button" class="btn submit-btn" @click="setDefault('Gamma')">Reset</button>
+                                    </div>
+                                </div>
+                                <div v-if="controlFilter('Gain')">
+                                    <label for="gain-range" class="config-label">Gain</label>
+                                    <div class="form-element">
+                                        <input type="range" class="slider-input" id="gain-range" v-model.number="newGain.value"
+                                            :min="newGain.min"
+                                            :max="newGain.max"
+                                            :step="newGain.step">
+                                        <input type="number" class="number-input" id="gain-number" v-model.number="newGain.value"
+                                            :min="newGain.min"
+                                            :max="newGain.max"
+                                            :step="newGain.step">
+                                        <button type="button" class="btn submit-btn" @click="setDefault('Gain')">Reset</button>
+                                    </div>
+                                </div>
+                                <div v-if="controlFilter('AutoExposure')">
+                                    <label for="autoExposure" class="config-label">Auto Exposure</label>
+                                    <div class="form-element">
+                                        <select class="menu-input" id="autoExposure" v-model.number="newAutoExposure">
+                                            <option v-for="item in controlFilter('AutoExposure').Menu.items" :key="item.id" :value="item.id">
+                                                {{ item.item.Name }}
+                                            </option>
+                                        </select>
+                                        <button type="button" class="btn submit-btn" @click="setDefault('AutoExposure')">Reset</button>
+                                    </div>
+                                </div>
+                                <div v-if="controlFilter('ExposureAbsolute')">
+                                    <label for="exposure-range" class="config-label">Exposure (Absolute)</label>
+                                    <div class="form-element">
+                                        <input type="range" class="slider-input" id="exposure-range" v-model.number="newExposureAbsolute.value"
+                                        :min="newExposureAbsolute.min"
+                                            :max="newExposureAbsolute.max"
+                                            :step="newExposureAbsolute.step">
+                                        <input type="number" class="number-input" id="exposure-number" v-model.number="newExposureAbsolute.value"
+                                            :min="newExposureAbsolute.min"
+                                            :max="newExposureAbsolute.max"
+                                            :step="newExposureAbsolute.step">
+                                        <button type="button" class="btn submit-btn" @click="setDefault('ExposureAbsolute')">Reset</button>
+                                    </div>
+                                </div>
+                                <p v-for="e in cameraControlErrors" class="error">{{e}}</p>
+                                <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
+                                    <button class="btn submit-btn" @click="requestSaveControls">Save Camera Controls</button>
+                                    <ConfirmationBox
+                                        v-model="showSaveAllControlsConfrim"
+                                        message="Would you like to save all camera controls?"
+                                        :onConfirmFunction="saveChanges"
+                                    />
+                                    <button class="btn submit-btn" @click="showResetAllControlsConfrim = true">Reset Camera Controls</button>
+                                    <ConfirmationBox
+                                        v-model="showResetAllControlsConfrim"
+                                        message="Would you like to reset all camera controls?"
+                                        :onConfirmFunction="resetControlConfig"
+                                    />
+                                </div>
 
-                        <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
-                            <button class="btn submit-btn" @click="requestSaveThresholds">Save Thresholds</button>
-                            <ConfirmationBox
-                                v-model="showSaveThresholdsConfrim"
-                                message="Would you like to save the Deviation Thresholds?"
-                                :onConfirmFunction="saveThresholds"
-                            />
-                            <button type="button" class="btn submit-btn" @click="showResetThresholdsConfrim = true">Reset to Default</button>
-                            <ConfirmationBox
-                                v-model="showResetThresholdsConfrim"
-                                message="Would you like to reset all Devation Thresholds to default?"
-                                :onConfirmFunction="resetAllThresholds"
-                            />
-                            <button type="button" class="btn submit-btn" @click="requestSaveDefaultThresholds">Set Global Default Thresholds</button>
-                            <ConfirmationBox
-                                v-model="showSetDefaultThresholdConfrim"
-                                message="Would you like to set the defualt value for the thresholds?"
-                                :onConfirmFunction="setServerDefaultThreshold"
-                            />
+                                <!-- added a success response needs extra logic as the websocket is a send a forget unlike restful -->
+                                <!-- <div v-if="saveState === 'success'" class="text-center p-1">
+                                    <p>Settings saved successfully.</p>
+                                </div>
+                                <div v-if="saveState === 'error'" class="text-center p-1">
+                                    <p>Failed to save settings. Please try again.</p>
+                                </div> -->
+                                <!-- fps probs be handled by a another route and not with the control filters -->
+                            </div>
+                            <!-- FPS -->
+                            <hr class="line-break" v-if="controlFilter('fps')">
+                            <h4 class="pt-3 pb-2 config-subtitle" v-if="controlFilter('fps')">Refresh Rate</h4>
+                            <div v-if="controlFilter('fps')">
+                                <label for="fps-range" class="config-label">Frame Rate</label>
+                                <div class="form-element">
+                                    <input type="range" class="slider-input" id="fps-range" v-model.number="newFPS" min="1" max="5" step="1">
+                                    <input type="number" class="number-input" id="fps-number" v-model.number="newFPS" min="1" max="5" step="1">
+                                </div>
+                                <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
+                                    <button class="btn submit-btn" @click="showSaveFrameRateConfrim = true">Save Frame Rate</button>
+                                    <ConfirmationBox
+                                        v-model="showSaveFrameRateConfrim"
+                                        message="Would you like to save the frame rate?"
+                                    />
+                                    <button type="button" class="btn submit-btn" @click="showResetFrameRateConfrim = true">Reset Frame Rate</button>
+                                    <ConfirmationBox
+                                        v-model="showResetFrameRateConfrim"
+                                        message="Would you like to reset the frame rate?"
+                                        :onConfirmFunction="setDefaultFPS"
+                                    />
+                                </div>
+                            </div>
+                            <!-- DIVIATION THRESHOLDS -->
+                            <hr class="line-break" v-if="selectedCamera">
+                            <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">
+                                Deviation Thresholds
+                                <img
+                                :src="isDeviationSection ? arrowDown : arrowUp"
+                                alt="toggle button" width="25" height="25" class="toggle-button"
+                                @click="isDeviationSection = !isDeviationSection"
+                                >
+                            </h4>
+                            <div v-if="isDeviationSection">
+                                <div v-if="selectedConfig">
+                                    <MultiThumbSlider
+                                        v-model:alertBelow="newAlertBelow"
+                                        v-model:warnBelow="newWarnBelow"
+                                        v-model:warnAbove="newWarnAbove"
+                                        v-model:alertAbove="newAlertAbove"
+                                        :min="80" :max="120"
+                                    />
+                                    <p v-for="e in divationErrors" class="error">{{e}}</p>
+                                </div>
+
+                                <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
+                                    <button class="btn submit-btn" @click="requestSaveThresholds">Save Thresholds</button>
+                                    <ConfirmationBox
+                                        v-model="showSaveThresholdsConfrim"
+                                        message="Would you like to save the Deviation Thresholds?"
+                                        :onConfirmFunction="saveThresholds"
+                                    />
+                                    <button type="button" class="btn submit-btn" @click="showResetThresholdsConfrim = true">Reset to Default</button>
+                                    <ConfirmationBox
+                                        v-model="showResetThresholdsConfrim"
+                                        message="Would you like to reset all Devation Thresholds to default?"
+                                        :onConfirmFunction="resetAllThresholds"
+                                    />
+                                    <button type="button" class="btn submit-btn" @click="requestSaveDefaultThresholds">Set Global Default Thresholds</button>
+                                    <ConfirmationBox
+                                        v-model="showSetDefaultThresholdConfrim"
+                                        message="Would you like to set the defualt value for the thresholds?"
+                                        :onConfirmFunction="setServerDefaultThreshold"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <hr class="line-break" v-if="selectedCamera">
                 </form>
             </div>
+            <!-- Camera feed -->
             <div class="col-12">
                 <div class=" col-12 d-flex mt-2 feed-row" v-if="selectedCamera">
                     <div v-if="isLive && imageSrc" class="w-100">
@@ -1163,5 +1218,8 @@ option:hover{
     margin-top: 0.75rem;
     margin-bottom: 0.75rem;
     text-align: center;
+}
+.toggle-button {
+    filter: var(--filter-background);
 }
 </style>
