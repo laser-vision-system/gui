@@ -1083,7 +1083,7 @@ onMounted(() => {
                                         v-model:warnBelow="newWarnBelow"
                                         v-model:warnAbove="newWarnAbove"
                                         v-model:alertAbove="newAlertAbove"
-                                        :min="80" :max="120"
+                                        :min="90" :max="110"
                                     />
                                     <p v-for="e in divationErrors" class="error">{{e}}</p>
                                 </div>
