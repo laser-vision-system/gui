@@ -105,9 +105,11 @@ export function useWebSocket(url) {
     }
     try {
       socket.send(encodeMessage(type, data));
+      return;
     } catch(e) {
       console.error(`Failed to send "${type}"`, e);
       error.value = `Failed to send ${type}.`;
+      return;
     }
   }
   // -------------------------
@@ -227,6 +229,8 @@ export function useWebSocket(url) {
         state: details?.state ?? null,
         warn_below_threshold: details?.warn_below_threshold ?? null,
         alert_below_threshold: details?.alert_below_threshold ?? null,
+        warn_above_threshold: details?.warn_above_threshold ?? null,
+        alert_above_treshold: details?.alert_above_treshold ?? null,
       };
     }
     return normalised;
@@ -281,6 +285,8 @@ export function useWebSocket(url) {
             state: 'Active',
             warn_below_threshold: existing?.warn_below_threshold ?? null,
             alert_below_threshold: existing?.alert_below_threshold ?? null,
+            warn_above_threshold: existing?.warn_above_threshold ?? null,
+            alert_above_treshold: existing?.alert_above_treshold ?? null,
           },
         }
         break;
@@ -369,12 +375,18 @@ export function useWebSocket(url) {
 
   // Set the name of Edge micro computers
   function setEdgeName(edgeId, name) {
-    send('SetEdgeName', { edge_id: edgeId, name });
+    send('SetEdgeName', {
+      edge_id: edgeId,
+      name,
+    });
   }
 
   // Set Vision Processing Type
   function setEdgeProcessingType(edgeId, processingType) {
-    send('SetEdgeProcessingType', { edge_id: edgeId, processing_type: processingType });
+    send('SetEdgeProcessingType', {
+      edge_id: edgeId,
+      processing_type: processingType,
+    });
   }
 
   // list camera API function
@@ -384,7 +396,11 @@ export function useWebSocket(url) {
 
   // set camera name API function
   function setCameraName(connId, cameraId, name) {
-    send('SetNameCamera', { conn_id: connId, camera_id: cameraId, name });
+    send('SetNameCamera', {
+      conn_id: connId,
+      camera_id: cameraId,
+      name,
+    });
   }
 
   // switch selected camera to a new camera, stopping the old one first (if any)
@@ -394,7 +410,10 @@ export function useWebSocket(url) {
       clearActiveFeed();
     }
     activeCamera.value = { connId, cameraId };
-    send('StartViewingCamera', { conn_id: connId, camera_id: cameraId });
+    send('StartViewingCamera', {
+      conn_id: connId,
+      camera_id: cameraId,
+    });
   }
 
   // stop viewing camera
@@ -407,7 +426,10 @@ export function useWebSocket(url) {
 
   // view camera config
   function viewCameraConfig(connId, cameraId) {
-    send('ViewCameraConfig', { conn_id: connId, camera_id: cameraId });
+    send('ViewCameraConfig', {
+      conn_id: connId,
+      camera_id: cameraId,
+    });
   }
 
   // update camera control configuration
@@ -415,8 +437,7 @@ export function useWebSocket(url) {
     send('Configuration', {
       conn_id: connId,
       camera_id: cameraId,
-      configuration:
-        typeof configuration === 'string' ? configuration : JSON.stringify(configuration),
+      configuration: typeof configuration === 'string' ? configuration : JSON.stringify(configuration),
     });
   }
 
@@ -427,9 +448,8 @@ export function useWebSocket(url) {
       camera_id: cameraId,
       warn_below_threshold: warnBelow,
       alert_below_threshold: alertBelow,
-      // TODO add the warn above and alet above thresholds:
-      //warn_above_threshold: warnAbove,
-      //alert_above_treshold: alertAbove,
+      warn_above_threshold: warnAbove,
+      alert_above_treshold: alertAbove,
     });
   }
 
@@ -438,9 +458,8 @@ export function useWebSocket(url) {
     send('SetDefaultThreshold', {
       warn_below_threshold: warnBelow,
       alert_below_threshold: alertBelow,
-      // TODO add the warn above and alet above thresholds:
-      //warn_above_threshold: warnAbove,
-      //alert_above_treshold: alertAbove,
+      warn_above_threshold: warnAbove,
+      alert_above_treshold: alertAbove,
     });
   }
 

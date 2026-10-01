@@ -659,8 +659,8 @@ function resetAllThresholds() {
     newAlertBelow.value = defaultThresholds.value.alert_below_threshold * 100;
     newWarnBelow.value = defaultThresholds.value.warn_below_threshold * 100;
     // add alert and warn above thresholds when routes are added
-    //newWarnAbove.value = defaultThresholds.value.warn_above_threshold * 100;
-    //newAlertAbove.value = defaultThresholds.value.alert_above_threshold * 100;
+    newWarnAbove.value = defaultThresholds.value.warn_above_threshold * 100;
+    newAlertAbove.value = defaultThresholds.value.alert_above_threshold * 100;
   } else {
     newAlertBelow.value = 95;
     newWarnBelow.value = 98;
@@ -681,8 +681,14 @@ function saveThresholds() {
 
   if (isLive.value) {
     try {
-      // UPDATE: when the route is Updated to 4 diiation values
-      setCameraThresholds(selectedCamera.value.conn_id, selectedCamera.value.camera_id, warning, alert)
+      setCameraThresholds(
+        selectedCamera.value.conn_id,
+        selectedCamera.value.camera_id,
+        warningBelow,
+        alertBelow,
+        warningAbove,
+        alertAbove,
+      );
       listCameras(); // refresh camera list
     } catch (e) {
       console.error('Error updating thresholds:', e);
@@ -707,7 +713,7 @@ function setServerDefaultThreshold() {
 
   if (isLive.value) {
     try {
-      setDefaultThreshold(warningBelow, alertBelow);
+      setDefaultThreshold(warningBelow, alertBelow, warningAbove, alertAbove);
       // update the default values
       getDefaultThresholds();
     } catch(e) {
