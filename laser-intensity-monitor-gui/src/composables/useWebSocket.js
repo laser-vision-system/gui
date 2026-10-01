@@ -29,7 +29,7 @@ export function useWebSocket(url) {
   // default Threasholds
   const defaultThresholds = ref(null);
   // Vision Processing Techniques
-  const visionProcessingTechniques = ref(null);
+  const visionProcessingTechniques = ref([]);
   // server Alert
   const serverAlert = ref(null);
 
@@ -335,7 +335,7 @@ export function useWebSocket(url) {
         break;
       // read the vision processing types that are sent by the server.
       case 'ProcessingTypes':
-        visionProcessingTechniques.value = data;
+        visionProcessingTechniques.value = data?.processing_types ?? [];
         break;
       // Alert sent by the server
       case 'Alert':

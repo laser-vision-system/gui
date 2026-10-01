@@ -53,6 +53,7 @@ const {
   imageSrc,
   controlConfig,
   defaultThresholds,
+  visionProcessingTechniques,
   // connections
   connect,
   // Functions
@@ -60,6 +61,7 @@ const {
   listEdges,
   setEdgeName,
   setEdgeProcessingType,
+  listProcessingTypes,
   // Cameras
   listCameras,
   viewCamera,
@@ -84,7 +86,7 @@ const isLive = computed(() => status.value === 'CONNECTED');
 // Cnn,
 // Diff,
 // Demonstration,
-const visionTech = ['Empty', 'Cnn', 'Diff', 'Demonstration'];
+//const visionTech = ['Empty', 'Cnn', 'Diff', 'Demonstration'];
 
 // --------------------
 //     Sample Data
@@ -657,8 +659,8 @@ function resetAllThresholds() {
     newAlertBelow.value = defaultThresholds.value.alert_below_threshold * 100;
     newWarnBelow.value = defaultThresholds.value.warn_below_threshold * 100;
     // add alert and warn above thresholds when routes are added
-    //newWarnAbove.value = defaultThresholds.value.
-    //newAlertAbove.value = defaultThresholds.value.
+    //newWarnAbove.value = defaultThresholds.value.warn_above_threshold * 100;
+    //newAlertAbove.value = defaultThresholds.value.alert_above_threshold * 100;
   } else {
     newAlertBelow.value = 95;
     newWarnBelow.value = 98;
@@ -795,8 +797,9 @@ watch(selectedMicroComputer, () => {
 // -------------------------------
 onMounted(() => {
     //fetchCameraConfig()
-    connect() // gets the edge list and camera list in its function
-    getDefaultThresholds() // get the default deviation thresholds on load
+  connect(); // gets the edge list and camera list in its function
+  getDefaultThresholds(); // get the default deviation thresholds on load
+  listProcessingTypes(); // request the prosessing types
 });
 </script>
 <template>
@@ -849,9 +852,9 @@ onMounted(() => {
                                     <div class="form-element">
                                         <select class="menu-input" id="vision-process" v-model.number="newVisionProcessing">
                                             <!-- TODO: change from static data to server hosted data-->
-                                            <option value="" disabled selected>Please select a Vision Processing Method</option>
-                                            <option v-for="(item,index) in visionTech" :key="item" :value="item">
-                                                [{{index + 1}}] : {{item}}
+                                            <option value="" disabled>Please select a Vision Processing Method</option>
+                                            <option v-for="(technique,index) in visionProcessingTechniques" :key="technique" :value="technique">
+                                                [{{index + 1}}] : {{technique}}
                                             </option>
                                         </select>
                                         <button type="button" class="btn submit-btn" @click="showSelectVisionProcessingConfrim = true">Select</button>
