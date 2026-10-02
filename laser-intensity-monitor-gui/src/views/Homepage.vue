@@ -23,7 +23,8 @@ const {
   setpoint,
   viewCamera,
   stopViewingCamera,
-  forceRetryCamera
+  forceRetryCamera,
+  forgetCameraRequest
 } = useWebSocket('ws://'+ location.hostname +':8080/gui_ws')
 
 //  Check if the websocket is connected
@@ -336,8 +337,13 @@ const updateSetpoint = () => {
         console.error("The setpoint() function threw an error:", error)
     }*/
 }
-const forceRetryCamBtn = (connId, cameraId) => {
+// button to send force retry camera command to server
+const forceRetryCameraBtn = (connId, cameraId) => {
     forceRetryCamera(connId, cameraId)
+}
+// button to send forget camera command to server
+const forgetCameraBtn = (connId, cameraId) => {
+    forgetCameraRequest(connId, cameraId)
 }
 // camera card traffic light system (using sample JSON data)
 function getCardColour(cam) {
@@ -494,7 +500,10 @@ onUnmounted(() => {
                         </tr>
                         <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
                             <td v-if="cam.state === 'Broken'">{{ cam.name }}
-                                <button class="btn submit-btn" @click="forceRetryCamBtn(cam.conn_id, camera_id)">Force Retry</button>
+                                <div class="button-group">
+                                    <button class="btn submit-btn" @click="forceRetryCameraBtn(cam.conn_id, camera_id)">Force Retry</button>
+                                    <button class="btn submit-btn" @click="forgetCameraBtn(cam.conn_id, camera_id)">Forget</button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -619,6 +628,12 @@ onUnmounted(() => {
     overflow: hidden;
     border-collapse: separate;
     border-spacing: 0;
+}
+
+.button-group {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
 }
 
 .microCom-title {
