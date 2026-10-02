@@ -110,17 +110,15 @@ const sortedDeviationAlerts = computed(() => {
             return a.deviation - b.deviation
         })
 })
-const disconnectionAlerts = computed(() => {
+const disconnectedMicroComs = computed(() => {
     return mergedCameraData.value
-    .filter(connection => connection.microComState === 'Disconnected' || connection.state === 'Disconnected')
+    .filter(connection => connection.microComState === 'Disconnected')
     .map(disconnection => {
         let alertMsg = ''
         let alertType = 'info'
 
         if (disconnection.microComState == 'Disconnected') {
             alertMsg = `[DISCONNECTION] ${disconnection.microComName} has disconnected.`
-        } else if (disconnection.state == 'Disconnected') {
-            alertMsg = `[DISCONNECTION] ${disconnection.name} has disconnected.`
         }
         return {
             ...disconnection,
@@ -128,6 +126,35 @@ const disconnectionAlerts = computed(() => {
             alertType
         }
     })
+})
+const disconnectedCameras = computed(() => {
+    return mergedCameraData.value
+    .filter(connection => connection.state === 'Disconnected')
+    .map(disconnection => {
+        let alertMsg = ''
+        let alertType = 'info'
+
+        if (disconnection.state == 'Disconnected') {
+            alertMsg = `[DISCONNECTION] ${disconnection.name} has disconnected.`
+        }
+        return {
+            ...disconnection,
+            alertMsg,
+            alertType
+        }
+    })    
+})
+const sortedDisconnectedMicroComAlerts = computed(() => {
+    const groupedAlerts = disconnectedMicroComs.value.reduce((alert, device) => {
+        if (!alert[device.microComState]) {
+            alert[device.microComState] = device
+        }
+        return alert
+    }, {})
+    return Object.values(groupedAlerts)
+})
+const shownDisconnectionAlerts = computed(() => {
+    return [...sortedDisconnectedMicroComAlerts.value, ...disconnectedCameras.value]
 })
 // grab microCom list from websocket or sample data
 const loadEdgesList = computed(() => {
@@ -424,7 +451,7 @@ onUnmounted(() => {
         <div class="row mt-2 mb-4">
                 <h3 class="cam-title">Alerts:
                     <button class="btn submit-btn" @click="toggleAlerts">
-                        {{ alertsExpanded ? 'Collapse All' : 'Show All (' + (sortedDeviationAlerts.length + disconnectionAlerts.length) + ')' }}
+                        {{ alertsExpanded ? 'Collapse All' : 'Show All (' + (sortedDeviationAlerts.length + shownDisconnectionAlerts.length) + ')' }}
                     </button>
                 </h3>
                 <div class="container mt-2">
@@ -436,9 +463,9 @@ onUnmounted(() => {
                             </div>
                         </div>
                     </div>
-                    <div v-if="disconnectionAlerts.length > 0" class="text-center mt-0">
+                    <div v-if="shownDisconnectionAlerts.length > 0" class="text-center mt-0">
                         <div v-show="alertsExpanded">
-                            <div v-for="alert in disconnectionAlerts" :key="`${alert.conn_id}-${alert.camera_id}`"
+                            <div v-for="alert in shownDisconnectionAlerts" :key="`${alert.conn_id}-${alert.camera_id}`"
                                 :class="['alert mb-1', `alert-${alert.alertType}`]" role="alert">
                                 {{ alert.alertMsg }}
                             </div>
