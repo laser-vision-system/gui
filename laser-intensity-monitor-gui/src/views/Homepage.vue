@@ -23,7 +23,7 @@ const {
   setpoint,
   viewCamera,
   stopViewingCamera,
-  forceRetry
+  forceRetryCamera
 } = useWebSocket('ws://'+ location.hostname +':8080/gui_ws')
 
 //  Check if the websocket is connected
@@ -336,8 +336,8 @@ const updateSetpoint = () => {
         console.error("The setpoint() function threw an error:", error)
     }*/
 }
-const forceRetryCamera = (connId, cameraId) => {
-    forceRetry(connId, cameraId)
+const forceRetryCamBtn = (connId, cameraId) => {
+    forceRetryCamera(connId, cameraId)
 }
 // camera card traffic light system (using sample JSON data)
 function getCardColour(cam) {
@@ -494,7 +494,7 @@ onUnmounted(() => {
                         </tr>
                         <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
                             <td v-if="cam.state === 'Broken'">{{ cam.name }}
-                                <button class="btn submit-btn" @click="forceRetryCamera(cam.conn_id, camera_id)">Force Retry</button>
+                                <button class="btn submit-btn" @click="forceRetryCamBtn(cam.conn_id, camera_id)">Force Retry</button>
                             </td>
                         </tr>
                     </tbody>
