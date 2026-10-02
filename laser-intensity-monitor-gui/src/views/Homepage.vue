@@ -144,17 +144,18 @@ const disconnectedCameras = computed(() => {
         }
     })    
 })
-const sortedDisconnectedMicroComAlerts = computed(() => {
+// gets rid of duplicate disconnected microcomputer alerts
+const disconnectedMicroComAlerts = computed(() => {
     const groupedAlerts = disconnectedMicroComs.value.reduce((alert, device) => {
-        if (!alert[device.microComState]) {
-            alert[device.microComState] = device
+        if (!alert[device.conn_id]) {
+            alert[device.conn_id] = device
         }
         return alert
     }, {})
     return Object.values(groupedAlerts)
 })
 const shownDisconnectionAlerts = computed(() => {
-    return [...sortedDisconnectedMicroComAlerts.value, ...disconnectedCameras.value]
+    return [...disconnectedMicroComAlerts.value, ...disconnectedCameras.value]
 })
 // grab microCom list from websocket or sample data
 const loadEdgesList = computed(() => {
@@ -502,9 +503,9 @@ onUnmounted(() => {
                         <tr>
                             <th scope="col" class="table-dark">Disconnected microComputers</th>
                         </tr>
-                        <template v-if="sampleMicroComputers.length > 0">
-                            <tr v-for="com in sampleMicroComputers" :key="com.conn_id">
-                                <td v-if="com.state === 'Disconnected'">{{ com.name }}</td>
+                        <template v-if="disconnectedMicroComAlerts.length > 0">
+                            <tr v-for="com in disconnectedMicroComAlerts" :key="com.conn_id">
+                                <td v-if="com.microComState === 'Disconnected'">{{ com.microComName }}</td>
                             </tr>
                         </template>
                         <template v-else>
