@@ -475,14 +475,14 @@ onUnmounted(() => {
                         <tr>
                             <th scope="col" class="table-dark">Disconnected microComputers</th>
                         </tr>
-                        <template v-if="sampleMicroComputers.length === 0">
-                            <tr>
-                                <td>&nbsp</td>
+                        <template v-if="sampleMicroComputers.length > 0">
+                            <tr v-for="com in sampleMicroComputers" :key="com.conn_id">
+                                <td v-if="com.state === 'Disconnected'">{{ com.name }}</td>
                             </tr>
                         </template>
                         <template v-else>
-                            <tr v-for="com in sampleMicroComputers" :key="com.conn_id">
-                                <td v-if="com.state === 'Disconnected'">{{ com.name }}</td>
+                            <tr>
+                                <td>&nbsp</td>
                             </tr>
                         </template>
                         <tr>
