@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, computed, reactive } from 'vue';
+import { ref, onMounted, onUnmounted, watch, computed, reactive } from 'vue';
 
 // icons
 import arrowUp from '../assets/images/arrow-up.svg';
@@ -130,6 +130,44 @@ const divationErrors = ref([]);
 const cameraControlErrors = ref([]);
 const cameraNameErrors = ref([]);
 const microComputerNameErrors = ref([]);
+
+// -------------------------
+//   Send feedback messages
+// -------------------------
+const feedback = reactive({
+  microComputerName: null,
+  visionProcessing: null,
+  camera: null,
+  controls: null,
+  thresholds: null,
+});
+
+const FEEDBACK_DURATION = 4000; // in ms
+const feedbackTimers = {};
+
+function showFeedback(section, ok, message) {
+  clearTimeout(feedbackTimers[section]);
+  feedback[section] = { ok, message };
+  feedbackTimers[section] = setTimeout(() => {
+    feedback[section] = null;
+  }, FEEDBACK_DURATION);
+}
+
+// runs a confirmed websocket command, shows the result, and hands the result back
+async function sendWithFeedback(section, label, sendFn) {
+  const result = await sendFn();
+  if (result.ok) {
+    showFeedback(section, true, `${label} has been sent successfully`);
+  } else {
+    showFeedback(section, false, `${label} failed to send: ${result.error}`);
+  }
+  return result;
+}
+
+// clear timer on refresh or page exit
+onUnmounted(() => {
+  Object.values(feedbackTimers).forEach(clearTimeout);
+});
 // --------------------
 //        Computed
 // --------------------
@@ -138,14 +176,17 @@ const activeMicroComputers = computed(() => {
   const source = isLive.value ? wsEdgeList.value : sampleMicroComputerList.microComputers
   return source.filter((com) => com.state === 'Active')
 });
+
 // filter out the cameras that are not active
 const activeCameras = computed(() => {
   const source = isLive.value ? wsCameraList.value : sampleCameraList.cameras
   const active = source.filter((cam) => cam.state === 'Active')
+
   // if no option is selecetd or the all option is selected.
   if (!selectedMicroComputer.value || selectedMicroComputer.value === 'all') {
     return active
   }
+
   // else a micro computer is selected filter only the cameras for that computer
   return active.filter((cam) => cam.conn_id === selectedMicroComputer.value.conn_id)
 });
@@ -164,6 +205,7 @@ const THRESHOLD_MAX = 200;
 function isBlank(v) {
   return v === '' || v === null || v === undefined || Number.isNaN(v);
 }
+
 // Camera Controls
 function validateCameraControlMinMax(name, range, value) {
   if (isBlank(value)) return true;
@@ -197,6 +239,7 @@ function validateAllCameraControlsMinMax() {
     Saturation: newSaturation, Gamma: newGamma, Gain: newGain,
     ExposureAbsolute: newExposureAbsolute,
   }
+
   let result = true;
   for (const [name, valueRef] of Object.entries(integerControls)) {
     if (!original?.[name]) continue; // camera doesn't support this control
@@ -300,40 +343,42 @@ function clearSelectedCamera() {
 }
 
 // rename Selected micro computer
-function renameMicroComputer() {
+async function renameMicroComputer() {
   if (!selectedMicroComputer.value || !newMicroComputerName.value) return
   if (isLive.value) {
-    // set micro computer name fucntion
-    setEdgeName(selectedMicroComputer.value.conn_id, newMicroComputerName.value)
-    // refresh micro comp / edge list
-    listEdges()
+    const result = await sendWithFeedback('microComputerName', 'Rename', () =>
+      setEdgeName(selectedMicroComputer.value.conn_id, newMicroComputerName.value));
+    if (result.ok) listEdges();
   } else {
-    selectedMicroComputer.value.name = newMicroComputerName.value
+    selectedMicroComputer.value.name = newMicroComputerName.value;
+    showFeedback('microComputerName', true, 'Rename saved (sample data)');
   }
 }
 
 // Select Vision processing method.
 //  the method for saving/ submiting the selected vision processing method
-function submitVisionProcessing() {
-  if (!selectedMicroComputer.value || newVisionProcessing.value == null) return
+async function submitVisionProcessing() {
+  if (!selectedMicroComputer.value || newVisionProcessing.value == null) return;
   if (isLive.value) {
-    // API function for submiting the chosen vision processing
-    setEdgeProcessingType(selectedMicroComputer.value.conn_id, newVisionProcessing.value)
-    // listEdges() ( not requried)
+    await sendWithFeedback('visionProcessing', 'Vision Processing Technique', () =>
+      // API function for submiting the chosen vision processing
+      setEdgeProcessingType(selectedMicroComputer.value.conn_id, newVisionProcessing.value));
   } else {
-    selectedMicroComputer.value.Menu.value.ConValueMenu = newVisionProcessing.value
+    selectedMicroComputer.value.Menu.value.ConValueMenu = newVisionProcessing.value;
+    showFeedback('visionProcessing', true, 'Vision processing Technique (sample data)');
   }
 }
 
 // Rename Selected camera
-function renameCamera() {
-  if (!selectedCamera.value || !newCameraName.value) return
+async function renameCamera() {
+  if (!selectedCamera.value || !newCameraName.value) return;
   // ADD VALIDATION FOR CAMERA RENAME
   if (isLive.value) {
-    setCameraName(selectedCamera.value.conn_id, selectedCamera.value.camera_id, newCameraName.value)
-    //listCameras() // refresh camera list (not needed)
+    await sendWithFeedback('camera', 'Camera Rename', () =>
+      setCameraName(selectedCamera.value.conn_id, selectedCamera.value.camera_id, newCameraName.value));
   } else {
-    selectedCamera.value.name = newCameraName.value
+    selectedCamera.value.name = newCameraName.value;
+    showFeedback('camera', true, 'Camera rename saved (sample data)');
   }
 }
 
@@ -394,21 +439,24 @@ async function saveChanges() {
     // ADD VALIDATION FOR CONTROLS
     const controlsPayload = buildControlsPayload()
     if (isLive.value) {
-      updateConfiguration(selectedCamera.value.conn_id, selectedCamera.value.camera_id, JSON.stringify(controlsPayload))
+      const { conn_id, camera_id } = selectedCamera.value;
+      const result = await sendWithFeedback('controls', 'Camera controls', () =>
+        updateConfiguration(conn_id, camera_id, JSON.stringify(controlsPayload)));
+      if (!result.ok) return;
       // one second await timer
-      await coundownTimer(1000)
+      await coundownTimer(1000);
       // request to view the camera config.
-      viewCameraConfig(selectedCamera.value.conn_id, selectedCamera.value.camera_id)
+      viewCameraConfig(conn_id, camera_id);
     } else {
-      //  the sample data does model fps
       selectedConfig.value = {
-        ...selectedConfig.value, fps: checkBlank(newFPS.value, selectedConfig.value.fps),
         configuration: { ...selectedConfig.value.configuration, ...controlsPayload },
-      }
+      };
+      showFeedback('controls', true, 'Camera controls saved (sample data)');
     }
   } catch (e) {
-    console.error('Error updating camera:', e)
-    saveState.value = 'error'
+    console.error('Error updating camera:', e);
+    saveState.value = 'error';
+    showFeedback('controls', false, 'Something went wrong preparing the camera controls.');
   }
 }
 //console.log(controlConfig)
@@ -671,54 +719,47 @@ function resetAllThresholds() {
 
 
 // save thresholds
-function saveThresholds() {
+async function saveThresholds() {
   if (!selectedCamera.value) return;
   const alertBelow = newAlertBelow.value / 100;
   const warningBelow = newWarnBelow.value / 100;
-  // add routes when api comes
   const warningAbove = newWarnAbove.value / 100;
   const alertAbove = newAlertAbove.value / 100;
 
   if (isLive.value) {
-    try {
-      setCameraThresholds(
-        selectedCamera.value.conn_id,
-        selectedCamera.value.camera_id,
-        warningBelow,
-        alertBelow,
-        warningAbove,
-        alertAbove,
-      );
-      listCameras(); // refresh camera list
-    } catch (e) {
-      console.error('Error updating thresholds:', e);
-    }
+      const result = await sendWithFeedback('threshold', 'Thresholds', () =>
+        setCameraThresholds(
+          selectedCamera.value.conn_id,
+          selectedCamera.value.camera_id,
+          alertBelow,
+          warningBelow,
+          warningAbove,
+          alertAbove,
+        ));
+      if (result.ok) listCameras(); // refresh camera list
   } else {
     selectedCamera.value.alert_below_threshold = alertBelow;
     selectedCamera.value.warn_below_threshold = warningBelow;
     selectedCamera.value.warn_above_threshold = warningAbove;
     selectedCamera.value.alert_above_threshold = alertAbove;
+    showFeedback('thresholds', true, 'Thresholds saved (sample data)');
   }
 }
 
 // set global defualt threshold on server
-function setServerDefaultThreshold() {
+async function setServerDefaultThreshold() {
   if (!selectedCamera.value) return
 
   const alertBelow = newAlertBelow.value / 100;
   const warningBelow = newWarnBelow.value / 100;
-  // add routes when api comes
   const warningAbove = newWarnAbove.value / 100;
   const alertAbove = newAlertAbove.value / 100;
 
   if (isLive.value) {
-    try {
-      setDefaultThreshold(warningBelow, alertBelow, warningAbove, alertAbove);
+      const result = await sendWithFeedback('thresholds', 'Default thresholds', () =>
+        setDefaultThreshold(alertBelow, warningBelow, warningAbove, alertAbove));
       // update the default values
-      getDefaultThresholds();
-    } catch(e) {
-      console.error('Error setting default thresholds:', e);
-    }
+      if (result.ok)  getDefaultThresholds();
   }
 }
 
@@ -853,6 +894,9 @@ onMounted(() => {
                                         />
                                     </div>
                                 </div>
+                                <p v-if="feedback.microComputerName"
+                                   :class="feedback.microComputerName.ok ? 'success' : 'error'"
+                                   role="status"> {{ feedback.microComputerName.message }}</p>
                                 <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all'">
                                     <label for="vision-process" class="config-label">Select Vision Processing Method</label>
                                     <div class="form-element">
@@ -871,6 +915,9 @@ onMounted(() => {
                                         />
                                     </div>
                                 </div>
+                                <p v-if="feedback.visionProcessing"
+                                   :class="feedback.visionProcessing.ok ? 'success' : 'error'"
+                                   role="status"> {{ feedback.visionProcessing.message }}</p>
                             </div>
                             <hr class="line-break">
                         </div>
@@ -906,6 +953,9 @@ onMounted(() => {
                                     />
                                 </div>
                             </div>
+                            <p v-if="feedback.camera"
+                               :class="feedback.camera.ok ? 'success' : 'error'"
+                               role="status"> {{ feedback.camera.message }}</p>
                             <hr class="line-break" v-if="selectedCamera">
                             <!-- CAMERA CONTROLS -->
                             <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">
@@ -1042,15 +1092,9 @@ onMounted(() => {
                                         :onConfirmFunction="resetControlConfig"
                                     />
                                 </div>
-
-                                <!-- added a success response needs extra logic as the websocket is a send a forget unlike restful -->
-                                <!-- <div v-if="saveState === 'success'" class="text-center p-1">
-                                    <p>Settings saved successfully.</p>
-                                </div>
-                                <div v-if="saveState === 'error'" class="text-center p-1">
-                                    <p>Failed to save settings. Please try again.</p>
-                                </div> -->
-                                <!-- fps probs be handled by a another route and not with the control filters -->
+                                <p v-if="feedback.controls"
+                                   :class="feedback.controls.ok ? 'success' : 'error'"
+                                   role="status"> {{ feedback.controls.message }}</p>
                             </div>
                             <!-- FPS -->
                             <hr class="line-break" v-if="controlFilter('fps')">
@@ -1117,6 +1161,9 @@ onMounted(() => {
                                         :onConfirmFunction="setServerDefaultThreshold"
                                     />
                                 </div>
+                                <p v-if="feedback.thresholds"
+                                   :class="feedback.thresholds.ok ? 'success' : 'error'"
+                                   role="status"> {{ feedback.thresholds.message }}</p>
                             </div>
                         </div>
                     </div>
@@ -1221,6 +1268,16 @@ option:hover{
 }
 .error {
     background: var(--range-alert);
+    border-radius: 1rem;
+    padding: 0.35rem;
+    font-weight: 600;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    text-align: center;
+}
+.success {
+    background: var(--range-ok, #2e7d32);
+    color: #fff;
     border-radius: 1rem;
     padding: 0.35rem;
     font-weight: 600;
