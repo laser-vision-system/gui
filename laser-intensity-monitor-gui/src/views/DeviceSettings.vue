@@ -43,7 +43,6 @@ const isDeviationSection = ref(true);
 //   WebSocket
 // --------------------
 import { useWebSocket } from '../composables/useWebSocket';
-// Point this at your server's websocket endpoint
 const {
   // state
   status,
@@ -123,8 +122,6 @@ const newGamma = ref(null); // needs validation
 const newGain = ref(null); // needs validation
 const newExposureAbsolute = ref(null); // needs validation
 const newAutoExposure = ref(null);
-// for save message e.g. success | error
-const saveState = ref('');
 // Validation Errors
 const divationErrors = ref([]);
 const cameraControlErrors = ref([]);
@@ -199,7 +196,7 @@ const activeCameras = computed(() => {
 // CUSTOM VALDIATION
 // All validate function return a bool, either true (is valid) or false (failed the validation)
 // global cosntants
-const THRESHOLD_MIN = 0; // this should always be zero but who knows with this project.
+const THRESHOLD_MIN = 0;
 const THRESHOLD_MAX = 200;
 
 function isBlank(v) {
@@ -209,8 +206,6 @@ function isBlank(v) {
 // Camera Controls
 function validateCameraControlMinMax(name, range, value) {
   if (isBlank(value)) return true;
-
-  let result = true;
 
   if (!Number.isInteger(value)) {
     cameraControlErrors.value.push(`Warning: ${name} must be a whole number`);
@@ -348,6 +343,8 @@ async function renameMicroComputer() {
   if (isLive.value) {
     const result = await sendWithFeedback('microComputerName', 'Rename', () =>
       setEdgeName(selectedMicroComputer.value.conn_id, newMicroComputerName.value));
+    // one second await timer
+    await coundownTimer(1000);
     if (result.ok) listEdges();
   } else {
     selectedMicroComputer.value.name = newMicroComputerName.value;
@@ -374,8 +371,11 @@ async function renameCamera() {
   if (!selectedCamera.value || !newCameraName.value) return;
   // ADD VALIDATION FOR CAMERA RENAME
   if (isLive.value) {
-    await sendWithFeedback('camera', 'Camera Rename', () =>
+    const result = await sendWithFeedback('camera', 'Camera Rename', () =>
       setCameraName(selectedCamera.value.conn_id, selectedCamera.value.camera_id, newCameraName.value));
+    // one second await timer
+    await coundownTimer(1000);
+    if (result.ok) listCameras(); // fetch the new camera list after renaming the camera
   } else {
     selectedCamera.value.name = newCameraName.value;
     showFeedback('camera', true, 'Camera rename saved (sample data)');
@@ -384,10 +384,7 @@ async function renameCamera() {
 
 // check for empty value if empty return the current value if not return the newValue from form.
 function checkBlank(newValue, currentValue) {
-    if (newValue === '' || newValue === null || newValue === undefined || Number.isNaN(newValue)) {
-        return currentValue;
-    }
-    return newValue;
+  return isBlank(newValue) ? currentValue : newValue;
 }
 
 // build camera control payload does not include the fps (we will figure that out later)
@@ -556,6 +553,10 @@ function findConfig(conn_id, camera_id) {
 // ------------------------------
 //          Methods
 // ------------------------------
+// returns the name of the micro computer a camera belongs to
+function edgeName(connId) {
+  return activeMicroComputers.value.find((com) => com.conn_id === connId)?.name ?? connId;
+}
 
 // control filter function for selected camera
 function controlFilter(controlName) {
@@ -626,7 +627,7 @@ function saveFrameRate() {
   if (!selectedCamera.value || !selectedConfig.value) return
   saveState.value = ''
   if (isLive.value) {
-    // TODO: there's currently no websocket path for fram rate
+    // TODO: there's currently no websocket path for frame rate
     console.warn('Saving frame rate against a live camera is not supported yet.')
   } else {
     selectedConfig.value = {
@@ -667,35 +668,6 @@ function resetControlConfig() {
   }
 }
 
-// set the threashold values to defualt (alert_below_threshold)
-function resetAlertThreshold() {
-  if (!selectedCamera.value) return
-  if (isLive.value) {
-    // add APi function when avaible
-    if (!defaultThresholds.value) {
-      console.warn('Default thresholds have not loaded from the server yet.');
-      return
-    }
-    newAlertBelow.value = defaultThresholds.value.alert_below_threshold * 100;
-  } else {
-    newAlertBelow.value = 80;
-  }
-
-}
-
-// rest the warn threshold (warn_below_threshold)
-function resetWarningThreshold() {
-  if (!selectedCamera.value) return
-  if (isLive.value) {
-    if (!defaultThresholds.value) {
-      console.warn('Default thresholds have not loaded from the server yet.')
-      return
-    }
-    newWarnBelow.value = defaultThresholds.value.warn_below_threshold * 100;
-  } else {
-    newWarnBelow.value = 95;
-  }
-}
 
 // sets the default threshold for all deviation thresholds
 function resetAllThresholds() {
@@ -756,10 +728,12 @@ async function setServerDefaultThreshold() {
   const alertAbove = newAlertAbove.value / 100;
 
   if (isLive.value) {
-      const result = await sendWithFeedback('thresholds', 'Default thresholds', () =>
-        setDefaultThreshold(alertBelow, warningBelow, warningAbove, alertAbove));
-      // update the default values
-      if (result.ok)  getDefaultThresholds();
+    const result = await sendWithFeedback('thresholds', 'Default thresholds', () =>
+      setDefaultThreshold(alertBelow, warningBelow, warningAbove, alertAbove));
+    // update the default values
+    if (result.ok) getDefaultThresholds();
+  } else {
+    showFeedback('thresholds', true, 'Defualt Thresholds saved (sample data)');
   }
 }
 
@@ -824,20 +798,31 @@ watch(wsCameraList, () => {
   Object.assign(selectedCamera.value, freshCam)
 })
 
-// make into compute method
+
+// keep the selected micro computer pointing at the refreshed entry after the edge list reloads
+// to prevent the select option from going blank
+watch(wsEdgeList, () => {
+  if (!isLive.value) return;
+  const current = selectedMicroComputer.value;
+  if (!current || current === 'all') return;
+  const fresh = wsEdgeList.value.find((com) => com.conn_id === current.conn_id);
+  selectedMicroComputer.value = fresh ?? ''
+})
+
 watch(selectedMicroComputer, () => {
   clearSelectedCamera()
   if (selectedMicroComputer.value && selectedMicroComputer.value !== 'all') {
     newMicroComputerName.value = selectedMicroComputer.value.name
-    // add auto select current vision processing when value is availbe
-    // newVisionProcessing.value =
+    // add auto select current vision processing when value is available
     if (isLive.value) {
       // add vision processing when api has a path for its value
+      //newVisionProcessing.value =
     } else {
       newVisionProcessing.value = selectedMicroComputer.value.Menu.value.ConValueMenu
     }
   }
 })
+
 
 // -------------------------------
 //        onMount and unMount
@@ -845,8 +830,6 @@ watch(selectedMicroComputer, () => {
 onMounted(() => {
     //fetchCameraConfig()
   connect(); // gets the edge list and camera list in its function
-  getDefaultThresholds(); // get the default deviation thresholds on load
-  listProcessingTypes(); // request the prosessing types
 });
 </script>
 <template>
@@ -936,7 +919,7 @@ onMounted(() => {
                                 <select class="w-100" id="cameraSelect" required v-model="selectedCamera">
                                     <option value="" disabled selected>Please select a camera</option>
                                     <option v-for="(cam, index) in activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`" :value="cam">
-                                        [ {{selectedMicroComputer.name}} - {{index + 1}} ] : {{cam.name}}
+                                        [ {{edgeName(cam.conn_id)}} - {{index + 1}} ] : {{cam.name}}
                                     </option>
                                 </select>
                             </div>
@@ -1276,8 +1259,7 @@ option:hover{
     text-align: center;
 }
 .success {
-    background: var(--range-ok, #2e7d32);
-    color: #fff;
+    background: var(--range-safe);
     border-radius: 1rem;
     padding: 0.35rem;
     font-weight: 600;

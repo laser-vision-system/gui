@@ -195,6 +195,8 @@ export function useWebSocket(url) {
       startHeartbeat();
       listEdges();
       listCameras();
+      getDefaultThresholds();
+      listProcessingTypes();
     }
 
     socket.onmessage = (event) => {
@@ -238,6 +240,11 @@ export function useWebSocket(url) {
     const img = new Image();
     // make sure that the image has loaded before clearing the blob before.
     img.onload = () => {
+      // the feed was stopped while this frame was loading, drop the frame
+      if (!activeCamera.value) {
+        URL.revokeObjectURL(newURL);
+        return;
+      }
       if (currentObjectUrl) {
         URL.revokeObjectURL(currentObjectUrl);
       }
@@ -327,7 +334,7 @@ export function useWebSocket(url) {
             warn_below_threshold: existing?.warn_below_threshold ?? null,
             alert_below_threshold: existing?.alert_below_threshold ?? null,
             warn_above_threshold: existing?.warn_above_threshold ?? null,
-            alert_above_treshold: existing?.alert_above_treshold ?? null,
+            alert_above_threshold: existing?.alert_above_threshold ?? null,
           },
         }
         break;
@@ -483,7 +490,7 @@ export function useWebSocket(url) {
   }
 
   // Set Camera Thresholds (Deviation alerts thresholds)
-  function setCameraThresholds(edgeId, cameraId, warnBelow, alertBelow, alertAbove, warnAbove) {
+  function setCameraThresholds(edgeId, cameraId, alertBelow, warnBelow,  warnAbove, alertAbove) {
     return sendConfirmed('SetCameraThresholds', {
       edge_id: edgeId,
       camera_id: cameraId,
