@@ -431,7 +431,6 @@ function coundownTimer(time) {
 // Save the changes made to the camera controls
 async function saveChanges() {
   if (!selectedCamera.value || !selectedConfig.value) return
-  saveState.value = ''
   try {
     // ADD VALIDATION FOR CONTROLS
     const controlsPayload = buildControlsPayload()
@@ -446,6 +445,7 @@ async function saveChanges() {
       viewCameraConfig(conn_id, camera_id);
     } else {
       selectedConfig.value = {
+        ...selectedConfig.value, // keep the orginal values of conn_id and camera_id
         configuration: { ...selectedConfig.value.configuration, ...controlsPayload },
       };
       showFeedback('controls', true, 'Camera controls saved (sample data)');
