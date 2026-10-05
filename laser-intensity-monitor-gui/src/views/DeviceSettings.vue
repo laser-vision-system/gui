@@ -1243,12 +1243,7 @@ option:hover{
     object-fit: contain;
     max-height: 500px;
 }
-.line-break {
-    border: none;
-    height: 3px;
-    color: var(--config-title);
-    background-color: var(--line-break-color);
-}
+
 .error {
     background: var(--range-alert);
     border-radius: 1rem;
@@ -1267,7 +1262,5 @@ option:hover{
     margin-bottom: 0.75rem;
     text-align: center;
 }
-.toggle-button {
-    filter: var(--filter-background);
-}
+
 </style>

@@ -1,11 +1,33 @@
 <script setup>
-import { useTheme } from '../composables/useTheme'
-const { theme, toggleTheme } = useTheme()
+import { ref } from 'vue';
+import { useTheme } from '../composables/useTheme';
+const { theme, toggleTheme } = useTheme();
+// icons
+import arrowUp from '../assets/images/arrow-up.svg';
+import arrowDown from '../assets/images/arrow-down.svg';
+
+// ----------------------
+//        V-model values
+// ----------------------
+
+// toggle settings sections
+const isGUI = ref(true);
+const isServer = ref(true);
+
 </script>
 <template>
     <div class="container">
         <div class="row p-3">
-            <div class="col text-center">
+            <!-- GUI Settings -->
+            <h2 class="fw-bold">
+                GUI Settings
+                <img
+                :src="isGUI ? arrowDown : arrowUp"
+                alt="toggle button" width="30" height="30" class="toggle-button"
+                @click="isGUI = !isGUI"
+                >
+            </h2>
+            <div class="col-12 text-center py-2" v-if="isGUI">
                 <h5 class="fw-bold" v-if="theme === 'dark'">Dark Mode</h5>
                 <h5 class="fw-bold" v-if="theme === 'light'">Light Mode</h5>
                 <label class="switch">
@@ -13,7 +35,23 @@ const { theme, toggleTheme } = useTheme()
                     <span class="slider round"></span>
                 </label>
             </div>
+            <hr class="line-break">
+            <!-- SERVER SETTINGS -->
+            <div class="col-12 py-2">
+                <h2 class="fw-bold">
+                    Sever Settings
+                    <img
+                    :src="isServer ? arrowDown : arrowUp"
+                    alt="toggle button" width="30" height="30" class="toggle-button"
+                    @click="isServer = !isServer"
+                    >
+                </h2>
+                <!-- Server Defaults -->
+                <div class="server-default-section">
 
+                </div>
+            </div>
+            <hr class="line-break">
         </div>
     </div>
 </template>
@@ -76,5 +114,9 @@ input:checked+.slider:before {
 
 .slider.round:before {
     border-radius: 50%;
+}
+
+.server-default-section{
+
 }
 </style>
