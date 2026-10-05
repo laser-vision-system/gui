@@ -101,3 +101,12 @@
     border-color: slateblue;
     color: black;
 }
+.line-break {
+    border: none;
+    height: 3px;
+    color: var(--config-title);
+    background-color: var(--line-break-color);
+}
+.toggle-button {
+    filter: var(--filter-background);
+}
