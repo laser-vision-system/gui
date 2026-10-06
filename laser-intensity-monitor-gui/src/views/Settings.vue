@@ -187,8 +187,8 @@ async function loadServerDefaultData() {
 }
 
 // Reset Defualt value
-function resetServerDefault() {
-
+function resetServerDefault(key) {
+  serverSettings[key].value = serverSettings[key].default;
 }
 // Rest all Defualt values
 function resetAllServerDefaults() {
@@ -202,12 +202,20 @@ function resetAllServerDefaults() {
 //        Validation
 // -------------------------------
 
-function validateserverSettingsData() {
+function validateServerSetting(name, min, max, value) {
   return true;
 }
 
+
+function validateAllServerSettings() {
+  let result = true;
+  for (const setting in serverSettings) {
+    result = validateServerSetting(setting.name, setting.min, setting.max, setting.value);
+  }
+}
+
 function requestSaveserverSettingsData() {
-  if (validateserverSettingsData()) showSetDefaultConfrim.value = true;
+  if (validateAllServerSettings()) showSetDefaultConfrim.value = true;
 }
 
 // -------------------------------
@@ -228,12 +236,11 @@ onMounted(() => {
         <div class="row p-3">
             <!-- GUI Settings -->
             <h2 class="config-title">
-                GUI Settings
                 <img
                 :src="isGUI ? arrowDown : arrowUp"
                 alt="toggle button" width="30" height="30" class="toggle-button"
-                @click="isGUI = !isGUI"
-                >
+                @click="isGUI = !isGUI">
+                GUI Settings
             </h2>
             <div v-if="isGUI">
                 <h3 class="config-subtitle">Theme</h3>
