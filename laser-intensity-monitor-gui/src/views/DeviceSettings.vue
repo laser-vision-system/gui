@@ -1194,23 +1194,6 @@ option:hover{
     max-height: 500px;
 }
 
-.error {
-    background: var(--range-alert);
-    border-radius: 1rem;
-    padding: 0.35rem;
-    font-weight: 600;
-    margin-top: 0.75rem;
-    margin-bottom: 0.75rem;
-    text-align: center;
-}
-.success {
-    background: var(--range-safe);
-    border-radius: 1rem;
-    padding: 0.35rem;
-    font-weight: 600;
-    margin-top: 0.75rem;
-    margin-bottom: 0.75rem;
-    text-align: center;
-}
+
 
 </style>

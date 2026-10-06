@@ -9,7 +9,7 @@ import arrowDown from '../assets/images/arrow-down.svg';
 // conponents
 import ConfirmationBox from '../components/ConfirmationBox.vue';
 // helper funtions
-import {isBlank, checkBlank} from '../utils/helpers'
+import {checkBlank} from '../utils/helpers'
 // --------------------------
 //        V-model values
 // --------------------------
@@ -28,7 +28,8 @@ const urlGetServerDefault = ref('/api/default_config');
 const urlPostServerDefault = ref('/api/write_default_config');
 
 // states
-const saveState = ref(null);
+const saveState = ref('');
+const isLive = ref(false);
 
 // Data from server
 const serverSettings = ref(null);
@@ -39,6 +40,28 @@ const newUpdateDelay = ref(null);
 const newCameraErrorDecrement = ref(null);
 const newCameraErrorIncrement = ref(null);
 const newCameraErrorThreshold = ref(null);
+
+// Validation
+const validationServerDefaultsErrors = ref([]);
+
+// Hard Coded min max and step values for server default settings
+const minMaxStep = {
+  websocket_poll_interval: { min: 0, max: 0, step: 0,},
+  update_delay: { min: 0, max: 0, step: 0,},
+  camera_err_decrement: { min: 0, max: 0, step: 0,},
+  camera_err_increment: { min: 0, max: 0, step: 0,},
+  camera_err_threshold: { min: 0, max: 0, step: 0,},
+};
+
+// Hard Coded Default vlaues
+const serverSettingDefaults = {
+  websocket_poll_interval_default: 1500, // in ms
+  update_delay_default: 500, // in ms
+  camera_err_decrement_default: 1,
+  camera_err_increment_default: 1,
+  camera_err_threshold_default: 5,
+};
+
 // --------------------------
 //       Resful Methods
 // --------------------------
@@ -53,8 +76,10 @@ async function getDefaultSettings() {
     }
     const data = await response.json();
     serverSettings.value = data;
+    isLive.value = true;
   } catch (error){
-    console.error('Error fetching camera data:', error)
+    console.error('Error fetching camera data:', error);
+    isLive.value = false;
   }
 }
 
@@ -69,11 +94,11 @@ async function postDefaultServerSettings() {
     },
     body: JSON.stringify({
       // add check blank handling
-      websocket_poll_interval:  parseInt(checkBlank(newWebsocketPollInterval.value, serverSettings.value?.websocket_poll_interval)),
-      update_delay: parseInt(checkBlank(newUpdateDelay.value, serverSettings.value?.update_delay)),
-      camera_err_decrement: parseInt(checkBlank(newCameraErrorDecrement.value, serverSettings.value?.camera_err_decrement)),
-      camera_err_increment: parseInt(checkBlank(newCameraErrorIncrement.value, serverSettings.value?.camera_err_increment)),
-      camera_err_threshold: parseInt(checkBlank(newCameraErrorThreshold.value, serverSettings.value?.camera_err_threshold)),
+      websocket_poll_interval:  msToDuration(checkBlank(newWebsocketPollInterval.value, serverSettings.value?.websocket_poll_interval)),
+      update_delay: msToDuration(checkBlank(newUpdateDelay.value, serverSettings.value?.update_delay)),
+      camera_err_decrement: checkBlank(newCameraErrorDecrement.value, serverSettings.value?.camera_err_decrement),
+      camera_err_increment: checkBlank(newCameraErrorIncrement.value, serverSettings.value?.camera_err_increment),
+      camera_err_threshold: checkBlank(newCameraErrorThreshold.value, serverSettings.value?.camera_err_threshold),
     }),
   };
 
@@ -103,17 +128,33 @@ async function postDefaultServerSettings() {
 //       Helper Methods
 // -------------------------------
 
+// Duration rust data type to ms
+function durationToMs(duration) {
+  return duration.secs * 1000 + duration.nanos / 1_000_000;
+}
+// ms to Duration rust data type
+function msToDuration(ms) {
+  const duration = {
+    secs: Math.floor(ms / 1000),
+    nanos: (ms % 1000) * 1_000_000,
+  };
+  return duration;
+}
 // load data
 async function loadServerDefaultData() {
   await getDefaultSettings();
+
   // load the current default values
-  newWebsocketPollInterval.value = serverSettings.value.websocket_poll_interval;
-  newUpdateDelay.value = serverSettings.value.update_delay;
+  newWebsocketPollInterval.value = durationToMs(serverSettings.value.websocket_poll_interval);
+  newUpdateDelay.value = durationToMs(serverSettings.value.update_delay);
   newCameraErrorDecrement.value = serverSettings.value.camera_err_decrement;
   newCameraErrorIncrement.value = serverSettings.value.camera_err_increment;
   newCameraErrorThreshold.value = serverSettings.value.camera_err_threshold;
-
 }
+
+// Reset Defualt value
+
+// Rest all Defualt values
 
 
 // -------------------------------
@@ -137,6 +178,12 @@ onMounted(() => {
 </script>
 <template>
     <div class="container">
+        <!-- for testing remove in final product -->
+        <div class="text-center mb-2 p-1">
+            <span v-if="isLive" class="badge bg-success">Live: Connected to server</span>
+            <span v-else class="badge bg-secondary">Offline: Showing sample data for local testing</span>
+        </div>
+        <!-- for testing remove in final product -->
         <div class="row p-3">
             <!-- GUI Settings -->
             <h2 class="config-title">
@@ -150,8 +197,8 @@ onMounted(() => {
             <div v-if="isGUI">
                 <h3 class="config-subtitle">Theme</h3>
                 <div class="col-12 text-center py-2">
-                    <h5 class="" v-if="theme === 'dark'">Dark Mode</h5>
-                    <h5 class="" v-if="theme === 'light'">Light Mode</h5>
+                    <h5 class="config-label" v-if="theme === 'dark'">Dark Mode</h5>
+                    <h5 class="config-label" v-if="theme === 'light'">Light Mode</h5>
                     <label class="switch">
                         <input type="checkbox" class="switch-input" :checked="theme === 'dark'" @change="toggleTheme">
                         <span class="slider round"></span>
@@ -184,8 +231,12 @@ onMounted(() => {
                     <div v-if="isSetServerDefault">
                         <label for="poll-interval-range" class="config-label">Web-Socket Poll Interval</label>
                         <div class="form-element">
-                            <input type="range" class="slider-input" id="poll-interval-range" v-model.number="newWebsocketPollInterval" min="1" max="5" step="1">
-                            <input type="number" class="number-input" id="poll-interval-number" v-model.number="newWebsocketPollInterval" min="1" max="5" step="1">
+                            <input
+                            type="range" class="slider-input" id="poll-interval-range"
+                            v-model.number="newWebsocketPollInterval" min="1" max="5" step="1">
+                            <input
+                            type="number" class="number-input" id="poll-interval-number"
+                            v-model.number="newWebsocketPollInterval" min="1" max="5" step="1">
                         </div>
                         <label for="update-delay-range" class="config-label">Update Delay</label>
                         <div class="form-element">
@@ -225,16 +276,25 @@ onMounted(() => {
                         </div>
                         <div class="text-center d-flex flex-row justify-content-center gap-3 py-2">
                             <!-- Server Setting from -->
-                            <button class="btn submit-btn" @click="requestSaveServerSettings">Set Default</button>
-                            <button class="btn submit-btn">Reset Server Defaults</button>
+                            <button class="btn submit-btn" @click="requestSaveServerSettings">Save Server Defaults</button>
+                            <button class="btn submit-btn" @click="showResetDefaultConfrim = !showResetDefaultConfrim">Reset Server Defaults</button>
                         </div>
                         <ConfirmationBox
                             v-model="showSetDefaultConfrim"
                             message="Would you like to save these as the defualt server settings?"
                             :onConfirmFunction="postDefaultServerSettings"
                         />
+                        <ConfirmationBox
+                            v-model="showResetDefaultConfrim"
+                            message="Would you like to reset the defualt server settings to it's previous values?"
+                            :onConfirmFunction="postDefaultServerSettings"
+                        />
                     </div>
-                    <hr class="line-break">
+                    <!-- Submision Confrimation -->
+                    <p v-if="saveState === 'success'" class="success'">The default settings have been successfuly updated.</p>
+                    <p v-if="saveState === 'error'" class="error'">An error has occured when updating the default settings.</p>
+                    <!-- validation errors -->
+                    <p v-for="e in validationServerDefaultsErrors" class="error">{{e}}</p>
                 </div>
             </div>
             <hr class="line-break">
@@ -302,7 +362,4 @@ input:checked+.slider:before {
     border-radius: 50%;
 }
 
-.server-default-section{
-
-}
 </style>
