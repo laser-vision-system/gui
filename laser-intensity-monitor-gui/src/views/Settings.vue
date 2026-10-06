@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 // composables
 import { useTheme } from '../composables/useTheme';
 const { theme, toggleTheme } = useTheme();
@@ -32,7 +32,7 @@ const saveState = ref('');
 const isLive = ref(false);
 
 // Data from server
-const serverSettings = ref(null);
+const serverSettingsData = ref(null);
 
 // User input data
 const newWebsocketPollInterval = ref(null);
@@ -40,6 +40,49 @@ const newUpdateDelay = ref(null);
 const newCameraErrorDecrement = ref(null);
 const newCameraErrorIncrement = ref(null);
 const newCameraErrorThreshold = ref(null);
+
+const serverSettings = reactive({
+  websocket_poll_interval: {
+    value: null,
+    min: 1000,
+    max: 30000,
+    step: 10,
+    name: 'Web-Socket Poll Interval',
+    default: 1500,
+  },
+  update_delay: {
+    value: null,
+    min: 10,
+    max: 10000,
+    step: 10,
+    name: 'Update Delay',
+    default: 500,
+  },
+  camera_err_decrement: {
+    value: null,
+    min: 1,
+    max: 64,
+    step: 1,
+    name: 'Camera Error Decrement',
+    default: 1,
+  },
+  camera_err_increment: {
+    value: null,
+    min: 1,
+    max: 64,
+    step: 1,
+    name: 'Camera Error Increment',
+    default: 1,
+  },
+  camera_err_threshold: {
+    value: null,
+    min: 1,
+    max: 256,
+    step: 1,
+    name: 'Camera Error Threshold',
+    default: 5,
+  },
+});
 
 // Validation
 const validationServerDefaultsErrors = ref([]);
@@ -51,15 +94,6 @@ const minMaxStep = {
   camera_err_decrement: { min: 1, max: 64, step: 1,},
   camera_err_increment: { min: 1, max: 64, step: 1,},
   camera_err_threshold: { min: 1, max: 256, step: 1,},
-};
-
-// Hard Coded Default vlaues
-const serverSettingDefaults = {
-  websocket_poll_interval_default: 1500, // in ms
-  update_delay_default: 500, // in ms
-  camera_err_decrement_default: 1,
-  camera_err_increment_default: 1,
-  camera_err_threshold_default: 5,
 };
 
 // --------------------------
@@ -75,7 +109,7 @@ async function getDefaultSettings() {
       throw new Error(`HTTP error: ${response.status}`);
     }
     const data = await response.json();
-    serverSettings.value = data;
+    serverSettingsData.value = data;
     isLive.value = true;
   } catch (error){
     console.error('Error fetching camera data:', error);
@@ -84,7 +118,7 @@ async function getDefaultSettings() {
 }
 
 // post new defualt settings
-async function postDefaultServerSettings() {
+async function postDefaultserverSettingsData() {
   saveState.value = '';
 
   const requestOptions = {
@@ -94,11 +128,11 @@ async function postDefaultServerSettings() {
     },
     body: JSON.stringify({
       // add check blank handling
-      websocket_poll_interval:  msToDuration(checkBlank(newWebsocketPollInterval.value, serverSettings.value?.websocket_poserverSettings)),
-      update_delay: msToDuration(checkBlank(newUpdateDelay.value, serverSettings.value?.update_delay)),
-      camera_err_decrement: checkBlank(newCameraErrorDecrement.value, serverSettings.value?.camera_err_decrement),
-      camera_err_increment: checkBlank(newCameraErrorIncrement.value, serverSettings.value?.camera_err_increment),
-      camera_err_threshold: checkBlank(newCameraErrorThreshold.value, serverSettings.value?.camera_err_threshold),
+      websocket_poll_interval:  msToDuration(checkBlank(serverSettings.websocket_poll_interval.value, serverSettingsData.value?.websocket_poserverSettingsData)),
+      update_delay: msToDuration(checkBlank(serverSettings.update_delay.value, serverSettingsData.value?.update_delay)),
+      camera_err_decrement: checkBlank(serverSettings.camera_err_decrement.value, serverSettingsData.value?.camera_err_decrement),
+      camera_err_increment: checkBlank(serverSettings.camera_err_increment.value, serverSettingsData.value?.camera_err_increment),
+      camera_err_threshold: checkBlank(serverSettings.camera_err_threshold.value, serverSettingsData.value?.camera_err_threshold),
     }),
   };
 
@@ -145,11 +179,11 @@ async function loadServerDefaultData() {
   await getDefaultSettings();
   if (!isLive.value) return;
   // load the current default values
-  newWebsocketPollInterval.value = durationToMs(serverSettings.value.websocket_poll_interval);
-  newUpdateDelay.value = durationToMs(serverSettings.value.update_delay);
-  newCameraErrorDecrement.value = serverSettings.value.camera_err_decrement;
-  newCameraErrorIncrement.value = serverSettings.value.camera_err_increment;
-  newCameraErrorThreshold.value = serverSettings.value.camera_err_threshold;
+  serverSettings.websocket_poll_interval.value = durationToMs(serverSettingsData.value.websocket_poll_interval);
+  serverSettings.update_delay.value = durationToMs(serverSettingsData.value.update_delay);
+  serverSettings.camera_err_decrement.value = serverSettingsData.value.camera_err_decrement;
+  serverSettings.camera_err_increment.value= serverSettingsData.value.camera_err_increment;
+  serverSettings.camera_err_threshold.value = serverSettingsData.value.camera_err_threshold;
 }
 
 // Reset Defualt value
@@ -158,22 +192,22 @@ function resetServerDefault() {
 }
 // Rest all Defualt values
 function resetAllServerDefaults() {
-  newWebsocketPollInterval.value = serverSettingDefaults.websocket_poll_interval_default;
-  newUpdateDelay.value = serverSettingDefaults.update_delay_default;
-  newCameraErrorDecrement.value = serverSettingDefaults.camera_err_decrement_default;
-  newCameraErrorIncrement.value = serverSettingDefaults.camera_err_increment_default;
-  newCameraErrorThreshold.value = serverSettingDefaults.camera_err_threshold_default;
+  serverSettings.websocket_poll_interval.value = serverSettings.websocket_poll_interval.default;
+  serverSettings.update_delay.value = serverSettings.update_delay.default;
+  serverSettings.camera_err_decrement.value = serverSettings.camera_err_decrement.default;
+  serverSettings.camera_err_increment.value = serverSettings.camera_err_increment.default;
+  serverSettings.camera_err_threshold.value = serverSettings.camera_err_threshold.default;
 }
 // -------------------------------
 //        Validation
 // -------------------------------
 
-function validateServerSettings() {
+function validateserverSettingsData() {
   return true;
 }
 
-function requestSaveServerSettings() {
-  if (validateServerSettings()) showSetDefaultConfrim.value = true;
+function requestSaveserverSettingsData() {
+  if (validateserverSettingsData()) showSetDefaultConfrim.value = true;
 }
 
 // -------------------------------
@@ -235,98 +269,38 @@ onMounted(() => {
                         @click="isSetServerDefault = !isSetServerDefault"
                         >
                     </h3>
-                    <div v-if="isSetServerDefault">
-                        <label for="poll-interval-range" class="config-label">Web-Socket Poll Interval (in ms)</label>
+                    <div v-if="isSetServerDefault" v-for="setting in serverSettings">
+                        <label class="config-label">{{setting.name}}</label>
                         <div class="form-element">
                             <input
-                            type="range" class="slider-input" id="poll-interval-range"
-                            v-model.number="newWebsocketPollInterval"
-                            :min="minMaxStep.websocket_poll_interval.min"
-                            :max="minMaxStep.websocket_poll_interval.max"
-                            :step="minMaxStep.websocket_poll_interval.step">
+                            type="range" class="slider-input"
+                            v-model.number="setting.value"
+                            :min="setting.min"
+                            :max="setting.max"
+                            :step="setting.step">
                             <input
                             type="number" class="number-input" id="poll-interval-number"
-                            v-model.number="newWebsocketPollInterval"
-                            :min="minMaxStep.websocket_poll_interval.min"
-                            :max="minMaxStep.websocket_poll_interval.max"
-                            :step="minMaxStep.websocket_poll_interval.step">
+                            v-model.number="setting.value"
+                            :min="setting.min"
+                            :max="setting.max"
+                            :step="setting.step">
                         </div>
-                        <label for="update-delay-range" class="config-label">Update Delay (in ms)</label>
-                        <div class="form-element">
-                            <input
-                            type="range" class="slider-input" id="update-delay-range"
-                            v-model.number="newUpdateDelay"
-                            :min="minMaxStep.update_delay.min"
-                            :max="minMaxStep.update_delay.max"
-                            :step="minMaxStep.update_delay.step">
-                            <input
-                            type="number" class="number-input" id="update-delay-number"
-                            v-model.number="newUpdateDelay"
-                            :min="minMaxStep.update_delay.min"
-                            :max="minMaxStep.update_delay.max"
-                            :step="minMaxStep.update_delay.step">
-                        </div>
-                        <label for="camera-err-decrement-range" class="config-label">Camera Error Decrement</label>
-                        <div class="form-element">
-                            <input
-                            type="range" class="slider-input" id="camera-err-decrement-range"
-                            v-model.number="newCameraErrorDecrement"
-                            :min="minMaxStep.camera_err_decrement.min"
-                            :max="minMaxStep.camera_err_decrement.max"
-                            :step="minMaxStep.camera_err_decrement.step">
-                            <input
-                            type="number" class="number-input" id="camera-err-decrement-number"
-                            v-model.number="newCameraErrorDecrement"
-                            :min="minMaxStep.camera_err_decrement.min"
-                            :max="minMaxStep.camera_err_decrement.max"
-                            :step="minMaxStep.camera_err_decrement.step">
-                        </div>
-                        <label for="camera-increment-range" class="config-label">Camera Error Increment</label>
-                        <div class="form-element">
-                            <input
-                            type="range" class="slider-input" id="camera-increment-range"
-                            v-model.number="newCameraErrorIncrement"
-                            :min="minMaxStep.camera_err_increment.min"
-                            :max="minMaxStep.camera_err_increment.max"
-                            :step="minMaxStep.camera_err_increment.step">
-                            <input
-                            type="number" class="number-input" id="camera-increment-number"
-                            v-model.number="newCameraErrorIncrement"
-                            :min="minMaxStep.camera_err_increment.min"
-                            :max="minMaxStep.camera_err_increment.max"
-                            :step="minMaxStep.camera_err_increment.step">
-                        </div>
-                        <label for="camera-error-threshold-range" class="config-label">Camera Error Threshold</label>
-                        <div class="form-element">
-                            <input
-                            type="range" class="slider-input" id="camera-error-threshold-range"
-                            v-model.number="newCameraErrorThreshold"
-                            :min="minMaxStep.camera_err_threshold.min"
-                            :max="minMaxStep.camera_err_threshold.max"
-                            :step="minMaxStep.camera_err_threshold.step">
-                            <input
-                            type="number" class="number-input" id="camera-error-threshold-number"
-                            v-model.number="newCameraErrorThreshold"
-                            :min="minMaxStep.camera_err_threshold.min"
-                            :max="minMaxStep.camera_err_threshold.max"
-                            :step="minMaxStep.camera_err_threshold.step">
-                        </div>
-                        <div class="text-center d-flex flex-row justify-content-center gap-3 py-2">
-                            <!-- Server Setting from -->
-                            <button class="btn submit-btn" @click="requestSaveServerSettings">Save Server Defaults</button>
-                            <button class="btn submit-btn" @click="showResetDefaultConfrim = !showResetDefaultConfrim">Reset Server Defaults</button>
-                        </div>
-                        <ConfirmationBox
-                            v-model="showSetDefaultConfrim"
-                            message="Would you like to save these as the defualt server settings?"
-                            :onConfirmFunction="postDefaultServerSettings"
-                        />
-                        <ConfirmationBox
-                            v-model="showResetDefaultConfrim"
-                            message="Would you like to reset the defualt server settings to it's previous values?"
-                            :onConfirmFunction="resetAllServerDefaults"
-                        />
                     </div>
+                    <div class="text-center d-flex flex-row justify-content-center gap-3 py-2">
+                        <!-- Server Setting from -->
+                        <button class="btn submit-btn" @click="requestSaveserverSettingsData">Save Server Defaults</button>
+                        <button class="btn submit-btn" @click="showResetDefaultConfrim = !showResetDefaultConfrim">Reset Server Defaults</button>
+                    </div>
+                    <ConfirmationBox
+                        v-model="showSetDefaultConfrim"
+                        message="Would you like to save these as the defualt server settings?"
+                        :onConfirmFunction="postDefaultserverSettingsData"
+                    />
+                    <ConfirmationBox
+                        v-model="showResetDefaultConfrim"
+                        message="Would you like to reset the defualt server settings to it's previous values?"
+                        :onConfirmFunction="resetAllServerDefaults"
+                    />
                     <!-- Submision Confrimation -->
                     <p v-if="saveState === 'success'" class="success">The default settings have been successfuly updated.</p>
                     <p v-if="saveState === 'error'" class="error">An error has occured when updating the default settings.</p>
