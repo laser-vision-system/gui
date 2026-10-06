@@ -46,11 +46,11 @@ const validationServerDefaultsErrors = ref([]);
 
 // Hard Coded min max and step values for server default settings
 const minMaxStep = {
-  websocket_poll_interval: { min: 0, max: 0, step: 0,},
-  update_delay: { min: 0, max: 0, step: 0,},
-  camera_err_decrement: { min: 0, max: 0, step: 0,},
-  camera_err_increment: { min: 0, max: 0, step: 0,},
-  camera_err_threshold: { min: 0, max: 0, step: 0,},
+  websocket_poll_interval: { min: 1000, max: 30000, step: 10,}, // in ms
+  update_delay: { min: 10, max: 10000, step: 10,}, // in ms
+  camera_err_decrement: { min: 1, max: 64, step: 1,},
+  camera_err_increment: { min: 1, max: 64, step: 1,},
+  camera_err_threshold: { min: 1, max: 256, step: 1,},
 };
 
 // Hard Coded Default vlaues
@@ -94,7 +94,7 @@ async function postDefaultServerSettings() {
     },
     body: JSON.stringify({
       // add check blank handling
-      websocket_poll_interval:  msToDuration(checkBlank(newWebsocketPollInterval.value, serverSettings.value?.websocket_poll_interval)),
+      websocket_poll_interval:  msToDuration(checkBlank(newWebsocketPollInterval.value, serverSettings.value?.websocket_poserverSettings)),
       update_delay: msToDuration(checkBlank(newUpdateDelay.value, serverSettings.value?.update_delay)),
       camera_err_decrement: checkBlank(newCameraErrorDecrement.value, serverSettings.value?.camera_err_decrement),
       camera_err_increment: checkBlank(newCameraErrorIncrement.value, serverSettings.value?.camera_err_increment),
@@ -143,7 +143,7 @@ function msToDuration(ms) {
 // load data
 async function loadServerDefaultData() {
   await getDefaultSettings();
-
+  if (!isLive.value) return;
   // load the current default values
   newWebsocketPollInterval.value = durationToMs(serverSettings.value.websocket_poll_interval);
   newUpdateDelay.value = durationToMs(serverSettings.value.update_delay);
@@ -153,10 +153,17 @@ async function loadServerDefaultData() {
 }
 
 // Reset Defualt value
+function resetServerDefault() {
 
+}
 // Rest all Defualt values
-
-
+function resetAllServerDefaults() {
+  newWebsocketPollInterval.value = serverSettingDefaults.websocket_poll_interval_default;
+  newUpdateDelay.value = serverSettingDefaults.update_delay_default;
+  newCameraErrorDecrement.value = serverSettingDefaults.camera_err_decrement_default;
+  newCameraErrorIncrement.value = serverSettingDefaults.camera_err_increment_default;
+  newCameraErrorThreshold.value = serverSettingDefaults.camera_err_threshold_default;
+}
 // -------------------------------
 //        Validation
 // -------------------------------
@@ -229,50 +236,80 @@ onMounted(() => {
                         >
                     </h3>
                     <div v-if="isSetServerDefault">
-                        <label for="poll-interval-range" class="config-label">Web-Socket Poll Interval</label>
+                        <label for="poll-interval-range" class="config-label">Web-Socket Poll Interval (in ms)</label>
                         <div class="form-element">
                             <input
                             type="range" class="slider-input" id="poll-interval-range"
-                            v-model.number="newWebsocketPollInterval" min="1" max="5" step="1">
+                            v-model.number="newWebsocketPollInterval"
+                            :min="minMaxStep.websocket_poll_interval.min"
+                            :max="minMaxStep.websocket_poll_interval.max"
+                            :step="minMaxStep.websocket_poll_interval.step">
                             <input
                             type="number" class="number-input" id="poll-interval-number"
-                            v-model.number="newWebsocketPollInterval" min="1" max="5" step="1">
+                            v-model.number="newWebsocketPollInterval"
+                            :min="minMaxStep.websocket_poll_interval.min"
+                            :max="minMaxStep.websocket_poll_interval.max"
+                            :step="minMaxStep.websocket_poll_interval.step">
                         </div>
-                        <label for="update-delay-range" class="config-label">Update Delay</label>
+                        <label for="update-delay-range" class="config-label">Update Delay (in ms)</label>
                         <div class="form-element">
                             <input
                             type="range" class="slider-input" id="update-delay-range"
-                            v-model.number="newUpdateDelay" min="1" max="5" step="1">
+                            v-model.number="newUpdateDelay"
+                            :min="minMaxStep.update_delay.min"
+                            :max="minMaxStep.update_delay.max"
+                            :step="minMaxStep.update_delay.step">
                             <input
                             type="number" class="number-input" id="update-delay-number"
-                            v-model.number="newUpdateDelay" min="1" max="5" step="1">
+                            v-model.number="newUpdateDelay"
+                            :min="minMaxStep.update_delay.min"
+                            :max="minMaxStep.update_delay.max"
+                            :step="minMaxStep.update_delay.step">
                         </div>
                         <label for="camera-err-decrement-range" class="config-label">Camera Error Decrement</label>
                         <div class="form-element">
                             <input
                             type="range" class="slider-input" id="camera-err-decrement-range"
-                            v-model.number="newCameraErrorDecrement" min="1" max="5" step="1">
+                            v-model.number="newCameraErrorDecrement"
+                            :min="minMaxStep.camera_err_decrement.min"
+                            :max="minMaxStep.camera_err_decrement.max"
+                            :step="minMaxStep.camera_err_decrement.step">
                             <input
                             type="number" class="number-input" id="camera-err-decrement-number"
-                            v-model.number="newCameraErrorDecrement" min="1" max="5" step="1">
+                            v-model.number="newCameraErrorDecrement"
+                            :min="minMaxStep.camera_err_decrement.min"
+                            :max="minMaxStep.camera_err_decrement.max"
+                            :step="minMaxStep.camera_err_decrement.step">
                         </div>
                         <label for="camera-increment-range" class="config-label">Camera Error Increment</label>
                         <div class="form-element">
                             <input
                             type="range" class="slider-input" id="camera-increment-range"
-                            v-model.number="newCameraErrorIncrement" min="1" max="5" step="1">
+                            v-model.number="newCameraErrorIncrement"
+                            :min="minMaxStep.camera_err_increment.min"
+                            :max="minMaxStep.camera_err_increment.max"
+                            :step="minMaxStep.camera_err_increment.step">
                             <input
                             type="number" class="number-input" id="camera-increment-number"
-                            v-model.number="newCameraErrorIncrement" min="1" max="5" step="1">
+                            v-model.number="newCameraErrorIncrement"
+                            :min="minMaxStep.camera_err_increment.min"
+                            :max="minMaxStep.camera_err_increment.max"
+                            :step="minMaxStep.camera_err_increment.step">
                         </div>
                         <label for="camera-error-threshold-range" class="config-label">Camera Error Threshold</label>
                         <div class="form-element">
                             <input
                             type="range" class="slider-input" id="camera-error-threshold-range"
-                            v-model.number="newCameraErrorThreshold" min="1" max="5" step="1">
+                            v-model.number="newCameraErrorThreshold"
+                            :min="minMaxStep.camera_err_threshold.min"
+                            :max="minMaxStep.camera_err_threshold.max"
+                            :step="minMaxStep.camera_err_threshold.step">
                             <input
                             type="number" class="number-input" id="camera-error-threshold-number"
-                            v-model.number="newCameraErrorThreshold" min="1" max="5" step="1">
+                            v-model.number="newCameraErrorThreshold"
+                            :min="minMaxStep.camera_err_threshold.min"
+                            :max="minMaxStep.camera_err_threshold.max"
+                            :step="minMaxStep.camera_err_threshold.step">
                         </div>
                         <div class="text-center d-flex flex-row justify-content-center gap-3 py-2">
                             <!-- Server Setting from -->
@@ -287,12 +324,12 @@ onMounted(() => {
                         <ConfirmationBox
                             v-model="showResetDefaultConfrim"
                             message="Would you like to reset the defualt server settings to it's previous values?"
-                            :onConfirmFunction="postDefaultServerSettings"
+                            :onConfirmFunction="resetAllServerDefaults"
                         />
                     </div>
                     <!-- Submision Confrimation -->
-                    <p v-if="saveState === 'success'" class="success'">The default settings have been successfuly updated.</p>
-                    <p v-if="saveState === 'error'" class="error'">An error has occured when updating the default settings.</p>
+                    <p v-if="saveState === 'success'" class="success">The default settings have been successfuly updated.</p>
+                    <p v-if="saveState === 'error'" class="error">An error has occured when updating the default settings.</p>
                     <!-- validation errors -->
                     <p v-for="e in validationServerDefaultsErrors" class="error">{{e}}</p>
                 </div>
@@ -361,5 +398,9 @@ input:checked+.slider:before {
 .slider.round:before {
     border-radius: 50%;
 }
+.number-input {
+    width: 5rem;
+}
+
 
 </style>
