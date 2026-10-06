@@ -9,7 +9,7 @@ import arrowDown from '../assets/images/arrow-down.svg';
 // conponents
 import ConfirmationBox from '../components/ConfirmationBox.vue';
 // helper funtions
-import {checkBlank} from '../utils/helpers'
+import {checkBlank, isBlank} from '../utils/helpers'
 // --------------------------
 //        V-model values
 // --------------------------
@@ -35,11 +35,6 @@ const isLive = ref(false);
 const serverSettingsData = ref(null);
 
 // User input data
-const newWebsocketPollInterval = ref(null);
-const newUpdateDelay = ref(null);
-const newCameraErrorDecrement = ref(null);
-const newCameraErrorIncrement = ref(null);
-const newCameraErrorThreshold = ref(null);
 
 const serverSettings = reactive({
   websocket_poll_interval: {
@@ -86,15 +81,6 @@ const serverSettings = reactive({
 
 // Validation
 const validationServerDefaultsErrors = ref([]);
-
-// Hard Coded min max and step values for server default settings
-const minMaxStep = {
-  websocket_poll_interval: { min: 1000, max: 30000, step: 10,}, // in ms
-  update_delay: { min: 10, max: 10000, step: 10,}, // in ms
-  camera_err_decrement: { min: 1, max: 64, step: 1,},
-  camera_err_increment: { min: 1, max: 64, step: 1,},
-  camera_err_threshold: { min: 1, max: 256, step: 1,},
-};
 
 // --------------------------
 //       Resful Methods
@@ -203,6 +189,22 @@ function resetAllServerDefaults() {
 // -------------------------------
 
 function validateServerSetting(name, min, max, value) {
+  if (isBlank(value)) return true;
+  // check if the input
+  if (!Number.isInteger(value)) {
+    cameraControlErrors.value.push(`Warning: ${name} must be a whole number`);
+    return false;
+  }
+  // check min
+  if (value < min) {
+    validationServerDefaultsErrors.value.push(`Warning: ${name} at ${value}, is under the minimum value of ${min}`);
+    return false;
+  }
+  // check max
+  if (value > max) {
+    validationServerDefaultsErrors.value.push(`Warning: ${name} at ${value}, is over the maximum value of ${max}`);
+    return false;
+  }
   return true;
 }
 
