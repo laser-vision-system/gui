@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, computed, reactive } from 'vue';
-
+import {isBlank, checkBlank} from '../utils/helpers'
 // icons
 import arrowUp from '../assets/images/arrow-up.svg';
 import arrowDown from '../assets/images/arrow-down.svg'
@@ -199,10 +199,6 @@ const activeCameras = computed(() => {
 const THRESHOLD_MIN = 0;
 const THRESHOLD_MAX = 200;
 
-function isBlank(v) {
-  return v === '' || v === null || v === undefined || Number.isNaN(v);
-}
-
 // Camera Controls
 function validateCameraControlMinMax(name, range, value) {
   if (isBlank(value)) return true;
@@ -380,11 +376,6 @@ async function renameCamera() {
     selectedCamera.value.name = newCameraName.value;
     showFeedback('camera', true, 'Camera rename saved (sample data)');
   }
-}
-
-// check for empty value if empty return the current value if not return the newValue from form.
-function checkBlank(newValue, currentValue) {
-  return isBlank(newValue) ? currentValue : newValue;
 }
 
 // build camera control payload does not include the fps (we will figure that out later)
@@ -1174,52 +1165,11 @@ onMounted(() => {
     </div>
 </template>
 <style scoped>
-.config-label {
-    font-weight: 500;
-    font-size: 16pt;
-    color: var(--config-title);
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-}
-.config-title {
-    font-weight: 600;
-    font-size: 20pt;
-    color: var(--config-title);
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-}
-.config-subtitle {
-    font-weight: 600;
-    font-size: 18pt;
-    color: var(--config-title);
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-}
-.number-input{
-    flex: 0 0 4em;
-    width: 4em;
-    padding: 0.25em;
-    border-radius: 0.5em;
-    border: 3px solid var(--nav-bg);
-    background-color: var(--bs-body-bg);
-    color: var(--bs-body-color);
-}
-.slider-input{
-    flex: 1 1 auto;
-    width: 100%;
-    accent-color: var(--nav-bg);
-    border-radius: 2em;
-}
-.slider-input:hover{
-    accent-color: var(--button-hover);
-}
+
 .menu-input{
     width: 100%;
 }
-.form-element{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 1em;
-    padding: 0.20em;
-}
+
 select {
     padding: 0.5em;
 }

@@ -110,3 +110,46 @@
 .toggle-button {
     filter: var(--filter-background);
 }
+.config-label {
+    font-weight: 500;
+    font-size: 16pt;
+    color: var(--config-title);
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+.config-title {
+    font-weight: 600;
+    font-size: 20pt;
+    color: var(--config-title);
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+.config-subtitle {
+    font-weight: 600;
+    font-size: 18pt;
+    color: var(--config-title);
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+.number-input{
+    flex: 0 0 4em;
+    width: 4em;
+    padding: 0.25em;
+    border-radius: 0.5em;
+    border: 3px solid var(--nav-bg);
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+}
+.slider-input{
+    flex: 1 1 auto;
+    width: 100%;
+    accent-color: var(--nav-bg);
+    border-radius: 2em;
+}
+.slider-input:hover{
+    accent-color: var(--button-hover);
+}
+.form-element{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1em;
+    padding: 0.20em;
+}
