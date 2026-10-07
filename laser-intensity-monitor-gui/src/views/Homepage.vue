@@ -11,10 +11,10 @@ const {
   status,
   // data
   edgeList: wsEdgeList,
+  disconnectedEdgeList: wsDisconnectedEdgeList,
   cameraList: wsCameraList,
   imageSrc,
   analysis,
-  activeCamera,
   connect,
   disconnect,
   // functions
@@ -24,7 +24,8 @@ const {
   viewCamera,
   stopViewingCamera,
   forceRetryCamera,
-  forgetCameraRequest
+  forgetCameraRequest,
+  forgetEdge
 } = useWebSocket('ws://'+ location.hostname +':8080/gui_ws')
 
 //  Check if the websocket is connected
@@ -37,6 +38,7 @@ import sampleCameraList from '../assets/data/sampleCameraList.json'
 import sampleImageAnalysis from '../assets/data/sampleImageAnalysis.json'
 import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.json'
 import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json'
+import sampleDisconnectedEdgeList from '../assets/data/sampleDisconnectedEdgeList.json'
 const sampleCameras = ref(sampleCameraList.cameras)
 const sampleAnalysis = ref(sampleImageAnalysis.GUIImageAnalysis)
 const sampleCameraConfigData = ref(sampleCameraConfiguration.configurations)
@@ -111,21 +113,13 @@ const sortedDeviationAlerts = computed(() => {
         })
 })
 const disconnectedMicroComs = computed(() => {
-    return mergedCameraData.value
-    .filter(connection => connection.microComState === 'Disconnected')
-    .map(disconnection => {
-        let alertMsg = ''
-        let alertType = 'info'
-
-        if (disconnection.microComState == 'Disconnected') {
-            alertMsg = `[DISCONNECTION] ${disconnection.microComName} has disconnected.`
-        }
-        return {
-            ...disconnection,
-            alertMsg,
-            alertType
-        }
-    })
+    const disconnectedEdgeList = loadDisconnectedEdgesList.value
+    return disconnectedEdgeList
+    .map(disconnection => ({
+        ...disconnection,
+        alertMsg: `[DISCONNECTION] ${disconnection.name} has disconnected.`,
+        alertType: 'info'
+    }))
 })
 const disconnectedCameras = computed(() => {
     return mergedCameraData.value
@@ -144,22 +138,17 @@ const disconnectedCameras = computed(() => {
         }
     })    
 })
-// gets rid of duplicate disconnected microcomputer alerts
-const disconnectedMicroComAlerts = computed(() => {
-    const groupedAlerts = disconnectedMicroComs.value.reduce((alert, device) => {
-        if (!alert[device.conn_id]) {
-            alert[device.conn_id] = device
-        }
-        return alert
-    }, {})
-    return Object.values(groupedAlerts)
+const disconnectionAlerts = computed(() => {
+    return [...disconnectedMicroComs.value, ...disconnectedCameras.value]
 })
-const shownDisconnectionAlerts = computed(() => {
-    return [...disconnectedMicroComAlerts.value, ...disconnectedCameras.value]
-})
-// grab microCom list from websocket or sample data
-const loadEdgesList = computed(() => {
+// grab active microCom list from websocket or sample data
+const loadActiveEdgesList = computed(() => {
     const source = isLive.value && wsEdgeList.value.length > 0 ? wsEdgeList.value : sampleMicroComputerList.microComputers
+    return source
+})
+// grab disconnected microCom list from websocket or sample data
+const loadDisconnectedEdgesList = computed(() => {
+    const source = isLive.value && wsDisconnectedEdgeList.value.length > 0 ? wsDisconnectedEdgeList.value : sampleDisconnectedEdgeList.microComputers
     return source
 })
 // grab camera list from websocket or sample data
@@ -176,7 +165,7 @@ const loadImageAnalysis = computed(() => {
 const mergedCameraData = computed(() => {
     const camDataList = loadCameraList.value
     const imageAnalysisData = loadImageAnalysis.value
-    const edgeDataList = loadEdgesList.value
+    const edgeDataList = loadActiveEdgesList.value
     const result = []
 
     for (const camera of camDataList) {
@@ -373,6 +362,10 @@ const forceRetryCameraBtn = (connId, cameraId) => {
 const forgetCameraBtn = (connId, cameraId) => {
     forgetCameraRequest(connId, cameraId)
 }
+// button to send forget edge command to server
+const forgetEdgeBtn = (connId) => {
+    forgetEdge(connId)
+}
 // camera card traffic light system (using sample JSON data)
 function getCardColour(cam) {
     if (!cam) return 'bg-dark'
@@ -452,7 +445,7 @@ onUnmounted(() => {
         <div class="row mt-2 mb-4">
                 <h3 class="cam-title">Alerts:
                     <button class="btn submit-btn" @click="toggleAlerts">
-                        {{ alertsExpanded ? 'Collapse All' : 'Show All (' + (sortedDeviationAlerts.length + shownDisconnectionAlerts.length) + ')' }}
+                        {{ alertsExpanded ? 'Collapse All' : 'Show All (' + (sortedDeviationAlerts.length + disconnectionAlerts.length) + ')' }}
                     </button>
                 </h3>
                 <div class="container mt-2">
@@ -464,9 +457,9 @@ onUnmounted(() => {
                             </div>
                         </div>
                     </div>
-                    <div v-if="shownDisconnectionAlerts.length > 0" class="text-center mt-0">
+                    <div v-if="disconnectionAlerts.length > 0" class="text-center mt-0">
                         <div v-show="alertsExpanded">
-                            <div v-for="alert in shownDisconnectionAlerts" :key="`${alert.conn_id}-${alert.camera_id}`"
+                            <div v-for="alert in disconnectionAlerts" :key="`${alert.conn_id}-${alert.camera_id}`"
                                 :class="['alert mb-1', `alert-${alert.alertType}`]" role="alert">
                                 {{ alert.alertMsg }}
                             </div>
@@ -503,16 +496,13 @@ onUnmounted(() => {
                         <tr>
                             <th scope="col" class="table-dark">Disconnected microComputers</th>
                         </tr>
-                        <template v-if="disconnectedMicroComAlerts.length > 0">
-                            <tr v-for="com in disconnectedMicroComAlerts" :key="com.conn_id">
-                                <td v-if="com.microComState === 'Disconnected'">{{ com.microComName }}</td>
-                            </tr>
-                        </template>
-                        <template v-else>
-                            <tr>
-                                <td>&nbsp</td>
-                            </tr>
-                        </template>
+                        <tr v-for="com in disconnectedMicroComs" :key="com.conn_id">
+                            <td v-if="com.state === 'Disconnected'">{{ com.name }}
+                                <div class="button-group">
+                                    <button class="btn submit-btn" @click="forgetEdge(com.conn_id)">Forget</button>
+                                </div>
+                            </td>
+                        </tr>
                         <tr>
                             <th scope="col" class="table-dark">Disconnected Cameras</th>
                         </tr>
