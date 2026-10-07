@@ -35,9 +35,12 @@ const showSetDefaultThresholdConfrim = ref(false);
 //   Toggle section values
 // -------------------------
 const isMicroComputerSection = ref(true);
+const isRenameMicroComputerSection = ref(true);
 const isCameraSection = ref(true);
+const isRenameCameraSection = ref(true);
 const isControlsSection = ref(true);
 const isDeviationSection = ref(true);
+
 
 // --------------------
 //   WebSocket
@@ -837,17 +840,22 @@ onMounted(() => {
                     <div class="form">
                         <div class="pb-3">
                             <h2 class="config-title">
-                                µ-Computer Configuration
                                 <img
                                 :src="isMicroComputerSection ? arrowDown : arrowUp"
                                 alt="toggle button" width="30" height="30" class="toggle-button"
-                                @click="isMicroComputerSection = !isMicroComputerSection"
-                                >
+                                @click="isMicroComputerSection = !isMicroComputerSection">
+                                µ-Computer Configuration
                             </h2>
                             <div v-if="isMicroComputerSection">
-                                <label for="microCompSelect" class="config-label"><h3 class="config-label">Select µ-Computer</h3></label>
+                                <label for="microCompSelect" class="config-subtitle">
+                                    <img
+                                    :src="isRenameMicroComputerSection ? arrowDown : arrowUp"
+                                    alt="toggle button" width="25" height="25" class="toggle-button"
+                                    @click="isRenameMicroComputerSection = !isRenameMicroComputerSection">
+                                    Select µ-Computer
+                                </label>
                                 <div class="form-element">
-                                    <select class="w-100" id="microCompSelect" v-model="selectedMicroComputer">
+                                    <select class="menu-input" id="microCompSelect" v-model="selectedMicroComputer">
                                         <option value="" disabled selected>Please select a µ-computer</option>
                                         <option value="all">Select All µ-computers</option>
                                         <option v-for="(com, index) in activeMicroComputers" :key="`${com.conn_id}`" :value="com">
@@ -856,25 +864,24 @@ onMounted(() => {
                                     </select>
                                 </div>
 
-                                <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all'">
+                                <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all' && isRenameMicroComputerSection">
                                     <label for="rename" class="config-label">Rename µ-Computer</label>
                                     <div class="form-element">
-                                        <input type="text" id="rename" class="w-100" v-model="newMicroComputerName">
+                                        <input type="text" id="rename" class="text-input" v-model="newMicroComputerName">
                                         <button type="button" class="btn submit-btn" @click="showRenameMicroCompConfrim = true">Rename</button>
                                         <ConfirmationBox
                                             v-model="showRenameMicroCompConfrim"
                                             :message="'Rename the selected micro-computer to ' + newMicroComputerName + '?'"
-                                            :onConfirmFunction="renameMicroComputer"
-                                        />
+                                            :onConfirmFunction="renameMicroComputer"/>
                                     </div>
                                 </div>
                                 <p v-if="feedback.microComputerName"
                                    :class="feedback.microComputerName.ok ? 'success' : 'error'"
                                    role="status"> {{ feedback.microComputerName.message }}</p>
-                                <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all'">
+                                <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all' && isRenameMicroComputerSection">
                                     <label for="vision-process" class="config-label">Select Vision Processing Method</label>
                                     <div class="form-element">
-                                        <select class="menu-input" id="vision-process" v-model.number="newVisionProcessing">
+                                        <select class="submenu-input " id="vision-process" v-model.number="newVisionProcessing">
                                             <!-- TODO: change from static data to server hosted data-->
                                             <option value="" disabled>Please select a Vision Processing Method</option>
                                             <option v-for="(technique,index) in visionProcessingTechniques" :key="technique" :value="technique">
@@ -896,18 +903,23 @@ onMounted(() => {
                             <hr class="line-break">
                         </div>
                         <h2 class="config-title">
-                            Camera Configuration
                             <img
                             :src="isCameraSection ? arrowDown : arrowUp"
                             alt="toggle button" width="30" height="30" class="toggle-button"
-                            @click="isCameraSection = !isCameraSection"
-                            >
+                            @click="isCameraSection = !isCameraSection">
+                            Camera Configuration
                         </h2>
                         <div v-if="isCameraSection">
                         <!-- SELECT CAMERA -->
-                            <label for="cameraSelect" class="config-label"><h3 class="config-label">Select Camera</h3></label>
+                            <label for="cameraSelect" class="config-subtitle">
+                                <img
+                                :src="isRenameCameraSection ? arrowDown : arrowUp"
+                                alt="toggle button" width="25" height="25" class="toggle-button"
+                                @click="isRenameCameraSection = !isRenameCameraSection">
+                                Select Camera
+                            </label>
                             <div class="form-element">
-                                <select class="w-100" id="cameraSelect" required v-model="selectedCamera">
+                                <select class="menu-input" id="cameraSelect" required v-model="selectedCamera">
                                     <option value="" disabled selected>Please select a camera</option>
                                     <option v-for="(cam, index) in activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`" :value="cam">
                                         [ {{edgeName(cam.conn_id)}} - {{index + 1}} ] : {{cam.name}}
@@ -915,10 +927,10 @@ onMounted(() => {
                                 </select>
                             </div>
                             <!-- RENAME CAMERA -->
-                            <div v-if="selectedConfig">
+                            <div v-if="selectedConfig && isRenameCameraSection">
                                 <label for="rename" class="config-label">Rename Camera</label>
                                 <div class="form-element">
-                                    <input type="text" id="rename" class="w-100" v-model="newCameraName">
+                                    <input type="text" id="rename" class="text-input" v-model="newCameraName">
                                     <button type="button" class="btn submit-btn" @click="showRenameCameraConfrim = true">Rename</button>
                                     <ConfirmationBox
                                     v-model="showRenameCameraConfrim"
@@ -933,12 +945,11 @@ onMounted(() => {
                             <hr class="line-break" v-if="selectedCamera">
                             <!-- CAMERA CONTROLS -->
                             <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">
-                                Camera Controls
                                 <img
                                 :src="isControlsSection ? arrowDown : arrowUp"
                                 alt="toggle button" width="25" height="25" class="toggle-button"
-                                @click="isControlsSection = !isControlsSection"
-                                >
+                                @click="isControlsSection = !isControlsSection">
+                                Camera Controls
                             </h4>
 
                             <div v-if="isControlsSection">
@@ -1096,12 +1107,11 @@ onMounted(() => {
                             <!-- DIVIATION THRESHOLDS -->
                             <hr class="line-break" v-if="selectedCamera">
                             <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">
-                                Deviation Thresholds
                                 <img
                                 :src="isDeviationSection ? arrowDown : arrowUp"
                                 alt="toggle button" width="25" height="25" class="toggle-button"
-                                @click="isDeviationSection = !isDeviationSection"
-                                >
+                                @click="isDeviationSection = !isDeviationSection">
+                                Deviation Thresholds
                             </h4>
                             <div v-if="isDeviationSection">
                                 <div v-if="selectedConfig">
@@ -1166,9 +1176,6 @@ onMounted(() => {
 </template>
 <style scoped>
 
-.menu-input{
-    width: 100%;
-}
 
 select {
     padding: 0.5em;

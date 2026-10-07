@@ -104,7 +104,7 @@ async function getDefaultSettings() {
 }
 
 // post new defualt settings
-async function postDefaultserverSettingsData() {
+async function postDefaultServerSettingsData() {
   saveState.value = '';
 
   const requestOptions = {
@@ -192,7 +192,7 @@ function validateServerSetting(name, min, max, value) {
   if (isBlank(value)) return true;
   // check if the input
   if (!Number.isInteger(value)) {
-    cameraControlErrors.value.push(`Warning: ${name} must be a whole number`);
+    validationServerDefaultsErrors.value.push(`Warning: ${name} must be a whole number`);
     return false;
   }
   // check min
@@ -214,9 +214,10 @@ function validateAllServerSettings() {
   for (const setting in serverSettings) {
     result = validateServerSetting(setting.name, setting.min, setting.max, setting.value);
   }
+  return result;
 }
 
-function requestSaveserverSettingsData() {
+function requestSaveServerSettingsData() {
   if (validateAllServerSettings()) showSetDefaultConfrim.value = true;
 }
 
@@ -260,23 +261,23 @@ onMounted(() => {
             <!-- SERVER SETTINGS -->
             <div class="col-12 py-2">
                 <h2 class="config-title">
-                    Sever Settings
                     <img
                     :src="isServer ? arrowDown : arrowUp"
                     alt="toggle button" width="30" height="30" class="toggle-button"
                     @click="isServer = !isServer"
                     >
+                    Sever Settings
                 </h2>
                 <!-- Server Defaults -->
                 <div class="server-default-section py-2" v-if="isServer">
                     <!-- Set server Defaults -->
                     <h3 class="config-subtitle">
-                        Set Server Defaults
                         <img
                         :src="isSetServerDefault ? arrowDown : arrowUp"
                         alt="toggle button" width="25" height="25" class="toggle-button"
                         @click="isSetServerDefault = !isSetServerDefault"
                         >
+                        Set Server Defaults
                     </h3>
                     <div v-if="isSetServerDefault" v-for="setting in serverSettings">
                         <label class="config-label">{{setting.name}}</label>
@@ -295,15 +296,17 @@ onMounted(() => {
                             :step="setting.step">
                         </div>
                     </div>
+                    <!-- validation errors -->
+                    <p v-for="e in validationServerDefaultsErrors" class="error">{{e}}</p>
                     <div class="text-center d-flex flex-row justify-content-center gap-3 py-2">
                         <!-- Server Setting from -->
-                        <button class="btn submit-btn" @click="requestSaveserverSettingsData">Save Server Defaults</button>
+                        <button class="btn submit-btn" @click="requestSaveServerSettingsData">Save Server Defaults</button>
                         <button class="btn submit-btn" @click="showResetDefaultConfrim = !showResetDefaultConfrim">Reset Server Defaults</button>
                     </div>
                     <ConfirmationBox
                         v-model="showSetDefaultConfrim"
                         message="Would you like to save these as the defualt server settings?"
-                        :onConfirmFunction="postDefaultserverSettingsData"
+                        :onConfirmFunction="postDefaultServerSettingsData"
                     />
                     <ConfirmationBox
                         v-model="showResetDefaultConfrim"
@@ -313,8 +316,7 @@ onMounted(() => {
                     <!-- Submision Confrimation -->
                     <p v-if="saveState === 'success'" class="success">The default settings have been successfuly updated.</p>
                     <p v-if="saveState === 'error'" class="error">An error has occured when updating the default settings.</p>
-                    <!-- validation errors -->
-                    <p v-for="e in validationServerDefaultsErrors" class="error">{{e}}</p>
+
                 </div>
             </div>
             <hr class="line-break">
