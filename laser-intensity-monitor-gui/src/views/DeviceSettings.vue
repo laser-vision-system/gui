@@ -6,6 +6,11 @@ import arrowUp from '../assets/images/arrow-up.svg';
 import arrowDown from '../assets/images/arrow-down.svg'
 
 // -----------------------------
+//   Config Shortcut
+// -----------------------------
+import { useSharedDeviceData } from '../composables/useSharedDeviceData';
+const { sharedMicroComputer, sharedCamera } = useSharedDeviceData();
+// -----------------------------
 //   Multi Thumb range slider
 // -----------------------------
 import MultiThumbSlider from '../components/MultiThumbRangeSlider.vue';
@@ -693,7 +698,7 @@ async function saveThresholds() {
   const alertAbove = newAlertAbove.value / 100;
 
   if (isLive.value) {
-      const result = await sendWithFeedback('threshold', 'Thresholds', () =>
+      const result = await sendWithFeedback('thresholds', 'Thresholds', () =>
         setCameraThresholds(
           selectedCamera.value.conn_id,
           selectedCamera.value.camera_id,
@@ -730,6 +735,33 @@ async function setServerDefaultThreshold() {
     showFeedback('thresholds', true, 'Defualt Thresholds saved (sample data)');
   }
 }
+
+// --------------------
+//      Shared Config
+// --------------------
+// state
+let sharedDataApplied = false;
+
+function applySharedData() {
+  // if the data has been already applied
+  if (sharedDataApplied) return;
+
+  const sharedComputer = sharedMicroComputer.value;
+  if (!sharedComputer) return;
+
+  const computer = activeMicroComputers.value.find((c) => c.conn_id === sharedComputer.conn_id);
+  if (!computer) return;
+  selectedMicroComputer.value = computer;
+
+  if (sharedCamera.value) {
+    const camera = activeCameras.value.find((c) =>
+      c.conn_id === sharedCamera.value.conn_id && c.camera_id === sharedCamera.value.camera_id);
+    if (!camera) return;
+    selectedCamera.value = camera;
+  }
+  sharedDataApplied = true;
+}
+
 
 // --------------------
 //        Watchers
@@ -816,7 +848,12 @@ watch(selectedMicroComputer, () => {
     }
   }
 })
-
+// watches for the websocket to connected before running the apply shared data
+watch(isLive, () => { sharedDataApplied = false; });
+watch([isLive, wsEdgeList, wsCameraList], () => {
+  applySharedData();
+  newMicroComputerName.value = selectedMicroComputer.value.name;
+}, { immediate: true });
 
 // -------------------------------
 //        onMount
@@ -824,6 +861,7 @@ watch(selectedMicroComputer, () => {
 onMounted(() => {
     //fetchCameraConfig()
   connect(); // gets the edge list and camera list in its function
+  applySharedData();
 });
 </script>
 <template>
