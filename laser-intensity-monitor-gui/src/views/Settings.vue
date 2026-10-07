@@ -191,6 +191,7 @@ function resetAllServerDefaults() {
 // -------------------------------
 
 function validateServerSetting(name, min, max, value) {
+
   if (isBlank(value)) return true;
   // check if the input
   if (!Number.isInteger(value)) {
@@ -212,9 +213,11 @@ function validateServerSetting(name, min, max, value) {
 
 
 function validateAllServerSettings() {
+  // clear the periouse warning messages
+  validationServerDefaultsErrors.value = [];
   let result = true;
   for (const setting of Object.values(serverSettings)) {
-    if (validateServerSetting(setting.name, setting.min, setting.max, setting.value)) {
+    if (!validateServerSetting(setting.name, setting.min, setting.max, setting.value)) {
       result = false;
     }
   }
