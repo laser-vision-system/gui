@@ -221,7 +221,7 @@ watch(warnAbove, (newValue) => {
         <div class="number-row">
 
             <!-- Alert Below number input -->
-            <label class="number-input alert-number">
+            <label class="threshold-number-input alert-number">
                 <span>Alert Below</span>
                 <input
                     type="number"
@@ -233,7 +233,7 @@ watch(warnAbove, (newValue) => {
                 />
             </label>
             <!-- Warn Below number input -->
-            <label class="number-input warn-number">
+            <label class="threshold-number-input warn-number">
                 <span>Warn Below</span>
                 <input
                     type="number"
@@ -245,7 +245,7 @@ watch(warnAbove, (newValue) => {
                 />
             </label>
             <!-- Warn Above number input -->
-            <label class="number-input warn-number">
+            <label class="threshold-number-input warn-number">
                 <span>Warn Above</span>
                 <input
                 type="number"
@@ -257,7 +257,7 @@ watch(warnAbove, (newValue) => {
                 />
             </label>
             <!-- Alert Above number input -->
-            <label class="number-input alert-number">
+            <label class="threshold-number-input alert-number">
                 <span>Alert Above</span>
                 <input
                     type="number"
@@ -399,7 +399,7 @@ watch(warnAbove, (newValue) => {
         margin-right: 2rem;
     }
 
-    .number-input {
+    .threshold-number-input {
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -409,7 +409,7 @@ watch(warnAbove, (newValue) => {
         gap: 0.3rem;
     }
 
-    .number-input input {
+    .threshold-number-input input {
         width: 4.5rem;
         padding: 0.25rem;
         border-radius: 0.5rem;

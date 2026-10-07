@@ -76,12 +76,14 @@
     --bs-alert-color: var(--bs-dark);
     --bs-alert-link-color: var(--bs-dark);
 }
+
 .alert-warning {
     --bs-alert-bg: var(--bs-warning);
     --bs-alert-border-color: var(--bs-warning);
     --bs-alert-color: var(--bs-dark);
     --bs-alert-link-color: var(--bs-dark);
 }
+
 .alert-danger {
     --bs-alert-bg: var(--bs-danger);
     --bs-alert-border-color: var(--bs-danger);
@@ -100,4 +102,101 @@
     background-color: var(--button-hover);
     border-color: slateblue;
     color: black;
+}
+
+.line-break {
+    border: none;
+    height: 3px;
+    color: var(--config-title);
+    background-color: var(--line-break-color);
+}
+
+.toggle-button {
+    filter: var(--filter-background);
+}
+
+.config-label {
+    font-weight: 500;
+    font-size: 16pt;
+    color: var(--config-title);
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    padding-left: 4.5rem;
+}
+
+.config-title {
+    font-weight: 600;
+    font-size: 20pt;
+    color: var(--config-title);
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+
+.config-subtitle {
+    font-weight: 600;
+    font-size: 18pt;
+    color: var(--config-title);
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    padding-left: 2.5rem;
+}
+
+.number-input{
+    flex: 0 0 4em;
+    width: 4em;
+    padding: 0.25em;
+    border-radius: 0.5em;
+    border: 3px solid var(--nav-bg);
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+}
+
+.menu-input{
+    width: 100%;
+    margin-left: 2.5rem;
+}
+
+.submenu-input {
+    width: 100%;
+    margin-left: 4rem;
+}
+
+.text-input {
+    width: 100%;
+    margin-left: 4rem;
+    padding: 0.45rem;
+}
+
+.slider-input{
+    flex: 1 1 auto;
+    width: 100%;
+    accent-color: var(--nav-bg);
+    border-radius: 2em;
+    margin-left: 4.5rem;
+}
+.slider-input:hover{
+    accent-color: var(--button-hover);
+}
+
+.form-element{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1em;
+    padding: 0.20em;
+}
+.error {
+    background: var(--range-alert);
+    border-radius: 1rem;
+    padding: 0.35rem;
+    font-weight: 600;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    text-align: center;
+}
+.success {
+    background: var(--range-safe);
+    border-radius: 1rem;
+    padding: 0.35rem;
+    font-weight: 600;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    text-align: center;
 }

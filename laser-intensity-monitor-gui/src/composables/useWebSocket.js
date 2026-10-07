@@ -101,17 +101,58 @@ export function useWebSocket(url) {
   function send(type, data) {
     if (socket?.readyState !== WebSocket.OPEN) {
       console.warn(`Cannot send "${type}", socket is not open`);
-      return;
+      return false;
     }
     try {
       socket.send(encodeMessage(type, data));
-      return;
+      return true;
     } catch(e) {
       console.error(`Failed to send "${type}"`, e);
       error.value = `Failed to send ${type}.`;
-      return;
+      return false;
     }
   }
+  // ---------------------------
+  //   Comfrim sent message
+  // ---------------------------
+  // Time in ms
+  const FLUSH_CHECK = 100;
+  const FLUSH_TIMEOUT = 3000;
+  // check that the message has been sent by the GUI.
+  function waitForBufferFlush(wSocket) {
+    return new Promise((resolve, reject) => {
+      const started = Date.now();
+      const timer = setInterval(() => {
+        if (wSocket.readyState !== WebSocket.OPEN) {
+          clearInterval(timer);
+          reject(new Error('Connection closed before the message was sent'));
+        } else if (wSocket.bufferedAmount === 0) {
+          clearInterval(timer);
+          resolve();
+        } else if (Date.now() - started > FLUSH_TIMEOUT) {
+          clearInterval(timer);
+          reject(new Error('Timed out waiting for the message to send'));
+        }
+      }, FLUSH_CHECK);
+    });
+  }
+
+  async function sendConfirmed(type, data) {
+    // save the web socket incase of reconnect.
+    const wSocket = socket;
+    if (!send(type, data)) {
+      return { ok: false, error: 'Socket is not open' };
+    }
+    try {
+      await waitForBufferFlush(wSocket);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  }
+
+
+
   // -------------------------
   //   Heartbeat
   // -------------------------
@@ -154,6 +195,8 @@ export function useWebSocket(url) {
       startHeartbeat();
       listEdges();
       listCameras();
+      getDefaultThresholds();
+      listProcessingTypes();
     }
 
     socket.onmessage = (event) => {
@@ -197,6 +240,11 @@ export function useWebSocket(url) {
     const img = new Image();
     // make sure that the image has loaded before clearing the blob before.
     img.onload = () => {
+      // the feed was stopped while this frame was loading, drop the frame
+      if (!activeCamera.value) {
+        URL.revokeObjectURL(newURL);
+        return;
+      }
       if (currentObjectUrl) {
         URL.revokeObjectURL(currentObjectUrl);
       }
@@ -230,7 +278,7 @@ export function useWebSocket(url) {
         warn_below_threshold: details?.warn_below_threshold ?? null,
         alert_below_threshold: details?.alert_below_threshold ?? null,
         warn_above_threshold: details?.warn_above_threshold ?? null,
-        alert_above_treshold: details?.alert_above_treshold ?? null,
+        alert_above_threshold: details?.alert_above_treshold ?? null,
       };
     }
     return normalised;
@@ -286,7 +334,7 @@ export function useWebSocket(url) {
             warn_below_threshold: existing?.warn_below_threshold ?? null,
             alert_below_threshold: existing?.alert_below_threshold ?? null,
             warn_above_threshold: existing?.warn_above_threshold ?? null,
-            alert_above_treshold: existing?.alert_above_treshold ?? null,
+            alert_above_threshold: existing?.alert_above_threshold ?? null,
           },
         }
         break;
@@ -375,7 +423,7 @@ export function useWebSocket(url) {
 
   // Set the name of Edge micro computers
   function setEdgeName(edgeId, name) {
-    send('SetEdgeName', {
+    return sendConfirmed('SetEdgeName', {
       edge_id: edgeId,
       name,
     });
@@ -383,7 +431,7 @@ export function useWebSocket(url) {
 
   // Set Vision Processing Type
   function setEdgeProcessingType(edgeId, processingType) {
-    send('SetEdgeProcessingType', {
+    return sendConfirmed('SetEdgeProcessingType', {
       edge_id: edgeId,
       processing_type: processingType,
     });
@@ -396,7 +444,7 @@ export function useWebSocket(url) {
 
   // set camera name API function
   function setCameraName(connId, cameraId, name) {
-    send('SetNameCamera', {
+    return sendConfirmed('SetNameCamera', {
       conn_id: connId,
       camera_id: cameraId,
       name,
@@ -434,7 +482,7 @@ export function useWebSocket(url) {
 
   // update camera control configuration
   function updateConfiguration(connId, cameraId, configuration) {
-    send('Configuration', {
+    return sendConfirmed('Configuration', {
       conn_id: connId,
       camera_id: cameraId,
       configuration: typeof configuration === 'string' ? configuration : JSON.stringify(configuration),
@@ -442,24 +490,24 @@ export function useWebSocket(url) {
   }
 
   // Set Camera Thresholds (Deviation alerts thresholds)
-  function setCameraThresholds(edgeId, cameraId, warnBelow, alertBelow, alertAbove, warnAbove) {
-    send('SetCameraThresholds', {
+  function setCameraThresholds(edgeId, cameraId, alertBelow, warnBelow,  warnAbove, alertAbove) {
+    return sendConfirmed('SetCameraThresholds', {
       edge_id: edgeId,
       camera_id: cameraId,
       warn_below_threshold: warnBelow,
       alert_below_threshold: alertBelow,
       warn_above_threshold: warnAbove,
-      alert_above_treshold: alertAbove,
+      alert_above_threshold: alertAbove,
     });
   }
 
   // Set Defualt vlaue of the servers camera thresholds
   function setDefaultThreshold(alertBelow, warnBelow, warnAbove, alertAbove) {
-    send('SetDefaultThreshold', {
+    return sendConfirmed('SetDefaultThreshold', {
       warn_below_threshold: warnBelow,
       alert_below_threshold: alertBelow,
       warn_above_threshold: warnAbove,
-      alert_above_treshold: alertAbove,
+      alert_above_threshold: alertAbove,
     });
   }
 

@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted, watch, computed, reactive } from 'vue';
-
+import { ref, onMounted, onUnmounted, watch, computed, reactive } from 'vue';
+import {isBlank, checkBlank} from '../utils/helpers'
 // icons
 import arrowUp from '../assets/images/arrow-up.svg';
 import arrowDown from '../assets/images/arrow-down.svg'
@@ -35,15 +35,17 @@ const showSetDefaultThresholdConfrim = ref(false);
 //   Toggle section values
 // -------------------------
 const isMicroComputerSection = ref(true);
+const isRenameMicroComputerSection = ref(true);
 const isCameraSection = ref(true);
+const isRenameCameraSection = ref(true);
 const isControlsSection = ref(true);
 const isDeviationSection = ref(true);
+
 
 // --------------------
 //   WebSocket
 // --------------------
 import { useWebSocket } from '../composables/useWebSocket';
-// Point this at your server's websocket endpoint
 const {
   // state
   status,
@@ -123,13 +125,49 @@ const newGamma = ref(null); // needs validation
 const newGain = ref(null); // needs validation
 const newExposureAbsolute = ref(null); // needs validation
 const newAutoExposure = ref(null);
-// for save message e.g. success | error
-const saveState = ref('');
 // Validation Errors
 const divationErrors = ref([]);
 const cameraControlErrors = ref([]);
 const cameraNameErrors = ref([]);
 const microComputerNameErrors = ref([]);
+
+// -------------------------
+//   Send feedback messages
+// -------------------------
+const feedback = reactive({
+  microComputerName: null,
+  visionProcessing: null,
+  camera: null,
+  controls: null,
+  thresholds: null,
+});
+
+const FEEDBACK_DURATION = 4000; // in ms
+const feedbackTimers = {};
+
+function showFeedback(section, ok, message) {
+  clearTimeout(feedbackTimers[section]);
+  feedback[section] = { ok, message };
+  feedbackTimers[section] = setTimeout(() => {
+    feedback[section] = null;
+  }, FEEDBACK_DURATION);
+}
+
+// runs a confirmed websocket command, shows the result, and hands the result back
+async function sendWithFeedback(section, label, sendFn) {
+  const result = await sendFn();
+  if (result.ok) {
+    showFeedback(section, true, `${label} has been sent successfully`);
+  } else {
+    showFeedback(section, false, `${label} failed to send: ${result.error}`);
+  }
+  return result;
+}
+
+// clear timer on refresh or page exit
+onUnmounted(() => {
+  Object.values(feedbackTimers).forEach(clearTimeout);
+});
 // --------------------
 //        Computed
 // --------------------
@@ -138,14 +176,17 @@ const activeMicroComputers = computed(() => {
   const source = isLive.value ? wsEdgeList.value : sampleMicroComputerList.microComputers
   return source.filter((com) => com.state === 'Active')
 });
+
 // filter out the cameras that are not active
 const activeCameras = computed(() => {
   const source = isLive.value ? wsCameraList.value : sampleCameraList.cameras
   const active = source.filter((cam) => cam.state === 'Active')
+
   // if no option is selecetd or the all option is selected.
   if (!selectedMicroComputer.value || selectedMicroComputer.value === 'all') {
     return active
   }
+
   // else a micro computer is selected filter only the cameras for that computer
   return active.filter((cam) => cam.conn_id === selectedMicroComputer.value.conn_id)
 });
@@ -158,17 +199,12 @@ const activeCameras = computed(() => {
 // CUSTOM VALDIATION
 // All validate function return a bool, either true (is valid) or false (failed the validation)
 // global cosntants
-const THRESHOLD_MIN = 0; // this should always be zero but who knows with this project.
+const THRESHOLD_MIN = 0;
 const THRESHOLD_MAX = 200;
 
-function isBlank(v) {
-  return v === '' || v === null || v === undefined || Number.isNaN(v);
-}
 // Camera Controls
 function validateCameraControlMinMax(name, range, value) {
   if (isBlank(value)) return true;
-
-  let result = true;
 
   if (!Number.isInteger(value)) {
     cameraControlErrors.value.push(`Warning: ${name} must be a whole number`);
@@ -197,6 +233,7 @@ function validateAllCameraControlsMinMax() {
     Saturation: newSaturation, Gamma: newGamma, Gain: newGain,
     ExposureAbsolute: newExposureAbsolute,
   }
+
   let result = true;
   for (const [name, valueRef] of Object.entries(integerControls)) {
     if (!original?.[name]) continue; // camera doesn't support this control
@@ -300,49 +337,48 @@ function clearSelectedCamera() {
 }
 
 // rename Selected micro computer
-function renameMicroComputer() {
+async function renameMicroComputer() {
   if (!selectedMicroComputer.value || !newMicroComputerName.value) return
   if (isLive.value) {
-    // set micro computer name fucntion
-    setEdgeName(selectedMicroComputer.value.conn_id, newMicroComputerName.value)
-    // refresh micro comp / edge list
-    listEdges()
+    const result = await sendWithFeedback('microComputerName', 'Rename', () =>
+      setEdgeName(selectedMicroComputer.value.conn_id, newMicroComputerName.value));
+    // one second await timer
+    await coundownTimer(1000);
+    if (result.ok) listEdges();
   } else {
-    selectedMicroComputer.value.name = newMicroComputerName.value
+    selectedMicroComputer.value.name = newMicroComputerName.value;
+    showFeedback('microComputerName', true, 'Rename saved (sample data)');
   }
 }
 
 // Select Vision processing method.
 //  the method for saving/ submiting the selected vision processing method
-function submitVisionProcessing() {
-  if (!selectedMicroComputer.value || newVisionProcessing.value == null) return
+async function submitVisionProcessing() {
+  if (!selectedMicroComputer.value || newVisionProcessing.value == null) return;
   if (isLive.value) {
-    // API function for submiting the chosen vision processing
-    setEdgeProcessingType(selectedMicroComputer.value.conn_id, newVisionProcessing.value)
-    // listEdges() ( not requried)
+    await sendWithFeedback('visionProcessing', 'Vision Processing Technique', () =>
+      // API function for submiting the chosen vision processing
+      setEdgeProcessingType(selectedMicroComputer.value.conn_id, newVisionProcessing.value));
   } else {
-    selectedMicroComputer.value.Menu.value.ConValueMenu = newVisionProcessing.value
+    selectedMicroComputer.value.Menu.value.ConValueMenu = newVisionProcessing.value;
+    showFeedback('visionProcessing', true, 'Vision processing Technique (sample data)');
   }
 }
 
 // Rename Selected camera
-function renameCamera() {
-  if (!selectedCamera.value || !newCameraName.value) return
+async function renameCamera() {
+  if (!selectedCamera.value || !newCameraName.value) return;
   // ADD VALIDATION FOR CAMERA RENAME
   if (isLive.value) {
-    setCameraName(selectedCamera.value.conn_id, selectedCamera.value.camera_id, newCameraName.value)
-    //listCameras() // refresh camera list (not needed)
+    const result = await sendWithFeedback('camera', 'Camera Rename', () =>
+      setCameraName(selectedCamera.value.conn_id, selectedCamera.value.camera_id, newCameraName.value));
+    // one second await timer
+    await coundownTimer(1000);
+    if (result.ok) listCameras(); // fetch the new camera list after renaming the camera
   } else {
-    selectedCamera.value.name = newCameraName.value
+    selectedCamera.value.name = newCameraName.value;
+    showFeedback('camera', true, 'Camera rename saved (sample data)');
   }
-}
-
-// check for empty value if empty return the current value if not return the newValue from form.
-function checkBlank(newValue, currentValue) {
-    if (newValue === '' || newValue === null || newValue === undefined || Number.isNaN(newValue)) {
-        return currentValue;
-    }
-    return newValue;
 }
 
 // build camera control payload does not include the fps (we will figure that out later)
@@ -389,26 +425,29 @@ function coundownTimer(time) {
 // Save the changes made to the camera controls
 async function saveChanges() {
   if (!selectedCamera.value || !selectedConfig.value) return
-  saveState.value = ''
   try {
     // ADD VALIDATION FOR CONTROLS
     const controlsPayload = buildControlsPayload()
     if (isLive.value) {
-      updateConfiguration(selectedCamera.value.conn_id, selectedCamera.value.camera_id, JSON.stringify(controlsPayload))
+      const { conn_id, camera_id } = selectedCamera.value;
+      const result = await sendWithFeedback('controls', 'Camera controls', () =>
+        updateConfiguration(conn_id, camera_id, JSON.stringify(controlsPayload)));
+      if (!result.ok) return;
       // one second await timer
-      await coundownTimer(1000)
+      await coundownTimer(1000);
       // request to view the camera config.
-      viewCameraConfig(selectedCamera.value.conn_id, selectedCamera.value.camera_id)
+      viewCameraConfig(conn_id, camera_id);
     } else {
-      //  the sample data does model fps
       selectedConfig.value = {
-        ...selectedConfig.value, fps: checkBlank(newFPS.value, selectedConfig.value.fps),
+        ...selectedConfig.value, // keep the orginal values of conn_id and camera_id
         configuration: { ...selectedConfig.value.configuration, ...controlsPayload },
-      }
+      };
+      showFeedback('controls', true, 'Camera controls saved (sample data)');
     }
   } catch (e) {
-    console.error('Error updating camera:', e)
-    saveState.value = 'error'
+    console.error('Error updating camera:', e);
+    saveState.value = 'error';
+    showFeedback('controls', false, 'Something went wrong preparing the camera controls.');
   }
 }
 //console.log(controlConfig)
@@ -508,6 +547,10 @@ function findConfig(conn_id, camera_id) {
 // ------------------------------
 //          Methods
 // ------------------------------
+// returns the name of the micro computer a camera belongs to
+function edgeName(connId) {
+  return activeMicroComputers.value.find((com) => com.conn_id === connId)?.name ?? connId;
+}
 
 // control filter function for selected camera
 function controlFilter(controlName) {
@@ -578,7 +621,7 @@ function saveFrameRate() {
   if (!selectedCamera.value || !selectedConfig.value) return
   saveState.value = ''
   if (isLive.value) {
-    // TODO: there's currently no websocket path for fram rate
+    // TODO: there's currently no websocket path for frame rate
     console.warn('Saving frame rate against a live camera is not supported yet.')
   } else {
     selectedConfig.value = {
@@ -619,35 +662,6 @@ function resetControlConfig() {
   }
 }
 
-// set the threashold values to defualt (alert_below_threshold)
-function resetAlertThreshold() {
-  if (!selectedCamera.value) return
-  if (isLive.value) {
-    // add APi function when avaible
-    if (!defaultThresholds.value) {
-      console.warn('Default thresholds have not loaded from the server yet.');
-      return
-    }
-    newAlertBelow.value = defaultThresholds.value.alert_below_threshold * 100;
-  } else {
-    newAlertBelow.value = 80;
-  }
-
-}
-
-// rest the warn threshold (warn_below_threshold)
-function resetWarningThreshold() {
-  if (!selectedCamera.value) return
-  if (isLive.value) {
-    if (!defaultThresholds.value) {
-      console.warn('Default thresholds have not loaded from the server yet.')
-      return
-    }
-    newWarnBelow.value = defaultThresholds.value.warn_below_threshold * 100;
-  } else {
-    newWarnBelow.value = 95;
-  }
-}
 
 // sets the default threshold for all deviation thresholds
 function resetAllThresholds() {
@@ -671,54 +685,49 @@ function resetAllThresholds() {
 
 
 // save thresholds
-function saveThresholds() {
+async function saveThresholds() {
   if (!selectedCamera.value) return;
   const alertBelow = newAlertBelow.value / 100;
   const warningBelow = newWarnBelow.value / 100;
-  // add routes when api comes
   const warningAbove = newWarnAbove.value / 100;
   const alertAbove = newAlertAbove.value / 100;
 
   if (isLive.value) {
-    try {
-      setCameraThresholds(
-        selectedCamera.value.conn_id,
-        selectedCamera.value.camera_id,
-        warningBelow,
-        alertBelow,
-        warningAbove,
-        alertAbove,
-      );
-      listCameras(); // refresh camera list
-    } catch (e) {
-      console.error('Error updating thresholds:', e);
-    }
+      const result = await sendWithFeedback('threshold', 'Thresholds', () =>
+        setCameraThresholds(
+          selectedCamera.value.conn_id,
+          selectedCamera.value.camera_id,
+          alertBelow,
+          warningBelow,
+          warningAbove,
+          alertAbove,
+        ));
+      if (result.ok) listCameras(); // refresh camera list
   } else {
     selectedCamera.value.alert_below_threshold = alertBelow;
     selectedCamera.value.warn_below_threshold = warningBelow;
     selectedCamera.value.warn_above_threshold = warningAbove;
     selectedCamera.value.alert_above_threshold = alertAbove;
+    showFeedback('thresholds', true, 'Thresholds saved (sample data)');
   }
 }
 
 // set global defualt threshold on server
-function setServerDefaultThreshold() {
+async function setServerDefaultThreshold() {
   if (!selectedCamera.value) return
 
   const alertBelow = newAlertBelow.value / 100;
   const warningBelow = newWarnBelow.value / 100;
-  // add routes when api comes
   const warningAbove = newWarnAbove.value / 100;
   const alertAbove = newAlertAbove.value / 100;
 
   if (isLive.value) {
-    try {
-      setDefaultThreshold(warningBelow, alertBelow, warningAbove, alertAbove);
-      // update the default values
-      getDefaultThresholds();
-    } catch(e) {
-      console.error('Error setting default thresholds:', e);
-    }
+    const result = await sendWithFeedback('thresholds', 'Default thresholds', () =>
+      setDefaultThreshold(alertBelow, warningBelow, warningAbove, alertAbove));
+    // update the default values
+    if (result.ok) getDefaultThresholds();
+  } else {
+    showFeedback('thresholds', true, 'Defualt Thresholds saved (sample data)');
   }
 }
 
@@ -783,29 +792,38 @@ watch(wsCameraList, () => {
   Object.assign(selectedCamera.value, freshCam)
 })
 
-// make into compute method
+
+// keep the selected micro computer pointing at the refreshed entry after the edge list reloads
+// to prevent the select option from going blank
+watch(wsEdgeList, () => {
+  if (!isLive.value) return;
+  const current = selectedMicroComputer.value;
+  if (!current || current === 'all') return;
+  const fresh = wsEdgeList.value.find((com) => com.conn_id === current.conn_id);
+  selectedMicroComputer.value = fresh ?? ''
+})
+
 watch(selectedMicroComputer, () => {
   clearSelectedCamera()
   if (selectedMicroComputer.value && selectedMicroComputer.value !== 'all') {
     newMicroComputerName.value = selectedMicroComputer.value.name
-    // add auto select current vision processing when value is availbe
-    // newVisionProcessing.value =
+    // add auto select current vision processing when value is available
     if (isLive.value) {
       // add vision processing when api has a path for its value
+      //newVisionProcessing.value =
     } else {
       newVisionProcessing.value = selectedMicroComputer.value.Menu.value.ConValueMenu
     }
   }
 })
 
+
 // -------------------------------
-//        onMount and unMount
+//        onMount
 // -------------------------------
 onMounted(() => {
     //fetchCameraConfig()
   connect(); // gets the edge list and camera list in its function
-  getDefaultThresholds(); // get the default deviation thresholds on load
-  listProcessingTypes(); // request the prosessing types
 });
 </script>
 <template>
@@ -822,17 +840,22 @@ onMounted(() => {
                     <div class="form">
                         <div class="pb-3">
                             <h2 class="config-title">
-                                µ-Computer Configuration
                                 <img
                                 :src="isMicroComputerSection ? arrowDown : arrowUp"
                                 alt="toggle button" width="30" height="30" class="toggle-button"
-                                @click="isMicroComputerSection = !isMicroComputerSection"
-                                >
+                                @click="isMicroComputerSection = !isMicroComputerSection">
+                                µ-Computer Configuration
                             </h2>
                             <div v-if="isMicroComputerSection">
-                                <label for="microCompSelect" class="config-label"><h3 class="config-label">Select µ-Computer</h3></label>
+                                <label for="microCompSelect" class="config-subtitle">
+                                    <img
+                                    :src="isRenameMicroComputerSection ? arrowDown : arrowUp"
+                                    alt="toggle button" width="25" height="25" class="toggle-button"
+                                    @click="isRenameMicroComputerSection = !isRenameMicroComputerSection">
+                                    Select µ-Computer
+                                </label>
                                 <div class="form-element">
-                                    <select class="w-100" id="microCompSelect" v-model="selectedMicroComputer">
+                                    <select class="menu-input" id="microCompSelect" v-model="selectedMicroComputer">
                                         <option value="" disabled selected>Please select a µ-computer</option>
                                         <option value="all">Select All µ-computers</option>
                                         <option v-for="(com, index) in activeMicroComputers" :key="`${com.conn_id}`" :value="com">
@@ -841,22 +864,24 @@ onMounted(() => {
                                     </select>
                                 </div>
 
-                                <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all'">
+                                <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all' && isRenameMicroComputerSection">
                                     <label for="rename" class="config-label">Rename µ-Computer</label>
                                     <div class="form-element">
-                                        <input type="text" id="rename" class="w-100" v-model="newMicroComputerName">
+                                        <input type="text" id="rename" class="text-input" v-model="newMicroComputerName">
                                         <button type="button" class="btn submit-btn" @click="showRenameMicroCompConfrim = true">Rename</button>
                                         <ConfirmationBox
                                             v-model="showRenameMicroCompConfrim"
                                             :message="'Rename the selected micro-computer to ' + newMicroComputerName + '?'"
-                                            :onConfirmFunction="renameMicroComputer"
-                                        />
+                                            :onConfirmFunction="renameMicroComputer"/>
                                     </div>
                                 </div>
-                                <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all'">
+                                <p v-if="feedback.microComputerName"
+                                   :class="feedback.microComputerName.ok ? 'success' : 'error'"
+                                   role="status"> {{ feedback.microComputerName.message }}</p>
+                                <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all' && isRenameMicroComputerSection">
                                     <label for="vision-process" class="config-label">Select Vision Processing Method</label>
                                     <div class="form-element">
-                                        <select class="menu-input" id="vision-process" v-model.number="newVisionProcessing">
+                                        <select class="submenu-input " id="vision-process" v-model.number="newVisionProcessing">
                                             <!-- TODO: change from static data to server hosted data-->
                                             <option value="" disabled>Please select a Vision Processing Method</option>
                                             <option v-for="(technique,index) in visionProcessingTechniques" :key="technique" :value="technique">
@@ -871,33 +896,41 @@ onMounted(() => {
                                         />
                                     </div>
                                 </div>
+                                <p v-if="feedback.visionProcessing"
+                                   :class="feedback.visionProcessing.ok ? 'success' : 'error'"
+                                   role="status"> {{ feedback.visionProcessing.message }}</p>
                             </div>
                             <hr class="line-break">
                         </div>
                         <h2 class="config-title">
-                            Camera Configuration
                             <img
                             :src="isCameraSection ? arrowDown : arrowUp"
                             alt="toggle button" width="30" height="30" class="toggle-button"
-                            @click="isCameraSection = !isCameraSection"
-                            >
+                            @click="isCameraSection = !isCameraSection">
+                            Camera Configuration
                         </h2>
                         <div v-if="isCameraSection">
                         <!-- SELECT CAMERA -->
-                            <label for="cameraSelect" class="config-label"><h3 class="config-label">Select Camera</h3></label>
+                            <label for="cameraSelect" class="config-subtitle">
+                                <img
+                                :src="isRenameCameraSection ? arrowDown : arrowUp"
+                                alt="toggle button" width="25" height="25" class="toggle-button"
+                                @click="isRenameCameraSection = !isRenameCameraSection">
+                                Select Camera
+                            </label>
                             <div class="form-element">
-                                <select class="w-100" id="cameraSelect" required v-model="selectedCamera">
+                                <select class="menu-input" id="cameraSelect" required v-model="selectedCamera">
                                     <option value="" disabled selected>Please select a camera</option>
                                     <option v-for="(cam, index) in activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`" :value="cam">
-                                        [ {{selectedMicroComputer.name}} - {{index + 1}} ] : {{cam.name}}
+                                        [ {{edgeName(cam.conn_id)}} - {{index + 1}} ] : {{cam.name}}
                                     </option>
                                 </select>
                             </div>
                             <!-- RENAME CAMERA -->
-                            <div v-if="selectedConfig">
+                            <div v-if="selectedConfig && isRenameCameraSection">
                                 <label for="rename" class="config-label">Rename Camera</label>
                                 <div class="form-element">
-                                    <input type="text" id="rename" class="w-100" v-model="newCameraName">
+                                    <input type="text" id="rename" class="text-input" v-model="newCameraName">
                                     <button type="button" class="btn submit-btn" @click="showRenameCameraConfrim = true">Rename</button>
                                     <ConfirmationBox
                                     v-model="showRenameCameraConfrim"
@@ -906,15 +939,17 @@ onMounted(() => {
                                     />
                                 </div>
                             </div>
+                            <p v-if="feedback.camera"
+                               :class="feedback.camera.ok ? 'success' : 'error'"
+                               role="status"> {{ feedback.camera.message }}</p>
                             <hr class="line-break" v-if="selectedCamera">
                             <!-- CAMERA CONTROLS -->
                             <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">
-                                Camera Controls
                                 <img
                                 :src="isControlsSection ? arrowDown : arrowUp"
                                 alt="toggle button" width="25" height="25" class="toggle-button"
-                                @click="isControlsSection = !isControlsSection"
-                                >
+                                @click="isControlsSection = !isControlsSection">
+                                Camera Controls
                             </h4>
 
                             <div v-if="isControlsSection">
@@ -1042,15 +1077,9 @@ onMounted(() => {
                                         :onConfirmFunction="resetControlConfig"
                                     />
                                 </div>
-
-                                <!-- added a success response needs extra logic as the websocket is a send a forget unlike restful -->
-                                <!-- <div v-if="saveState === 'success'" class="text-center p-1">
-                                    <p>Settings saved successfully.</p>
-                                </div>
-                                <div v-if="saveState === 'error'" class="text-center p-1">
-                                    <p>Failed to save settings. Please try again.</p>
-                                </div> -->
-                                <!-- fps probs be handled by a another route and not with the control filters -->
+                                <p v-if="feedback.controls"
+                                   :class="feedback.controls.ok ? 'success' : 'error'"
+                                   role="status"> {{ feedback.controls.message }}</p>
                             </div>
                             <!-- FPS -->
                             <hr class="line-break" v-if="controlFilter('fps')">
@@ -1078,12 +1107,11 @@ onMounted(() => {
                             <!-- DIVIATION THRESHOLDS -->
                             <hr class="line-break" v-if="selectedCamera">
                             <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">
-                                Deviation Thresholds
                                 <img
                                 :src="isDeviationSection ? arrowDown : arrowUp"
                                 alt="toggle button" width="25" height="25" class="toggle-button"
-                                @click="isDeviationSection = !isDeviationSection"
-                                >
+                                @click="isDeviationSection = !isDeviationSection">
+                                Deviation Thresholds
                             </h4>
                             <div v-if="isDeviationSection">
                                 <div v-if="selectedConfig">
@@ -1117,6 +1145,9 @@ onMounted(() => {
                                         :onConfirmFunction="setServerDefaultThreshold"
                                     />
                                 </div>
+                                <p v-if="feedback.thresholds"
+                                   :class="feedback.thresholds.ok ? 'success' : 'error'"
+                                   role="status"> {{ feedback.thresholds.message }}</p>
                             </div>
                         </div>
                     </div>
@@ -1144,52 +1175,8 @@ onMounted(() => {
     </div>
 </template>
 <style scoped>
-.config-label {
-    font-weight: 500;
-    font-size: 16pt;
-    color: var(--config-title);
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-}
-.config-title {
-    font-weight: 600;
-    font-size: 20pt;
-    color: var(--config-title);
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-}
-.config-subtitle {
-    font-weight: 600;
-    font-size: 18pt;
-    color: var(--config-title);
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-}
-.number-input{
-    flex: 0 0 4em;
-    width: 4em;
-    padding: 0.25em;
-    border-radius: 0.5em;
-    border: 3px solid var(--nav-bg);
-    background-color: var(--bs-body-bg);
-    color: var(--bs-body-color);
-}
-.slider-input{
-    flex: 1 1 auto;
-    width: 100%;
-    accent-color: var(--nav-bg);
-    border-radius: 2em;
-}
-.slider-input:hover{
-    accent-color: var(--button-hover);
-}
-.menu-input{
-    width: 100%;
-}
-.form-element{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 1em;
-    padding: 0.20em;
-}
+
+
 select {
     padding: 0.5em;
 }
@@ -1213,22 +1200,7 @@ option:hover{
     object-fit: contain;
     max-height: 500px;
 }
-.line-break {
-    border: none;
-    height: 3px;
-    color: var(--config-title);
-    background-color: var(--line-break-color);
-}
-.error {
-    background: var(--range-alert);
-    border-radius: 1rem;
-    padding: 0.35rem;
-    font-weight: 600;
-    margin-top: 0.75rem;
-    margin-bottom: 0.75rem;
-    text-align: center;
-}
-.toggle-button {
-    filter: var(--filter-background);
-}
+
+
+
 </style>

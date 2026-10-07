@@ -2,7 +2,7 @@
 # Posted by oshell, modified by community. See post 'Timeline' for change history
 # Retrieved 2026-09-11, License - CC BY-SA 4.0
 
-FROM node:lts-alpine
+FROM --platform=$BUILDPLATFORM node:lts-alpine
 # install simple http server for serving static content
 RUN npm install -g http-server
 # make the 'app' folder the current working directory
