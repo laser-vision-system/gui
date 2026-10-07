@@ -8,8 +8,7 @@ on:
   push:
     branches:
       - 'main'
-      - 'dev'
-      - 'feat/docker-automated-workflow'
+      - 'gui-dev'
     paths:
       - '**.rs'
       - 'Cargo.lock'
@@ -71,7 +70,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          context: /laser-intensity-monitor-gui/.
+          context: laser-intensity-monitor-gui/
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           builder: container-builder

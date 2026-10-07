@@ -1,20 +1,30 @@
 <script setup>
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
-//import cameraFeed from '../components/CameraFeed.vue'
-import { useWebSocket } from '../composables/useWebSocket'
+
+// --------------------
+//   Config Shortcut
+// --------------------
+// import router and useSharedDeviceData.js for shortcuts
+import { useRouter } from 'vue-router'
+import { useSharedDeviceData } from '../composables/useSharedDeviceData'
+const router = useRouter();
+const { setSharedMicroComputer, setSharedCamera, clearSharedDeviceData } = useSharedDeviceData();
+
 // --------------------
 //   WebSocket
 // --------------------
+//import cameraFeed from '../components/CameraFeed.vue'
+import { useWebSocket } from '../composables/useWebSocket'
 // Point this at your server's websocket endpoint
 const {
   // state
   status,
   // data
   edgeList: wsEdgeList,
+  disconnectedEdgeList: wsDisconnectedEdgeList,
   cameraList: wsCameraList,
   imageSrc,
   analysis,
-  activeCamera,
   connect,
   disconnect,
   // functions
@@ -22,7 +32,10 @@ const {
   listCameras,
   setpoint,
   viewCamera,
-  stopViewingCamera
+  stopViewingCamera,
+  forceRetryCamera,
+  forgetCameraRequest,
+  forgetEdge
 } = useWebSocket('ws://'+ location.hostname +':8080/gui_ws')
 
 //  Check if the websocket is connected
@@ -35,6 +48,7 @@ import sampleCameraList from '../assets/data/sampleCameraList.json'
 import sampleImageAnalysis from '../assets/data/sampleImageAnalysis.json'
 import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.json'
 import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json'
+import sampleDisconnectedEdgeList from '../assets/data/sampleDisconnectedEdgeList.json'
 const sampleCameras = ref(sampleCameraList.cameras)
 const sampleAnalysis = ref(sampleImageAnalysis.GUIImageAnalysis)
 const sampleCameraConfigData = ref(sampleCameraConfiguration.configurations)
@@ -76,14 +90,15 @@ const deviationAlerts = computed(() => {
                 let alertMsg = ''
                 let alertType = ''
 
-                if (analysis.deviation > analysis.warn_below_threshold) {
+                // green threshold
+                if (analysis.deviation >= analysis.warn_below_threshold && analysis.deviation <= analysis.warn_above_threshold) {
                     alertMsg = `[LOW] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                     alertType = 'success'
-                }
-                else if (analysis.deviation <= analysis.warn_below_threshold && analysis.deviation > analysis.alert_below_threshold) {
-                    alertMsg = `[MODERATE] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
-                    alertType = 'warning'
-                } else if (analysis.deviation <= analysis.alert_below_threshold) {
+                } else if ((analysis.deviation < analysis.warn_below_threshold && analysis.deviation >= analysis.alert_below_threshold) ||
+                            (analysis.deviation > analysis.warn_above_threshold && analysis.deviation <= analysis.alert_above_threshold)) {
+                                alertMsg = `[MODERATE] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
+                                alertType = 'warning'
+                } else if ((analysis.deviation < analysis.alert_below_threshold) || (analysis.deviation > analysis.alert_above_threshold)) {
                     alertMsg = `[HIGH] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                     alertType = 'danger'
                 }
@@ -104,19 +119,26 @@ const sortedDeviationAlerts = computed(() => {
             if (priority[a.alertType] !== priority[b.alertType]) {
                 return priority[a.alertType] - priority[b.alertType]
             }
-            return b.deviation - a.deviation
+            return a.deviation - b.deviation
         })
 })
-const disconnectionAlerts = computed(() => {
+const disconnectedMicroComs = computed(() => {
+    const disconnectedEdgeList = loadDisconnectedEdgesList.value
+    return disconnectedEdgeList
+    .map(disconnection => ({
+        ...disconnection,
+        alertMsg: `[DISCONNECTION] ${disconnection.name} has disconnected.`,
+        alertType: 'info'
+    }))
+})
+const disconnectedCameras = computed(() => {
     return mergedCameraData.value
-    .filter(connection => connection.microComState === 'Disconnected' || connection.state === 'Disconnected')
+    .filter(connection => connection.state === 'Disconnected')
     .map(disconnection => {
         let alertMsg = ''
         let alertType = 'info'
 
-        if (disconnection.microComState == 'Disconnected') {
-            alertMsg = `[DISCONNECTION] ${disconnection.microComName} has disconnected.`
-        } else if (disconnection.state == 'Disconnected') {
+        if (disconnection.state == 'Disconnected') {
             alertMsg = `[DISCONNECTION] ${disconnection.name} has disconnected.`
         }
         return {
@@ -126,9 +148,17 @@ const disconnectionAlerts = computed(() => {
         }
     })
 })
-// grab microCom list from websocket or sample data
-const loadEdgesList = computed(() => {
+const disconnectionAlerts = computed(() => {
+    return [...disconnectedMicroComs.value, ...disconnectedCameras.value]
+})
+// grab active microCom list from websocket or sample data
+const loadActiveEdgesList = computed(() => {
     const source = isLive.value && wsEdgeList.value.length > 0 ? wsEdgeList.value : sampleMicroComputerList.microComputers
+    return source
+})
+// grab disconnected microCom list from websocket or sample data
+const loadDisconnectedEdgesList = computed(() => {
+    const source = isLive.value && wsDisconnectedEdgeList.value.length > 0 ? wsDisconnectedEdgeList.value : sampleDisconnectedEdgeList.microComputers
     return source
 })
 // grab camera list from websocket or sample data
@@ -138,22 +168,22 @@ const loadCameraList = computed(() => {
 })
 // grab image analysis from websocket or sample data
 const loadImageAnalysis = computed(() => {
-    const source = isLive.value && analysis.value !== null > 0 ? analysis.value : null
+    const source = isLive.value && analysis.value !== null > 0 ? analysis.value : sampleImageAnalysis.GUIImageAnalysis
     return source
 })
 // merge camera list with microcomputer, image analysis & selection details
 const mergedCameraData = computed(() => {
     const camDataList = loadCameraList.value
     const imageAnalysisData = loadImageAnalysis.value
-    const edgeDataList = loadEdgesList.value
+    const edgeDataList = loadActiveEdgesList.value
     const result = []
 
     for (const camera of camDataList) {
 		let matchingData = ref(null)
 		if (imageAnalysisData !== null) {
-			if( imageAnalysisData.conn_id === camera.conn_id && imageAnalysisData.camera_id === camera.camera_id)	 {
-				matchingData = imageAnalysisData
-			} 
+            matchingData = imageAnalysisData.find(
+                analysis => analysis.conn_id === camera.conn_id && analysis.camera_id === camera.camera_id
+            )
 		}
         const matchingComData = edgeDataList.find(
             connection => connection.conn_id === camera.conn_id
@@ -334,19 +364,34 @@ const updateSetpoint = () => {
         console.error("The setpoint() function threw an error:", error)
     }*/
 }
+// button to send force retry camera command to server
+const forceRetryCameraBtn = (connId, cameraId) => {
+    forceRetryCamera(connId, cameraId)
+}
+// button to send forget camera command to server
+const forgetCameraBtn = (connId, cameraId) => {
+    forgetCameraRequest(connId, cameraId)
+}
+// button to send forget edge command to server
+const forgetEdgeBtn = (connId) => {
+    forgetEdge(connId)
+}
 // camera card traffic light system (using sample JSON data)
 function getCardColour(cam) {
     if (!cam) return 'bg-dark'
 
     const deviation = cam.deviation
-    const warning = cam.warn_below_threshold
-    const critical = cam.alert_below_threshold
+    const warnBelow = cam.warn_below_threshold
+    const warnAbove = cam.warn_above_threshold
+    const alertBelow = cam.alert_below_threshold
+    const alertAbove = cam.alert_above_threshold
 
-    if (deviation > warning) {
+    if (deviation >= warnBelow && deviation <= warnAbove) {
         return 'bg-success'
-    } else if (deviation <= warning && deviation > critical) {
-        return 'bg-warning'
-    } else if (deviation <= critical) {
+    } else if ((deviation < warnBelow && deviation >= alertBelow) ||
+                (deviation > warnAbove && deviation <= alertAbove)) {
+                    return 'bg-warning text-dark'
+    } else if ((deviation < alertBelow) || (deviation > alertAbove)) {
         return 'bg-danger'
     } else {
         return 'bg-dark'
@@ -376,6 +421,21 @@ function stopPolling() {
 
     liveFeedSrc.value = null
 }
+
+
+// --------------------
+//    Config Shortcut
+// --------------------
+function configureCamera(connID, cameraID) {
+  setSharedCamera(connID, cameraID);
+  router.push('/device-settings');
+}
+
+function configureMicroComputer(connID) {
+  setSharedMicroComputer(connID);
+  router.push('/device-settings');
+}
+
 // --------------------
 //        Watchers
 // --------------------
@@ -394,7 +454,9 @@ function stopPolling() {
 //        onMount and unMount
 // -------------------------------
 onMounted(async () => {
-    connect()
+  connect();
+  clearSharedDeviceData();
+
     // await fetchCameraConfig()
     // await fetchCameraInfo()
     // if (hasSelectedCamera.value) startPolling()
@@ -407,7 +469,7 @@ onUnmounted(() => {
 </script>
 <template>
     <div class="container">
-        <div class="row p-2 mt-2 mb-4">
+        <div class="row mt-2 mb-4">
                 <h3 class="cam-title">Alerts:
                     <button class="btn submit-btn" @click="toggleAlerts">
                         {{ alertsExpanded ? 'Collapse All' : 'Show All (' + (sortedDeviationAlerts.length + disconnectionAlerts.length) + ')' }}
@@ -417,7 +479,7 @@ onUnmounted(() => {
                     <div v-if="sortedDeviationAlerts.length > 0" class="text-center mt-2">
                         <div v-show="alertsExpanded">
                             <div v-for="alert in sortedDeviationAlerts" :key="alert.camera_id"
-                                :class="['alert mb-1', `alert-${alert.alertType}`, 'fade', 'show']" role="alert">
+                                :class="['alert mb-1', `alert-${alert.alertType}`]" role="alert">
                                 {{ alert.alertMsg }}
                             </div>
                         </div>
@@ -425,7 +487,7 @@ onUnmounted(() => {
                     <div v-if="disconnectionAlerts.length > 0" class="text-center mt-0">
                         <div v-show="alertsExpanded">
                             <div v-for="alert in disconnectionAlerts" :key="`${alert.conn_id}-${alert.camera_id}`"
-                                :class="['alert mb-1', `alert-${alert.alertType}`, 'fade', 'show']" role="alert">
+                                :class="['alert mb-1', `alert-${alert.alertType}`]" role="alert">
                                 {{ alert.alertMsg }}
                             </div>
                         </div>
@@ -436,17 +498,21 @@ onUnmounted(() => {
             <div class="col-lg-8 col-12 ps-0">
                 <h3 class="cam-title">Connections:</h3>
                     <div v-for="(section, conn_id) in activeMergedData" :key="conn_id">
-                        <h4 class="microCom-title">{{ section.microComName }}
-                            <span class="badge bg-secondary">
-                                {{ section.microComState }}
-                            </span>
-                        </h4>
-                        <div class="row d-flex justify-content-start p-2 g-2">
-                            <div class="col-3 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
-                                <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
-                                    <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
-                                        <h5 class="card-title">{{ cam.name }}</h5>
-                                            <p class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
+                        <div v-if="section.microComState === 'Active'">
+                            <h4 class="microCom-title d-flex flex-row gap-2">{{ section.microComName }}
+                                <span class="badge bg-secondary">
+                                    {{ section.microComState }}
+                                </span>
+                                <button type="button" class="badge submit-btn border-0"
+                                        @click="configureMicroComputer(section.conn_id)">Configure</button>
+                            </h4>
+                            <div class="row d-flex justify-content-start p-2 g-2">
+                                <div class="col-3 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
+                                    <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
+                                        <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
+                                            <h5 class="card-title">{{ cam.name }}</h5>
+                                                <p class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -459,21 +525,33 @@ onUnmounted(() => {
                         <tr>
                             <th scope="col" class="table-dark">Disconnected microComputers</th>
                         </tr>
-                        <template v-if="sampleMicroComputers.length === 0">
-                            <tr>
-                                <td>&nbsp</td>
-                            </tr>
-                        </template>
-                        <template v-else>
-                            <tr v-for="com in sampleMicroComputers" :key="com.conn_id">
-                                <td v-if="com.state === 'Disconnected'">{{ com.name }}</td>
-                            </tr>
-                        </template>
+                        <tr v-for="com in disconnectedMicroComs" :key="com.conn_id">
+                            <td v-if="com.state === 'Disconnected'">{{ com.name }}
+                                <div class="button-group">
+                                    <button class="btn submit-btn" @click="forgetEdge(com.conn_id)">Forget</button>
+                                </div>
+                            </td>
+                        </tr>
                         <tr>
                             <th scope="col" class="table-dark">Disconnected Cameras</th>
                         </tr>
                         <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
                             <td v-if="cam.state === 'Disconnected'">{{ cam.name }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="table border border-2 hardware-info">
+                    <tbody>
+                        <tr>
+                            <th scope="col" class="table-dark">Broken Cameras</th>
+                        </tr>
+                        <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
+                            <td v-if="cam.state === 'Broken'">{{ cam.name }}
+                                <div class="button-group">
+                                    <button class="btn submit-btn" @click="forceRetryCameraBtn(cam.conn_id, camera_id)">Force Retry</button>
+                                    <button class="btn submit-btn" @click="forgetCameraBtn(cam.conn_id, camera_id)">Forget</button>
+                                </div>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -512,17 +590,30 @@ onUnmounted(() => {
                                 <table class="table border border-2 hardware-info">
                                     <tbody>
                                         <tr>
-                                            <th class="bg-warning text-dark">Warning Threshold:</th>
-                                            <td>{{Math.round(selectedCameraInfo.warn_below_threshold * 100)}}-{{ Math.round(selectedCameraInfo.alert_below_threshold * 100) + '%' }}</td>
+                                            <th class="bg-danger text-white">Alert below:</th>
+                                            <td>{{ Math.round(selectedCameraInfo.alert_below_threshold * 100) + '%' }}</td>
                                         </tr>
                                         <tr>
-                                            <th class="bg-danger text-white">Critical Threshold:</th>
-                                            <td>Below {{ Math.round(selectedCameraInfo.alert_below_threshold * 100) + '%' }}</td>
+                                            <th class="bg-warning text-dark">Warn below:</th>
+                                            <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100) + '%' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="bg-success text-white">No alert:</th>
+                                            <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100)}}-{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="bg-warning text-dark">Warn above:</th>
+                                            <td>{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="bg-danger text-white">Alert above:</th>
+                                            <td>{{ Math.round(selectedCameraInfo.alert_above_threshold * 100) + '%' }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
-                                <div class="col-12 px-0">
-                                    <button class="btn submit-btn" :disabled="!selectedCameraId" @click="updateSetpoint">{{ isSetpointActive ? 'Update Setpoint' : 'Set Setpoint' }}</button>
+                                <div class="col-12 px-0 text-center d-flex flex-row justify-content-center gap-3">
+                                    <button class="btn submit-btn" :disabled="!selectedCameraId" @click="updateSetpoint">{{ isSetpointActive ? 'Recalibrate' : 'Calibrate' }}</button>
+                                    <button class="btn submit-btn" @click="configureCamera(selectedCameraInfo.conn_id,selectedCameraInfo.camera_id)">Configure</button>
                                 </div>
                             </div>
                         </div>
@@ -550,7 +641,7 @@ onUnmounted(() => {
 .selected-camera {
     border: 0.5rem solid lightsteelblue;
     box-shadow: 0 0 0.2rem steelblue;
-    color: var(--nav-title);
+    color: var(--camera-tab-text);
 }
 
 .feedbox {
@@ -585,6 +676,12 @@ onUnmounted(() => {
     overflow: hidden;
     border-collapse: separate;
     border-spacing: 0;
+}
+
+.button-group {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
 }
 
 .microCom-title {
