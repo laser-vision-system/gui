@@ -391,6 +391,4 @@ input:checked+.slider:before {
 .number-input {
     width: 5rem;
 }
-
-
 </style>

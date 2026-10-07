@@ -611,7 +611,6 @@ onUnmounted(() => {
                                         </tr>
                                     </tbody>
                                 </table>
-                                <div class="col-12 px-0">
                                 <div class="col-12 px-0 text-center d-flex flex-row justify-content-center gap-3">
                                     <button class="btn submit-btn" :disabled="!selectedCameraId" @click="updateSetpoint">{{ isSetpointActive ? 'Recalibrate' : 'Calibrate' }}</button>
                                     <button class="btn submit-btn" @click="configureCamera(selectedCameraInfo.conn_id,selectedCameraInfo.camera_id)">Configure</button>
