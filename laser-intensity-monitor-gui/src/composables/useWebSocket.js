@@ -10,6 +10,8 @@ export function useWebSocket(url) {
   // Hashmap: < conn_id, name >
   const edges = ref({});
   const edgeList = computed(() => Object.values(edges.value));
+  const disconnectedEdges = ref({});
+  const disconnectedEdgeList = computed(() => Object.values(disconnectedEdges.value));
   // cameras hashmap:
   // Hashmap: < (conn_id , camera_id), name, state >
   // CameraDetails: { name, state, warnBelowThreshold, alertBelowThreshold }
@@ -194,6 +196,7 @@ export function useWebSocket(url) {
       error.value = null;
       startHeartbeat();
       listEdges();
+      listDisconnectedEdges();
       listCameras();
       getDefaultThresholds();
       listProcessingTypes();
@@ -294,6 +297,17 @@ export function useWebSocket(url) {
     return normalised;
   }
 
+  // normalise the disconnected Edge hash map into a java array
+  function normaliseDisconnectedEdgeMap(raw) {
+    const normalised = {};
+    if (!raw) return normalised;
+    for (const [key, name] of Object.entries(raw)) {
+      const connId = key;
+      normalised[connId] = { conn_id: connId, name, state: 'Disconnected' };
+    }
+    return normalised;
+  }
+
   // parse the configuration payload
   function parseConfigurationPayload(data) {
     if (typeof data !== 'string') return data ?? null;
@@ -318,6 +332,10 @@ export function useWebSocket(url) {
       // list of All edge (micro computers)
       case 'ListOfEdges':
         edges.value = normaliseEdgeMap(data?.edges);
+        break;
+      // list of All disconnected edges (micro computers)
+      case 'DisconnectedEdges':
+        disconnectedEdges.value = normaliseDisconnectedEdgeMap(data?.disconnectedEdges);
         break;
       // Camera Connect  (a new camera has come online)
       case 'CameraConnected': {
@@ -419,6 +437,11 @@ export function useWebSocket(url) {
   // List the Edge micro computers
   function listEdges() {
     send('ListEdges');
+  }
+
+  // List the disconnected Edge micro computers
+  function listDisconnectedEdges() {
+    send('ListDisconnectedEdges');
   }
 
   // Set the name of Edge micro computers
@@ -538,6 +561,13 @@ export function useWebSocket(url) {
     });
   }
 
+  // Forget Edge function
+  function forgetEdge(connId) {
+    send('ForgetEdge', {
+      conn_id: connId
+    });
+  }
+
   // request to the server to list the programing types
   function listProcessingTypes() {
     send('ListProcessingTypes');
@@ -565,6 +595,8 @@ export function useWebSocket(url) {
     // Data
     edges,
     edgeList,
+    disconnectedEdges,
+    disconnectedEdgeList,
     cameras,
     cameraList,
     imageSrc,
@@ -579,6 +611,7 @@ export function useWebSocket(url) {
     disconnect,
     // Request functions
     listEdges,
+    listDisconnectedEdges,
     setEdgeName,
     setEdgeProcessingType,
     listCameras,
@@ -593,6 +626,7 @@ export function useWebSocket(url) {
     setpoint,
     setpointAll,
     forgetCameraRequest,
+    forgetEdge,
     forceRetryCamera,
     listProcessingTypes,
   }
