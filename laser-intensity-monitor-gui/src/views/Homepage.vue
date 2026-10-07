@@ -1,10 +1,20 @@
 <script setup>
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
-//import cameraFeed from '../components/CameraFeed.vue'
-import { useWebSocket } from '../composables/useWebSocket'
+
+// --------------------
+//   Config Shortcut
+// --------------------
+// import router and useSharedDeviceData.js for shortcuts
+import { useRouter } from 'vue-router'
+import { useSharedDeviceData } from '../composables/useSharedDeviceData'
+const router = useRouter();
+const { setSharedMicroComputer, setSharedCamera, clearSharedDeviceData } = useSharedDeviceData();
+
 // --------------------
 //   WebSocket
 // --------------------
+//import cameraFeed from '../components/CameraFeed.vue'
+import { useWebSocket } from '../composables/useWebSocket'
 // Point this at your server's websocket endpoint
 const {
   // state
@@ -82,7 +92,7 @@ const deviationAlerts = computed(() => {
                 if (analysis.deviation >= analysis.warn_below_threshold && analysis.deviation <= analysis.warn_above_threshold) {
                     alertMsg = `[LOW] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                     alertType = 'success'
-                } else if ((analysis.deviation < analysis.warn_below_threshold && analysis.deviation >= analysis.alert_below_threshold) || 
+                } else if ((analysis.deviation < analysis.warn_below_threshold && analysis.deviation >= analysis.alert_below_threshold) ||
                             (analysis.deviation > analysis.warn_above_threshold && analysis.deviation <= analysis.alert_above_threshold)) {
                                 alertMsg = `[MODERATE] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                                 alertType = 'warning'
@@ -142,7 +152,7 @@ const disconnectedCameras = computed(() => {
             alertMsg,
             alertType
         }
-    })    
+    })
 })
 // gets rid of duplicate disconnected microcomputer alerts
 const disconnectedMicroComAlerts = computed(() => {
@@ -418,6 +428,21 @@ function stopPolling() {
 
     liveFeedSrc.value = null
 }
+
+
+// --------------------
+//    Config Shortcut
+// --------------------
+function configureCamera(connID, cameraID) {
+  setSharedCamera(connID, cameraID);
+  router.push('/device-settings');
+}
+
+function configureMicroComputer(connID) {
+  setSharedMicroComputer(connID);
+  router.push('/device-settings');
+}
+
 // --------------------
 //        Watchers
 // --------------------
@@ -436,7 +461,9 @@ function stopPolling() {
 //        onMount and unMount
 // -------------------------------
 onMounted(async () => {
-    connect()
+  connect();
+  clearSharedDeviceData();
+
     // await fetchCameraConfig()
     // await fetchCameraInfo()
     // if (hasSelectedCamera.value) startPolling()
@@ -479,10 +506,12 @@ onUnmounted(() => {
                 <h3 class="cam-title">Connections:</h3>
                     <div v-for="(section, conn_id) in activeMergedData" :key="conn_id">
                         <div v-if="section.microComState === 'Active'">
-                            <h4 class="microCom-title">{{ section.microComName }}
+                            <h4 class="microCom-title d-flex flex-row gap-2">{{ section.microComName }}
                                 <span class="badge bg-secondary">
                                     {{ section.microComState }}
                                 </span>
+                                <button type="button" class="badge submit-btn border-0"
+                                        @click="configureMicroComputer(section.conn_id)">Configure</button>
                             </h4>
                             <div class="row d-flex justify-content-start p-2 g-2">
                                 <div class="col-3 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
@@ -573,7 +602,7 @@ onUnmounted(() => {
                                         <tr>
                                             <th class="bg-danger text-white">Alert below:</th>
                                             <td>{{ Math.round(selectedCameraInfo.alert_below_threshold * 100) + '%' }}</td>
-                                        </tr>                                        
+                                        </tr>
                                         <tr>
                                             <th class="bg-warning text-dark">Warn below:</th>
                                             <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100) + '%' }}</td>
@@ -592,8 +621,9 @@ onUnmounted(() => {
                                         </tr>
                                     </tbody>
                                 </table>
-                                <div class="col-12 px-0">
+                                <div class="col-12 px-0 text-center d-flex flex-row justify-content-center gap-3">
                                     <button class="btn submit-btn" :disabled="!selectedCameraId" @click="updateSetpoint">{{ isSetpointActive ? 'Update Setpoint' : 'Set Setpoint' }}</button>
+                                    <button class="btn submit-btn" @click="configureCamera(selectedCameraInfo.conn_id,selectedCameraInfo.camera_id)">Configure</button>
                                 </div>
                             </div>
                         </div>
