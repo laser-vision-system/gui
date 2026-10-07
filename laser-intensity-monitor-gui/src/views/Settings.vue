@@ -114,8 +114,8 @@ async function postDefaultServerSettingsData() {
     },
     body: JSON.stringify({
       // add check blank handling
-      websocket_poll_interval:  msToDuration(checkBlank(serverSettings.websocket_poll_interval.value, serverSettingsData.value?.websocket_poserverSettingsData)),
-      update_delay: msToDuration(checkBlank(serverSettings.update_delay.value, serverSettingsData.value?.update_delay)),
+      websocket_poll_interval:  msToDuration(checkBlank(serverSettings.websocket_poll_interval.value, durationToMs(serverSettingsData.value?.websocket_poll_interval))),
+      update_delay: msToDuration(checkBlank(serverSettings.update_delay.value, durationToMs(serverSettingsData.value?.update_delay))),
       camera_err_decrement: checkBlank(serverSettings.camera_err_decrement.value, serverSettingsData.value?.camera_err_decrement),
       camera_err_increment: checkBlank(serverSettings.camera_err_increment.value, serverSettingsData.value?.camera_err_increment),
       camera_err_threshold: checkBlank(serverSettings.camera_err_threshold.value, serverSettingsData.value?.camera_err_threshold),
@@ -147,6 +147,8 @@ async function postDefaultServerSettingsData() {
 // -------------------------------
 //       Helper Methods
 // -------------------------------
+
+// function to check if the duration is blank or not
 
 // Duration rust data type to ms
 function durationToMs(duration) {
@@ -211,8 +213,10 @@ function validateServerSetting(name, min, max, value) {
 
 function validateAllServerSettings() {
   let result = true;
-  for (const setting in serverSettings) {
-    result = validateServerSetting(setting.name, setting.min, setting.max, setting.value);
+  for (const setting of Object.values(serverSettings)) {
+    if (validateServerSetting(setting.name, setting.min, setting.max, setting.value)) {
+      result = false;
+    }
   }
   return result;
 }
@@ -264,8 +268,7 @@ onMounted(() => {
                     <img
                     :src="isServer ? arrowDown : arrowUp"
                     alt="toggle button" width="30" height="30" class="toggle-button"
-                    @click="isServer = !isServer"
-                    >
+                    @click="isServer = !isServer">
                     Sever Settings
                 </h2>
                 <!-- Server Defaults -->
@@ -275,8 +278,7 @@ onMounted(() => {
                         <img
                         :src="isSetServerDefault ? arrowDown : arrowUp"
                         alt="toggle button" width="25" height="25" class="toggle-button"
-                        @click="isSetServerDefault = !isSetServerDefault"
-                        >
+                        @click="isSetServerDefault = !isSetServerDefault">
                         Set Server Defaults
                     </h3>
                     <div v-if="isSetServerDefault" v-for="setting in serverSettings">
@@ -289,7 +291,7 @@ onMounted(() => {
                             :max="setting.max"
                             :step="setting.step">
                             <input
-                            type="number" class="number-input" id="poll-interval-number"
+                            type="number" class="number-input"
                             v-model.number="setting.value"
                             :min="setting.min"
                             :max="setting.max"
