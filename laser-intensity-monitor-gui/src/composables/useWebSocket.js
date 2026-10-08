@@ -303,7 +303,7 @@ export function useWebSocket(url) {
     if (!raw) return normalised;
     for (const [key, name] of Object.entries(raw)) {
       const connId = key;
-      normalised[connId] = { conn_id: connId, name, state: 'Disconnected' };
+      normalised[connId] = { conn_id: connId, name: name };
     }
     return normalised;
   }
@@ -564,7 +564,7 @@ export function useWebSocket(url) {
   // Forget Edge function
   function forgetEdge(connId) {
     send('ForgetEdge', {
-      conn_id: connId
+      conn: connId
     });
   }
 
