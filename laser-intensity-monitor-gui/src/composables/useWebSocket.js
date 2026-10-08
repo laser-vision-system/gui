@@ -335,7 +335,7 @@ export function useWebSocket(url) {
         break;
       // list of All disconnected edges (micro computers)
       case 'DisconnectedEdges':
-        disconnectedEdges.value = normaliseDisconnectedEdgeMap(data?.disconnectedEdges);
+        disconnectedEdges.value = normaliseDisconnectedEdgeMap(data?.edges);
         break;
       // Camera Connect  (a new camera has come online)
       case 'CameraConnected': {
