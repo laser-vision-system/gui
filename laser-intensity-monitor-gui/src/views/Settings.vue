@@ -29,13 +29,11 @@ const urlPostServerDefault = ref('/api/write_default_config');
 
 // states
 const saveState = ref('');
-const isLive = ref(false);
 
 // Data from server
 const serverSettingsData = ref(null);
 
 // User input data
-
 const serverSettings = reactive({
   websocket_poll_interval: {
     value: null,
@@ -90,16 +88,14 @@ const validationServerDefaultsErrors = ref([]);
 // used for fetching the current values for the Server settings page.
 async function getDefaultSettings() {
   try {
-    const response = await fetch(urlGetServerDefault.value);
+    const response = await fetch(urlGetServerDefault.value, { cache: 'no-store' });
     if (!response.ok) {
       throw new Error(`HTTP error: ${response.status}`);
     }
     const data = await response.json();
     serverSettingsData.value = data;
-    isLive.value = true;
   } catch (error){
     console.error('Error fetching camera data:', error);
-    isLive.value = false;
   }
 }
 
@@ -165,7 +161,6 @@ function msToDuration(ms) {
 // load data
 async function loadServerDefaultData() {
   await getDefaultSettings();
-  if (!isLive.value) return;
   // load the current default values
   serverSettings.websocket_poll_interval.value = durationToMs(serverSettingsData.value.websocket_poll_interval);
   serverSettings.update_delay.value = durationToMs(serverSettingsData.value.update_delay);
@@ -237,12 +232,6 @@ onMounted(() => {
 </script>
 <template>
     <div class="container">
-        <!-- for testing remove in final product -->
-        <div class="text-center mb-2 p-1">
-            <span v-if="isLive" class="badge bg-success">Live: Connected to server</span>
-            <span v-else class="badge bg-secondary">Offline: Showing sample data for local testing</span>
-        </div>
-        <!-- for testing remove in final product -->
         <div class="row p-3">
             <!-- GUI Settings -->
             <h2 class="config-title">
