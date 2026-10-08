@@ -37,11 +37,11 @@ const serverSettingsData = ref(null);
 const serverSettings = reactive({
   websocket_poll_interval: {
     value: null,
-    min: 1000,
-    max: 30000,
-    step: 10,
+    min: 1,
+    max: 1000,
+    step: 1,
     name: 'Web-Socket Poll Interval',
-    default: 1500,
+    default: 10,
   },
   update_delay: {
     value: null,
@@ -49,7 +49,7 @@ const serverSettings = reactive({
     max: 10000,
     step: 10,
     name: 'Update Delay',
-    default: 500,
+    default: 1000,
   },
   camera_err_decrement: {
     value: null,
@@ -110,11 +110,13 @@ async function postDefaultServerSettingsData() {
     },
     body: JSON.stringify({
       // add check blank handling
-      websocket_poll_interval:  msToDuration(checkBlank(serverSettings.websocket_poll_interval.value, durationToMs(serverSettingsData.value?.websocket_poll_interval))),
-      update_delay: msToDuration(checkBlank(serverSettings.update_delay.value, durationToMs(serverSettingsData.value?.update_delay))),
-      camera_err_decrement: checkBlank(serverSettings.camera_err_decrement.value, serverSettingsData.value?.camera_err_decrement),
-      camera_err_increment: checkBlank(serverSettings.camera_err_increment.value, serverSettingsData.value?.camera_err_increment),
-      camera_err_threshold: checkBlank(serverSettings.camera_err_threshold.value, serverSettingsData.value?.camera_err_threshold),
+      json: {
+        websocket_poll_interval:  msToDuration(checkBlank(serverSettings.websocket_poll_interval.value, durationToMs(serverSettingsData.value?.websocket_poll_interval))),
+        update_delay: msToDuration(checkBlank(serverSettings.update_delay.value, durationToMs(serverSettingsData.value?.update_delay))),
+        camera_err_decrement: checkBlank(serverSettings.camera_err_decrement.value, serverSettingsData.value?.camera_err_decrement),
+        camera_err_increment: checkBlank(serverSettings.camera_err_increment.value, serverSettingsData.value?.camera_err_increment),
+        camera_err_threshold: checkBlank(serverSettings.camera_err_threshold.value, serverSettingsData.value?.camera_err_threshold),
+        },
     }),
   };
 
