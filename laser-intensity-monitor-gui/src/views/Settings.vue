@@ -110,7 +110,7 @@ async function postDefaultServerSettingsData() {
     },
     body: JSON.stringify({
       // add check blank handling
-      json: {
+      settings: {
         websocket_poll_interval:  msToDuration(checkBlank(serverSettings.websocket_poll_interval.value, durationToMs(serverSettingsData.value?.websocket_poll_interval))),
         update_delay: msToDuration(checkBlank(serverSettings.update_delay.value, durationToMs(serverSettingsData.value?.update_delay))),
         camera_err_decrement: checkBlank(serverSettings.camera_err_decrement.value, serverSettingsData.value?.camera_err_decrement),
