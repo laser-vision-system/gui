@@ -31,6 +31,3 @@ export function useSharedDeviceData() {
     clearAllSharedDeviceData,
   }
 }
-// selected camera info
-
-// selected micro camera info

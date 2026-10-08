@@ -930,8 +930,7 @@ onMounted(() => {
                                         <ConfirmationBox
                                         v-model="showSelectVisionProcessingConfrim"
                                         message="Please click Confrim to chanage the Vision Processing Method"
-                                        :onConfirmFunction="submitVisionProcessing"
-                                        />
+                                        :onConfirmFunction="submitVisionProcessing"/>
                                     </div>
                                 </div>
                                 <p v-if="feedback.visionProcessing"
@@ -973,8 +972,7 @@ onMounted(() => {
                                     <ConfirmationBox
                                     v-model="showRenameCameraConfrim"
                                     :message="'Rename the selected camera to ' + newCameraName + '?'"
-                                    :onConfirmFunction="renameCamera"
-                                    />
+                                    :onConfirmFunction="renameCamera"/>
                                 </div>
                             </div>
                             <p v-if="feedback.camera"
@@ -1106,14 +1104,12 @@ onMounted(() => {
                                     <ConfirmationBox
                                         v-model="showSaveAllControlsConfrim"
                                         message="Would you like to save all camera controls?"
-                                        :onConfirmFunction="saveChanges"
-                                    />
+                                        :onConfirmFunction="saveChanges"/>
                                     <button class="btn submit-btn" @click="showResetAllControlsConfrim = true">Reset Camera Controls</button>
                                     <ConfirmationBox
                                         v-model="showResetAllControlsConfrim"
                                         message="Would you like to reset all camera controls?"
-                                        :onConfirmFunction="resetControlConfig"
-                                    />
+                                        :onConfirmFunction="resetControlConfig"/>
                                 </div>
                                 <p v-if="feedback.controls"
                                    :class="feedback.controls.ok ? 'success' : 'error'"
@@ -1168,20 +1164,17 @@ onMounted(() => {
                                     <ConfirmationBox
                                         v-model="showSaveThresholdsConfrim"
                                         message="Would you like to save the Deviation Thresholds?"
-                                        :onConfirmFunction="saveThresholds"
-                                    />
+                                        :onConfirmFunction="saveThresholds"/>
                                     <button type="button" class="btn submit-btn" @click="showResetThresholdsConfrim = true">Reset to Default</button>
                                     <ConfirmationBox
                                         v-model="showResetThresholdsConfrim"
                                         message="Would you like to reset all Devation Thresholds to default?"
-                                        :onConfirmFunction="resetAllThresholds"
-                                    />
+                                        :onConfirmFunction="resetAllThresholds"/>
                                     <button type="button" class="btn submit-btn" @click="requestSaveDefaultThresholds">Set Global Default Thresholds</button>
                                     <ConfirmationBox
                                         v-model="showSetDefaultThresholdConfrim"
                                         message="Would you like to set the defualt value for the thresholds?"
-                                        :onConfirmFunction="setServerDefaultThreshold"
-                                    />
+                                        :onConfirmFunction="setServerDefaultThreshold"/>
                                 </div>
                                 <p v-if="feedback.thresholds"
                                    :class="feedback.thresholds.ok ? 'success' : 'error'"
@@ -1238,7 +1231,4 @@ option:hover{
     object-fit: contain;
     max-height: 500px;
 }
-
-
-
 </style>
