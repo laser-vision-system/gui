@@ -527,9 +527,9 @@ onUnmounted(() => {
                             <th scope="col" class="table-dark">Disconnected microComputers</th>
                         </tr>
                         <tr v-for="com in disconnectedMicroComs" :key="com.conn_id">
-                            <td v-if="com.state === 'Disconnected'">{{ com.name }}
+                            <td>{{ com.name }}
                                 <div class="button-group">
-                                    <button class="btn submit-btn" @click="forgetEdge(com.conn_id)">Forget</button>
+                                    <button class="btn submit-btn" @click="forgetEdgeBtn(com.conn_id)">Forget</button>
                                 </div>
                             </td>
                         </tr>
