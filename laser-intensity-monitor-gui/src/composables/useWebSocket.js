@@ -281,7 +281,7 @@ export function useWebSocket(url) {
         warn_below_threshold: details?.warn_below_threshold ?? null,
         alert_below_threshold: details?.alert_below_threshold ?? null,
         warn_above_threshold: details?.warn_above_threshold ?? null,
-        alert_above_threshold: details?.alert_above_treshold ?? null,
+        alert_above_threshold: details?.alert_above_threshold ?? null,
       };
     }
     return normalised;

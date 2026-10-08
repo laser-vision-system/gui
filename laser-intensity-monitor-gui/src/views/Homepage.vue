@@ -192,7 +192,7 @@ const mergedCameraData = computed(() => {
         result.push({
             ...camera,
             intensity: matchingData ? matchingData.intensity : 0,
-            deviation: matchingData ? matchingData.deviation : 0,
+            deviation: matchingData && !isNaN(Number(matchingData.deviation)) ? Number(matchingData.deviation) : '--',
             microComName: matchingComData ? matchingComData.name : null,
             microComState: matchingComData ? matchingComData.state : null,
             isSelected: selectedCameraId.value === `${camera.conn_id}-${camera.camera_id}`
@@ -511,7 +511,8 @@ onUnmounted(() => {
                                     <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
                                         <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
                                             <h5 class="card-title">{{ cam.name }}</h5>
-                                                <p class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
+                                                <p v-if="Number(cam.deviation)" class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
+                                                <p v-else class="card-text">{{ cam.deviation }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -611,7 +612,7 @@ onUnmounted(() => {
                                         </tr>
                                     </tbody>
                                 </table>
-                                <div class="col-12 px-0 text-center d-flex flex-row justify-content-center gap-3">
+                                <div class="button-group">
                                     <button class="btn submit-btn" :disabled="!selectedCameraId" @click="updateSetpoint">{{ isSetpointActive ? 'Recalibrate' : 'Calibrate' }}</button>
                                     <button class="btn submit-btn" @click="configureCamera(selectedCameraInfo.conn_id,selectedCameraInfo.camera_id)">Configure</button>
                                 </div>
