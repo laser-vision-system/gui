@@ -65,7 +65,7 @@ const serverSettings = reactive({
     max: 64,
     step: 1,
     name: 'Camera Error Increment',
-    default: 1,
+    default: 2,
   },
   camera_err_threshold: {
     value: null,
