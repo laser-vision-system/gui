@@ -564,7 +564,7 @@ export function useWebSocket(url) {
   // Forget Edge function
   function forgetEdge(connId) {
     send('ForgetEdge', {
-      conn_id: connId
+      conn: connId
     });
   }
 
