@@ -321,6 +321,7 @@ onMounted(() => {
 </template>
 <style scoped>
 .switch {
+    margin-left: 4.5rem;
     position: relative;
     display: inline-block;
     width: 60px;
