@@ -959,7 +959,7 @@ onMounted(() => {
                                 <select class="menu-input" id="cameraSelect" required v-model="selectedCamera">
                                     <option value="" disabled selected>Please select a camera</option>
                                     <option v-for="(cam, index) in activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`" :value="cam">
-                                        [ {{edgeName(cam.conn_id)}} - {{index + 1}} ] : {{cam.name}}
+                                        [ {{edgeName(cam.conn_id)}} - {{index + 1}} ] : {{cam.name.name}}
                                     </option>
                                 </select>
                             </div>
