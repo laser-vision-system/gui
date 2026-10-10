@@ -276,7 +276,7 @@ export function useWebSocket(url) {
       normalised[`${connId},${cameraId}`] = {
         conn_id: connId,
         camera_id: cameraId,
-        name: JASON.parse(details?.name) ?? '', // for hidden nested JSON value.
+        name: details?.name ?? '', // for hidden nested JSON value.
         state: details?.state ?? null,
         warn_below_threshold: details?.warn_below_threshold ?? null,
         alert_below_threshold: details?.alert_below_threshold ?? null,
