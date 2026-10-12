@@ -19,7 +19,7 @@ docker pull ghcr.io/cos40005-p12/gui-amd64:BRANCH
 ```
 If you want to make and run a container for testing run the following:
 ```
-sudo docker run -p 5173:8080 -it --rm --name gui ghcr.io/cos40005-p12/gui-CPUARCHITECTURE:BRANCH
+sudo docker run -p 5173:8080 --rm --name gui ghcr.io/cos40005-p12/gui-CPUARCHITECTURE:BRANCH
 ```
 For deployment on the server instead run the following:
 ```

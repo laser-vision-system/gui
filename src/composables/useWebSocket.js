@@ -18,7 +18,7 @@ export function useWebSocket(url) {
   // state: 'Active' | 'Disconnected' | 'Broken' | 'Limbo' | 'Invalid'
   const cameras = ref({});
   // camera list java array
-  // Array: { connId, cameraId, name: {name: '', description: '', extra: '', index: ''}, state}
+  // Array: { connId, cameraId, name, state }
   const cameraList = computed(() => Object.values(cameras.value));
   // active camera feed
   const imageSrc = ref('');
@@ -276,7 +276,7 @@ export function useWebSocket(url) {
       normalised[`${connId},${cameraId}`] = {
         conn_id: connId,
         camera_id: cameraId,
-        name: details?.name ?? '', // for hidden nested JSON value.
+        name: details?.name ?? '',
         state: details?.state ?? null,
         warn_below_threshold: details?.warn_below_threshold ?? null,
         alert_below_threshold: details?.alert_below_threshold ?? null,
