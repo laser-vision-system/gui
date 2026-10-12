@@ -36,7 +36,7 @@ export function useWebSocket(url) {
   const serverAlert = ref(null);
 
   // Array of Known ID feilds  just add any more ids that are needed to this array of the time comes
-  const ID_KEYS = ['conn_id', 'camera_id', 'edge_id', 'conn'];
+  const ID_KEYS = ['conn_id', 'camera_id', 'edge_id' , 'conn'];
   // Creates regex alturation string out of the array of ids
   const ID_KEYS_REGEX_OPTIONS = ID_KEYS.join('|');
   //

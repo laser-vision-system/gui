@@ -77,7 +77,6 @@ const liveFeedSrc = ref(null) // dynamic image source
 const selectedCameraId = ref(null)
 const cameraSetpoints = ref({})
 const alertsExpanded = ref(true) // alert system variable
-const emptyArray = ref([])
 // --------------------
 //        Computed
 // --------------------
@@ -154,17 +153,17 @@ const disconnectionAlerts = computed(() => {
 })
 // grab active microCom list from websocket or sample data
 const loadActiveEdgesList = computed(() => {
-    const source = isLive.value && wsEdgeList.value.length > 0 ? wsEdgeList.value : emptyArray
+    const source = isLive.value && wsEdgeList.value.length > 0 ? wsEdgeList.value : sampleMicroComputerList.microComputers
     return source
 })
 // grab disconnected microCom list from websocket or sample data
 const loadDisconnectedEdgesList = computed(() => {
-    const source = isLive.value && wsDisconnectedEdgeList.value.length > 0 ? wsDisconnectedEdgeList.value : emptyArray
+    const source = isLive.value && wsDisconnectedEdgeList.value.length > 0 ? wsDisconnectedEdgeList.value : sampleDisconnectedEdgeList.microComputers
     return source
 })
 // grab camera list from websocket or sample data
 const loadCameraList = computed(() => {
-    const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : emptyArray
+    const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : sampleCameraList.cameras
     return source
 })
 // grab image analysis from websocket or sample data
