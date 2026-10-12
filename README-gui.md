@@ -1,4 +1,4 @@
-# Laser Intensity Monitor GUI
+# GUI
 
 ## Framework Versions
 ### Bootstrap 5.3.8

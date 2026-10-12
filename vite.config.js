@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 
 export default defineConfig({
+  // when deployed add the  path loaction of the development build files on the server to the base variable.
   base: "",
   plugins: [
     vue(),
