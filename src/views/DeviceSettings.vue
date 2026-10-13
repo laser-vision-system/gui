@@ -14,7 +14,9 @@ const { sharedMicroComputer, sharedCamera } = useSharedDeviceData();
 //   Multi Thumb range slider
 // -----------------------------
 import MultiThumbSlider from '../components/MultiThumbRangeSlider.vue';
-
+// persistant data for devation threshold range slider min max
+import {usePersistantSliderRange} from '../composables/usePersistantSliderRange';
+const { sliderRange, saveDeviationSliderRange, revertDeviationSliderRange, resetDeviationSliderRange } = usePersistantSliderRange();
 // Diviation configration
 const newAlertBelow = ref(null);
 const newWarnBelow = ref(null);
@@ -35,6 +37,9 @@ const showResetFrameRateConfrim = ref(false);// probably not needed will get rid
 const showSaveThresholdsConfrim = ref(false);
 const showResetThresholdsConfrim = ref(false);
 const showSetDefaultThresholdConfrim = ref(false);
+const showSetThresholdRange = ref(false);
+const showCancelThresholdRange = ref(false);
+const showDefautThresholdRange = ref(false);
 
 // -------------------------
 //   Toggle section values
@@ -45,6 +50,7 @@ const isCameraSection = ref(true);
 const isRenameCameraSection = ref(true);
 const isControlsSection = ref(true);
 const isDeviationSection = ref(true);
+const isDeviationMinMaxConfigure = ref(false);
 
 
 // --------------------
@@ -68,7 +74,6 @@ const {
   listEdges,
   setEdgeName,
   setEdgeProcessingType,
-  listProcessingTypes,
   // Cameras
   listCameras,
   viewCamera,
@@ -132,9 +137,11 @@ const newExposureAbsolute = ref(null); // needs validation
 const newAutoExposure = ref(null);
 // Validation Errors
 const divationErrors = ref([]);
+const divationSliderRangeErrors = ref([]);
 const cameraControlErrors = ref([]);
 const cameraNameErrors = ref([]);
 const microComputerNameErrors = ref([]);
+
 
 // -------------------------
 //   Send feedback messages
@@ -145,6 +152,7 @@ const feedback = reactive({
   camera: null,
   controls: null,
   thresholds: null,
+  thresholdsRange: null,
 });
 
 const FEEDBACK_DURATION = 4000; // in ms
@@ -251,10 +259,6 @@ function validateAllCameraControlsMinMax() {
   return result;
 }
 
-// Validate Camera name
-function validateCameraName() {
-
-}
 
 // Validate Divation Thresholds:
 // ASK IF WE NEED A DYNAMIC MAX VALUE FOR THE THRESHOLDS and add it to the api route
@@ -315,11 +319,42 @@ function validateDivation() {
   return result;
 }
 
+// Threshold Range validation
+function validateThresholdRange() {
+  divationSliderRangeErrors.value = [];
+  let result = true;
+  if (!Number.isInteger(sliderRange.value.min)) {
+    divationSliderRangeErrors.value.push(`Warning: min: ${sliderRange.value.min} must be a whole number`);
+    return false;
+  }
+  if (!Number.isInteger(sliderRange.value.max)) {
+    divationSliderRangeErrors.value.push(`Warning: max: ${sliderRange.value.max} must be a whole number`);
+    return false;
+  }
+  if (sliderRange.value.min < THRESHOLD_MIN || sliderRange.value.min >= sliderRange.value.max) {
+    divationSliderRangeErrors.value.push(`Warning: min: ${sliderRange.value.min} is out of bounds`);
+    return false;
+  }
+  if (sliderRange.value.max > THRESHOLD_MAX || sliderRange.value.max <= sliderRange.value.min) {
+    divationSliderRangeErrors.value.push(`Warning: max: ${sliderRange.value.max} is out of bounds`);
+    return false;
+  }
+  return result;
+}
+
 // Validate MicroComputer name
 function validateMicroComputerName() {
 
 }
 
+// Validate Camera name
+function validateCameraName() {
+
+}
+// request functions for the validation before save / sending functionalitly.
+function requestSetSliderRange() {
+  if (validateThresholdRange()) showSetThresholdRange.value = true;
+}
 function requestSaveControls() {
   if (validateAllCameraControlsMinMax()) showSaveAllControlsConfrim.value = true;
 }
@@ -328,6 +363,15 @@ function requestSaveThresholds() {
 }
 function requestSaveDefaultThresholds() {
   if (validateDivation()) showSetDefaultThresholdConfrim.value = true;
+}
+
+// save confrimation for local Storage
+function saveConfrimThresholdRange() {
+  if (saveDeviationSliderRange()) {
+    showFeedback('thresholdsRange', true, 'Thresholds Range has been saved successfully');
+  } else {
+    showFeedback('thresholdsRange', false, 'Error: Threshold range did not save successfully ');
+  }
 }
 
 // when micro comp is clicked/ selected clear the value for selected camera to aviod errors.
@@ -1128,14 +1172,12 @@ onMounted(() => {
                                     <button class="btn submit-btn" @click="showSaveFrameRateConfrim = true">Save Frame Rate</button>
                                     <ConfirmationBox
                                         v-model="showSaveFrameRateConfrim"
-                                        message="Would you like to save the frame rate?"
-                                    />
+                                        message="Would you like to save the frame rate?"/>
                                     <button type="button" class="btn submit-btn" @click="showResetFrameRateConfrim = true">Reset Frame Rate</button>
                                     <ConfirmationBox
                                         v-model="showResetFrameRateConfrim"
                                         message="Would you like to reset the frame rate?"
-                                        :onConfirmFunction="setDefaultFPS"
-                                    />
+                                        :onConfirmFunction="setDefaultFPS"/>
                                 </div>
                             </div>
                             <!-- DIVIATION THRESHOLDS -->
@@ -1146,15 +1188,37 @@ onMounted(() => {
                                 alt="toggle button" width="25" height="25" class="toggle-button"
                                 @click="isDeviationSection = !isDeviationSection">
                                 Deviation Thresholds
+                                <button class="btn submit-btn" @click="isDeviationMinMaxConfigure = !isDeviationMinMaxConfigure">Configure Range</button>
                             </h4>
                             <div v-if="isDeviationSection">
+                                <div v-if="isDeviationMinMaxConfigure">
+                                    <div class="text-center d-flex flex-row justify-content-center gap-3 deviation-range-slider">
+                                        <label for="slider-range-min" class="config-label">Min</label>
+                                        <input type="number" id="slider-range-min" class="number-input" v-model.number="sliderRange.min" :min="THRESHOLD_MIN" :max="sliderRange.max - 1">
+                                        <label for="slider-range-max" class="config-label">Max</label>
+                                        <input type="number" id="slider-range-max" class="number-input" v-model.number="sliderRange.max" :min="sliderRange.min + 1" :max="THRESHOLD_MAX">
+                                    </div>
+                                    <div class="d-flex flex-row justify-content-center gap-3 py-3">
+                                        <button class="btn submit-btn" @click="requestSetSliderRange">Set Range</button>
+                                        <ConfirmationBox
+                                            v-model="showSetThresholdRange"
+                                            message="Would you like to save the divation threshold range?"
+                                            :onConfirmFunction="saveConfrimThresholdRange"/>
+                                        <button class="btn submit-btn" @click="revertDeviationSliderRange">Cancel</button>
+                                        <button class="btn submit-btn" @click="resetDeviationSliderRange">Set Default Range</button>
+                                    </div>
+                                </div>
+                                <p v-for="e in divationSliderRangeErrors" class="error">{{e}}</p>
+                                <p v-if="feedback.thresholdsRange"
+                                   :class="feedback.thresholdsRange.ok ? 'success' : 'error'"
+                                   role="status"> {{ feedback.thresholdsRange.message }}</p>
                                 <div v-if="selectedConfig">
                                     <MultiThumbSlider
                                         v-model:alertBelow="newAlertBelow"
                                         v-model:warnBelow="newWarnBelow"
                                         v-model:warnAbove="newWarnAbove"
                                         v-model:alertAbove="newAlertAbove"
-                                        :min="90" :max="110"
+                                        :min="sliderRange.min" :max="sliderRange.max"
                                     />
                                     <p v-for="e in divationErrors" class="error">{{e}}</p>
                                 </div>
@@ -1170,7 +1234,7 @@ onMounted(() => {
                                         v-model="showResetThresholdsConfrim"
                                         message="Would you like to reset all Devation Thresholds to default?"
                                         :onConfirmFunction="resetAllThresholds"/>
-                                    <button type="button" class="btn submit-btn" @click="requestSaveDefaultThresholds">Set Global Default Thresholds</button>
+                                    <button type="button" class="btn submit-btn" @click="requestSaveDefaultThresholds">Save Global Default Thresholds</button>
                                     <ConfirmationBox
                                         v-model="showSetDefaultThresholdConfrim"
                                         message="Would you like to set the defualt value for the thresholds?"
@@ -1230,5 +1294,9 @@ option:hover{
     background-color: var(--cam-bg);
     object-fit: contain;
     max-height: 500px;
+}
+.deviation-range-slider {
+   margin-left: 0rem;
+   margin-right: 5rem ;
 }
 </style>
