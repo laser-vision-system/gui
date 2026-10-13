@@ -200,8 +200,8 @@ const activeCameras = computed(() => {
 // --------------------
 // All validate function return a bool, either true (is valid) or false (failed the validation)
 // Validation Errors
-const divationErrors = ref([]);
-const divationSliderRangeErrors = ref([]);
+const deviationErrors = ref([]);
+const deviationSliderRangeErrors = ref([]);
 const cameraControlErrors = ref([]);
 const cameraNameErrors = ref([]);
 const microComputerNameErrors = ref([]);
@@ -254,59 +254,59 @@ function validateAllCameraControlsMinMax() {
   return result;
 }
 
-// Validate Divation Thresholds:
-function validateDivation() {
+// Validate deviation Thresholds:
+function validateDeviation() {
   // reset varables both global and local
   let result = true;
-  divationErrors.value = [];
+  deviationErrors.value = [];
 
   if (!Number.isFinite(newAlertBelow.value) || !Number) {
-    divationErrors.value.push(`Warning: Alert Below must be a percentage and not ${newAlertBelow.value}`);
+    deviationErrors.value.push(`Warning: Alert Below must be a percentage and not ${newAlertBelow.value}`);
     result = false;
   }
   if (!Number.isFinite(newWarnBelow.value)) {
-    divationErrors.value.push(`Warning: Warn Below must be a percentage and not ${newWarnBelow.value}`);
+    deviationErrors.value.push(`Warning: Warn Below must be a percentage and not ${newWarnBelow.value}`);
     result = false;
   }
   if (!Number.isFinite(newWarnAbove.value)) {
-    divationErrors.value.push(`Warning: Warn Above must be a percentage and not ${newWarnAbove.value}`);
+    deviationErrors.value.push(`Warning: Warn Above must be a percentage and not ${newWarnAbove.value}`);
     result = false;
   }
   if (!Number.isFinite(newAlertAbove.value)) {
-    divationErrors.value.push(`Warning: Alert Above must be a percentage and not ${newAlertAbove.value}`);
+    deviationErrors.value.push(`Warning: Alert Above must be a percentage and not ${newAlertAbove.value}`);
     result = false;
   }
 
   if (newAlertBelow.value < THRESHOLD_MIN) { // Alert Below Validation
-    divationErrors.value.push(`Warning: Alert Below threshold of ${newAlertBelow.value}% is under the allowed limit of ${THRESHOLD_MIN}%`);
+    deviationErrors.value.push(`Warning: Alert Below threshold of ${newAlertBelow.value}% is under the allowed limit of ${THRESHOLD_MIN}%`);
     result = false;
   }
   if (newAlertBelow.value >= newWarnBelow.value) {
-    divationErrors.value.push(`Warning: Alert Below threshold of ${newAlertBelow.value}% is more than or equal to the Warn Below threshold of ${newWarnBelow.value}%`);
+    deviationErrors.value.push(`Warning: Alert Below threshold of ${newAlertBelow.value}% is more than or equal to the Warn Below threshold of ${newWarnBelow.value}%`);
     result = false;
   }
   if (newWarnBelow.value <= newAlertBelow.value) { // Warn Below Validation
-    divationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is less than or equal to the Alert Below threshold of ${newAlertBelow.value}%`);
+    deviationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is less than or equal to the Alert Below threshold of ${newAlertBelow.value}%`);
     result = false;
   }
   if (newWarnBelow.value >= newWarnAbove.value) {
-    divationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is more than or equal to the Warn Above threshold of ${newWarnAbove.value}%`);
+    deviationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is more than or equal to the Warn Above threshold of ${newWarnAbove.value}%`);
     result = false;
   }
   if (newWarnAbove.value <= newWarnBelow.value) { // Warn Above Validation
-    divationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is less than or equal to the Warn Below threshold of ${newWarnBelow.value}%`);
+    deviationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is less than or equal to the Warn Below threshold of ${newWarnBelow.value}%`);
     result = false;
   }
   if (newWarnAbove.value >= newAlertAbove.value) {
-    divationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is more than or equal to the Alert Above threshold of ${newWarnBelow.value}%`);
+    deviationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is more than or equal to the Alert Above threshold of ${newWarnBelow.value}%`);
     result = false;
   }
   if (newAlertAbove.value <= newWarnAbove.value) { // Alert Above Validation
-    divationErrors.value.push(`Warning: Alert Above threshold of ${newAlertAbove.value}% is less than or equal to the Warn Above threshold of ${newWarnAbove.value}%`);
+    deviationErrors.value.push(`Warning: Alert Above threshold of ${newAlertAbove.value}% is less than or equal to the Warn Above threshold of ${newWarnAbove.value}%`);
     result = false;
   }
   if (newAlertAbove.value > THRESHOLD_MAX) {
-    divationErrors.value.push(`Warning: Alert Above threshold of ${newAlertAbove.value}% is over the allowed limit of ${THRESHOLD_MAX}%`);
+    deviationErrors.value.push(`Warning: Alert Above threshold of ${newAlertAbove.value}% is over the allowed limit of ${THRESHOLD_MAX}%`);
     result = false;
   }
   return result;
@@ -314,22 +314,22 @@ function validateDivation() {
 
 // Threshold Range validation
 function validateThresholdRange() {
-  divationSliderRangeErrors.value = [];
+  deviationSliderRangeErrors.value = [];
   let result = true;
   if (!Number.isInteger(sliderRange.value.min)) {
-    divationSliderRangeErrors.value.push(`Warning: min: ${sliderRange.value.min} must be a whole number`);
+    deviationSliderRangeErrors.value.push(`Warning: min: ${sliderRange.value.min} must be a whole number`);
     return false;
   }
   if (!Number.isInteger(sliderRange.value.max)) {
-    divationSliderRangeErrors.value.push(`Warning: max: ${sliderRange.value.max} must be a whole number`);
+    deviationSliderRangeErrors.value.push(`Warning: max: ${sliderRange.value.max} must be a whole number`);
     return false;
   }
   if (sliderRange.value.min < THRESHOLD_MIN || sliderRange.value.min >= sliderRange.value.max) {
-    divationSliderRangeErrors.value.push(`Warning: min: ${sliderRange.value.min} is out of bounds`);
+    deviationSliderRangeErrors.value.push(`Warning: min: ${sliderRange.value.min} is out of bounds`);
     return false;
   }
   if (sliderRange.value.max > THRESHOLD_MAX || sliderRange.value.max <= sliderRange.value.min) {
-    divationSliderRangeErrors.value.push(`Warning: max: ${sliderRange.value.max} is out of bounds`);
+    deviationSliderRangeErrors.value.push(`Warning: max: ${sliderRange.value.max} is out of bounds`);
     return false;
   }
   return result;
@@ -356,10 +356,10 @@ function requestSaveControls() {
   if (validateAllCameraControlsMinMax()) showSaveAllControlsConfrim.value = true;
 }
 function requestSaveThresholds() {
-  if (validateDivation()) showSaveThresholdsConfrim.value = true;
+  if (validateDeviation()) showSaveThresholdsConfrim.value = true;
 }
 function requestSaveDefaultThresholds() {
-  if (validateDivation()) showSetDefaultThresholdConfrim.value = true;
+  if (validateDeviation()) showSetDefaultThresholdConfrim.value = true;
 }
 
 // save confrimation for local Storage
@@ -711,7 +711,7 @@ watch(selectedCamera, (cam, oldCam) => {
 
   selectedConfig.value = null;
   cameraControlErrors.value = [];
-  divationErrors.value = [];
+  deviationErrors.value = [];
   cameraNameErrors.value = [];
   microComputerNameErrors.value = [];
   if (!cam) {
@@ -1076,13 +1076,13 @@ onMounted(() => {
                                         <button class="btn submit-btn" @click="requestSetSliderRange">Set Range</button>
                                         <ConfirmationBox
                                             v-model="showSetThresholdRange"
-                                            message="Would you like to save the divation threshold range?"
+                                            message="Would you like to save the deviation threshold range?"
                                             :onConfirmFunction="saveConfrimThresholdRange"/>
                                         <button class="btn submit-btn" @click="revertDeviationSliderRange">Cancel</button>
                                         <button class="btn submit-btn" @click="resetDeviationSliderRange">Set Default Range</button>
                                     </div>
                                 </div>
-                                <p v-for="e in divationSliderRangeErrors" class="error">{{e}}</p>
+                                <p v-for="e in deviationSliderRangeErrors" class="error">{{e}}</p>
                                 <p v-if="feedback.thresholdsRange"
                                    :class="feedback.thresholdsRange.ok ? 'success' : 'error'"
                                    role="status"> {{ feedback.thresholdsRange.message }}</p>
@@ -1094,7 +1094,7 @@ onMounted(() => {
                                         v-model:alertAbove="newAlertAbove"
                                         :min="sliderRange.min" :max="sliderRange.max"
                                     />
-                                    <p v-for="e in divationErrors" class="error">{{e}}</p>
+                                    <p v-for="e in deviationErrors" class="error">{{e}}</p>
                                 </div>
                                 <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
                                     <button class="btn submit-btn" @click="requestSaveThresholds">Save Thresholds</button>
