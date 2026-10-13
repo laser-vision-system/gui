@@ -8,7 +8,7 @@ import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSharedDeviceData } from '../composables/useSharedDeviceData'
 const router = useRouter();
-const { setSharedMicroComputer, setSharedCamera, clearSharedDeviceData } = useSharedDeviceData();
+const { setSharedMicroComputer, setSharedCamera, clearAllSharedDeviceData } = useSharedDeviceData();
 
 // --------------------
 //   WebSocket
@@ -183,7 +183,7 @@ const mergedCameraData = computed(() => {
 		if (imageAnalysisData !== null) {
             if (imageAnalysisData.conn_id === camera.conn_id && imageAnalysisData.camera_id === camera.camera_id) {
 				matchingData = imageAnalysisData
-			} 
+			}
 		}
         const matchingComData = edgeDataList.find(
             connection => connection.conn_id === camera.conn_id
@@ -455,7 +455,7 @@ function configureMicroComputer(connID) {
 // -------------------------------
 onMounted(async () => {
   connect();
-  clearSharedDeviceData();
+  clearAllSharedDeviceData();
 
     // await fetchCameraConfig()
     // await fetchCameraInfo()
