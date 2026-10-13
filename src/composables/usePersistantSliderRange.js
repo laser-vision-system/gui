@@ -19,7 +19,7 @@ const sliderRange = ref(load());
 // shared functions
 export function usePersistantSliderRange() {
   // saves the sliderRange of the deviation
-  const saveDeviationsliderRange = () => {
+  const saveDeviationSliderRange = () => {
     if (sliderRange.value.min >= sliderRange.value.max) {
       sliderRange.value.min -= 1;
     }
@@ -44,7 +44,7 @@ export function usePersistantSliderRange() {
 
   return {
     sliderRange,
-    saveDeviationsliderRange,
+    saveDeviationSliderRange,
     revertDeviationSliderRange,
     resetDeviationSliderRange
   };

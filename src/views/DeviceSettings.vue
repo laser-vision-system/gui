@@ -16,7 +16,7 @@ const { sharedMicroComputer, sharedCamera } = useSharedDeviceData();
 import MultiThumbSlider from '../components/MultiThumbRangeSlider.vue';
 // persistant data for devation threshold range slider min max
 import {usePersistantSliderRange} from '../composables/usePersistantSliderRange';
-const { sliderRange, saveDeviationsliderRange, revertDeviationSliderRange, resetDeviationSliderRange } = usePersistantSliderRange();
+const { sliderRange, saveDeviationSliderRange, revertDeviationSliderRange, resetDeviationSliderRange } = usePersistantSliderRange();
 // Diviation configration
 const newAlertBelow = ref(null);
 const newWarnBelow = ref(null);
@@ -152,6 +152,7 @@ const feedback = reactive({
   camera: null,
   controls: null,
   thresholds: null,
+  thresholdsRange: null,
 });
 
 const FEEDBACK_DURATION = 4000; // in ms
@@ -350,7 +351,7 @@ function validateMicroComputerName() {
 function validateCameraName() {
 
 }
-
+// request functions for the validation before save / sending functionalitly.
 function requestSetSliderRange() {
   if (validateThresholdRange()) showSetThresholdRange.value = true;
 }
@@ -362,6 +363,15 @@ function requestSaveThresholds() {
 }
 function requestSaveDefaultThresholds() {
   if (validateDivation()) showSetDefaultThresholdConfrim.value = true;
+}
+
+// save confrimation for local Storage
+function saveConfrimThresholdRange() {
+  if (saveDeviationSliderRange()) {
+    showFeedback('thresholdsRange', true, 'Thresholds Range has been saved successfully');
+  } else {
+    showFeedback('thresholdsRange', false, 'Error: Threshold range did not save successfully ');
+  }
 }
 
 // when micro comp is clicked/ selected clear the value for selected camera to aviod errors.
@@ -1192,14 +1202,16 @@ onMounted(() => {
                                         <button class="btn submit-btn" @click="requestSetSliderRange">Set Range</button>
                                         <ConfirmationBox
                                             v-model="showSetThresholdRange"
-                                            message="Would you like to reset the frame rate?"
-                                            :onConfirmFunction="saveDeviationsliderRange"/>
+                                            message="Would you like to save the divation threshold range?"
+                                            :onConfirmFunction="saveConfrimThresholdRange"/>
                                         <button class="btn submit-btn" @click="revertDeviationSliderRange">Cancel</button>
                                         <button class="btn submit-btn" @click="resetDeviationSliderRange">Set Default Range</button>
                                     </div>
                                 </div>
                                 <p v-for="e in divationSliderRangeErrors" class="error">{{e}}</p>
-
+                                <p v-if="feedback.thresholdsRange"
+                                   :class="feedback.thresholdsRange.ok ? 'success' : 'error'"
+                                   role="status"> {{ feedback.thresholdsRange.message }}</p>
                                 <div v-if="selectedConfig">
                                     <MultiThumbSlider
                                         v-model:alertBelow="newAlertBelow"
