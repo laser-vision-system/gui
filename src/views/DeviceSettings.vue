@@ -557,9 +557,6 @@ function loadCameraValues() {
   newGain.value = config.Gain?.IntegerRange ?? null
   newExposureAbsolute.value = config.ExposureAbsolute?.IntegerRange ?? null
   newAutoExposure.value = config.AutoExposure?.Menu ?? null
-  if (!isLive.value) {
-    newFPS.value = selectedConfig.value.fps ?? null
-  }
 }
 // set selected control values to the defualt settings
 function setDefault(controlName) {
