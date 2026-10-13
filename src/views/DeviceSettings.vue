@@ -37,6 +37,9 @@ const showResetFrameRateConfrim = ref(false);// probably not needed will get rid
 const showSaveThresholdsConfrim = ref(false);
 const showResetThresholdsConfrim = ref(false);
 const showSetDefaultThresholdConfrim = ref(false);
+const showSetThresholdRange = ref(false);
+const showCancelThresholdRange = ref(false);
+const showDefautThresholdRange = ref(false);
 
 // -------------------------
 //   Toggle section values
@@ -71,7 +74,6 @@ const {
   listEdges,
   setEdgeName,
   setEdgeProcessingType,
-  listProcessingTypes,
   // Cameras
   listCameras,
   viewCamera,
@@ -135,9 +137,11 @@ const newExposureAbsolute = ref(null); // needs validation
 const newAutoExposure = ref(null);
 // Validation Errors
 const divationErrors = ref([]);
+const divationSliderRangeErrors = ref([]);
 const cameraControlErrors = ref([]);
 const cameraNameErrors = ref([]);
 const microComputerNameErrors = ref([]);
+
 
 // -------------------------
 //   Send feedback messages
@@ -254,10 +258,6 @@ function validateAllCameraControlsMinMax() {
   return result;
 }
 
-// Validate Camera name
-function validateCameraName() {
-
-}
 
 // Validate Divation Thresholds:
 // ASK IF WE NEED A DYNAMIC MAX VALUE FOR THE THRESHOLDS and add it to the api route
@@ -318,11 +318,42 @@ function validateDivation() {
   return result;
 }
 
+// Threshold Range validation
+function validateThresholdRange() {
+  divationSliderRangeErrors.value = [];
+  let result = true;
+  if (!Number.isInteger(sliderRange.value.min)) {
+    divationSliderRangeErrors.value.push(`Warning: min: ${sliderRange.value.min} must be a whole number`);
+    return false;
+  }
+  if (!Number.isInteger(sliderRange.value.max)) {
+    divationSliderRangeErrors.value.push(`Warning: max: ${sliderRange.value.max} must be a whole number`);
+    return false;
+  }
+  if (sliderRange.value.min < THRESHOLD_MIN || sliderRange.value.min >= sliderRange.value.max) {
+    divationSliderRangeErrors.value.push(`Warning: min: ${sliderRange.value.min} is out of bounds`);
+    return false;
+  }
+  if (sliderRange.value.max > THRESHOLD_MAX || sliderRange.value.max <= sliderRange.value.min) {
+    divationSliderRangeErrors.value.push(`Warning: max: ${sliderRange.value.max} is out of bounds`);
+    return false;
+  }
+  return result;
+}
+
 // Validate MicroComputer name
 function validateMicroComputerName() {
 
 }
 
+// Validate Camera name
+function validateCameraName() {
+
+}
+
+function requestSetSliderRange() {
+  if (validateThresholdRange()) showSetThresholdRange.value = true;
+}
 function requestSaveControls() {
   if (validateAllCameraControlsMinMax()) showSaveAllControlsConfrim.value = true;
 }
@@ -1131,14 +1162,12 @@ onMounted(() => {
                                     <button class="btn submit-btn" @click="showSaveFrameRateConfrim = true">Save Frame Rate</button>
                                     <ConfirmationBox
                                         v-model="showSaveFrameRateConfrim"
-                                        message="Would you like to save the frame rate?"
-                                    />
+                                        message="Would you like to save the frame rate?"/>
                                     <button type="button" class="btn submit-btn" @click="showResetFrameRateConfrim = true">Reset Frame Rate</button>
                                     <ConfirmationBox
                                         v-model="showResetFrameRateConfrim"
                                         message="Would you like to reset the frame rate?"
-                                        :onConfirmFunction="setDefaultFPS"
-                                    />
+                                        :onConfirmFunction="setDefaultFPS"/>
                                 </div>
                             </div>
                             <!-- DIVIATION THRESHOLDS -->
@@ -1160,11 +1189,16 @@ onMounted(() => {
                                         <input type="number" id="slider-range-max" class="number-input" v-model.number="sliderRange.max" :min="sliderRange.min + 1" :max="THRESHOLD_MAX">
                                     </div>
                                     <div class="d-flex flex-row justify-content-center gap-3 py-3">
-                                        <button class="btn submit-btn" @click="saveDeviationsliderRange">Save Range</button>
+                                        <button class="btn submit-btn" @click="requestSetSliderRange">Set Range</button>
+                                        <ConfirmationBox
+                                            v-model="showSetThresholdRange"
+                                            message="Would you like to reset the frame rate?"
+                                            :onConfirmFunction="saveDeviationsliderRange"/>
                                         <button class="btn submit-btn" @click="revertDeviationSliderRange">Cancel</button>
                                         <button class="btn submit-btn" @click="resetDeviationSliderRange">Set Default Range</button>
                                     </div>
                                 </div>
+                                <p v-for="e in divationSliderRangeErrors" class="error">{{e}}</p>
 
                                 <div v-if="selectedConfig">
                                     <MultiThumbSlider
@@ -1188,7 +1222,7 @@ onMounted(() => {
                                         v-model="showResetThresholdsConfrim"
                                         message="Would you like to reset all Devation Thresholds to default?"
                                         :onConfirmFunction="resetAllThresholds"/>
-                                    <button type="button" class="btn submit-btn" @click="requestSaveDefaultThresholds">Set Global Default Thresholds</button>
+                                    <button type="button" class="btn submit-btn" @click="requestSaveDefaultThresholds">Save Global Default Thresholds</button>
                                     <ConfirmationBox
                                         v-model="showSetDefaultThresholdConfrim"
                                         message="Would you like to set the defualt value for the thresholds?"
