@@ -1,49 +1,16 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, computed, reactive } from 'vue';
-import {isBlank, checkBlank} from '../utils/helpers'
-// icons
-import arrowUp from '../assets/images/arrow-up.svg';
+import { isBlank, checkBlank } from '../utils/helpers'
+
+// -------------------------
+//   Toggle section
+// -------------------------
+
+// Toggle Icons
+import arrowUp from '../assets/images/arrow-up.svg'
 import arrowDown from '../assets/images/arrow-down.svg'
 
-// -----------------------------
-//   Config Shortcut
-// -----------------------------
-import { useSharedDeviceData } from '../composables/useSharedDeviceData';
-const { sharedMicroComputer, sharedCamera } = useSharedDeviceData();
-// -----------------------------
-//   Multi Thumb range slider
-// -----------------------------
-import MultiThumbSlider from '../components/MultiThumbRangeSlider.vue';
-// persistant data for devation threshold range slider min max
-import {usePersistantSliderRange} from '../composables/usePersistantSliderRange';
-const { sliderRange, saveDeviationSliderRange, revertDeviationSliderRange, resetDeviationSliderRange } = usePersistantSliderRange();
-// Diviation configration
-const newAlertBelow = ref(null);
-const newWarnBelow = ref(null);
-const newWarnAbove = ref(null);
-const newAlertAbove = ref(null);
-// -------------------------
-//   Confrimation pop up values
-// -------------------------
-import ConfirmationBox from '../components/ConfirmationBox.vue';
-
-const showRenameMicroCompConfrim = ref(false);
-const showSelectVisionProcessingConfrim = ref(false);
-const showRenameCameraConfrim = ref(false);
-const showSaveAllControlsConfrim = ref(false);
-const showResetAllControlsConfrim = ref(false);
-const showSaveFrameRateConfrim = ref(false);
-const showResetFrameRateConfrim = ref(false);// probably not needed will get rid of in sprint 6 :]
-const showSaveThresholdsConfrim = ref(false);
-const showResetThresholdsConfrim = ref(false);
-const showSetDefaultThresholdConfrim = ref(false);
-const showSetThresholdRange = ref(false);
-const showCancelThresholdRange = ref(false);
-const showDefautThresholdRange = ref(false);
-
-// -------------------------
-//   Toggle section values
-// -------------------------
+// Toggle Values
 const isMicroComputerSection = ref(true);
 const isRenameMicroComputerSection = ref(true);
 const isCameraSection = ref(true);
@@ -52,10 +19,44 @@ const isControlsSection = ref(true);
 const isDeviationSection = ref(true);
 const isDeviationMinMaxConfigure = ref(false);
 
+// -----------------------------
+//   Config Shortcut
+// -----------------------------
+import { useSharedDeviceData } from '../composables/useSharedDeviceData';
+const { sharedMicroComputer, sharedCamera } = useSharedDeviceData();
+
+// -----------------------------
+//   Multi Thumb range slider
+// -----------------------------
+import MultiThumbSlider from '../components/MultiThumbRangeSlider.vue';
+// persistant data for the devation threshold range
+import {usePersistantSliderRange} from '../composables/usePersistantSliderRange';
+const { sliderRange, saveDeviationSliderRange, revertDeviationSliderRange, resetDeviationSliderRange } = usePersistantSliderRange();
+// Diviation configration values
+const newAlertBelow = ref(null);
+const newWarnBelow = ref(null);
+const newWarnAbove = ref(null);
+const newAlertAbove = ref(null);
+
+// -----------------------------
+//   Confrimation pop up window
+// -----------------------------
+import ConfirmationBox from '../components/ConfirmationBox.vue';
+// Show Booleans
+const showRenameMicroCompConfrim = ref(false);
+const showSelectVisionProcessingConfrim = ref(false);
+const showRenameCameraConfrim = ref(false);
+const showSaveAllControlsConfrim = ref(false);
+const showResetAllControlsConfrim = ref(false);
+const showSaveThresholdsConfrim = ref(false);
+const showResetThresholdsConfrim = ref(false);
+const showSetDefaultThresholdConfrim = ref(false);
+const showSetThresholdRange = ref(false);
 
 // --------------------
 //   WebSocket
 // --------------------
+// Functions and values from the GUI's WebSocket
 import { useWebSocket } from '../composables/useWebSocket';
 const {
   // state
@@ -90,17 +91,6 @@ const {
 const isLive = computed(() => status.value === 'CONNECTED');
 
 // --------------------
-//        Data
-// --------------------
-//const cameraConfigApiURL = ref('/api/configuration')
-//const guiUpdateApiURL = ref('/api/gui_update')
-//     Empty,
-// Cnn,
-// Diff,
-// Demonstration,
-//const visionTech = ['Empty', 'Cnn', 'Diff', 'Demonstration'];
-
-// --------------------
 //     Sample Data
 // --------------------
 // mirrors the output of listcameras in websocket
@@ -109,14 +99,19 @@ import sampleCameraList from '../assets/data/sampleCameraList.json';
 import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.json';
 // list of micro computers
 import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json';
+
 // -------------------------
-//     V model vairables
+//     Selected values
 // -------------------------
-// User selected variables
+// Values which are selected by the user
 const selectedMicroComputer = ref(''); // selected m comp
 const selectedCamera = ref(''); // chosen from camera list
 const selectedConfig = ref(null); // matches choice from camera list using the conn_id and camera_id
-// Form section toggles
+
+// -------------------------
+//     Rename Values
+// -------------------------
+
 // MicroComputer Configurables Rename
 const newMicroComputerName = ref(null);
 // MicroComputer Configurables Select vision processing
@@ -124,27 +119,21 @@ const newVisionProcessing = ref(null);
 // Camera Configuration Rename
 const newCameraName = ref(null); // needs validation
 
-// FPS (not added yet)
-const newFPS = ref(null); // needs validation
-// camera controls (control = selectedConfig.configuration.conrtolName.IntergerRange)
-const newBrightness = ref(null); // needs validation
-const newContrast = ref(null); // needs validation
-const newHue = ref(null); // needs validation
-const newSaturation = ref(null); // needs validation
-const newGamma = ref(null); // needs validation
-const newGain = ref(null); // needs validation
-const newExposureAbsolute = ref(null); // needs validation
-const newAutoExposure = ref(null);
-// Validation Errors
-const divationErrors = ref([]);
-const divationSliderRangeErrors = ref([]);
-const cameraControlErrors = ref([]);
-const cameraNameErrors = ref([]);
-const microComputerNameErrors = ref([]);
+// -------------------------
+//      Camera Controls
+// -------------------------
 
+const newBrightness = ref(null);
+const newContrast = ref(null);
+const newHue = ref(null);
+const newSaturation = ref(null);
+const newGamma = ref(null);
+const newGain = ref(null);
+const newExposureAbsolute = ref(null);
+const newAutoExposure = ref(null);
 
 // -------------------------
-//   Send feedback messages
+//   Feedback Messages
 // -------------------------
 const feedback = reactive({
   microComputerName: null,
@@ -181,10 +170,12 @@ async function sendWithFeedback(section, label, sendFn) {
 onUnmounted(() => {
   Object.values(feedbackTimers).forEach(clearTimeout);
 });
+
 // --------------------
-//        Computed
+//    Computed Data
 // --------------------
 // filter micro Computer list for active computers
+// may need to be changed to remove state
 const activeMicroComputers = computed(() => {
   const source = isLive.value ? wsEdgeList.value : sampleMicroComputerList.microComputers
   return source.filter((com) => com.state === 'Active')
@@ -205,12 +196,15 @@ const activeCameras = computed(() => {
 });
 
 // --------------------
-//        Methods
+//   CUSTOM VALDIATION
 // --------------------
-
-
-// CUSTOM VALDIATION
 // All validate function return a bool, either true (is valid) or false (failed the validation)
+// Validation Errors
+const divationErrors = ref([]);
+const divationSliderRangeErrors = ref([]);
+const cameraControlErrors = ref([]);
+const cameraNameErrors = ref([]);
+const microComputerNameErrors = ref([]);
 // global cosntants
 const THRESHOLD_MIN = 0;
 const THRESHOLD_MAX = 200;
@@ -256,12 +250,11 @@ function validateAllCameraControlsMinMax() {
       result = false;
     }
   }
+
   return result;
 }
 
-
 // Validate Divation Thresholds:
-// ASK IF WE NEED A DYNAMIC MAX VALUE FOR THE THRESHOLDS and add it to the api route
 function validateDivation() {
   // reset varables both global and local
   let result = true;
@@ -351,6 +344,10 @@ function validateMicroComputerName() {
 function validateCameraName() {
 
 }
+
+// ---------------------------
+//    Validated Save Methods
+// ---------------------------
 // request functions for the validation before save / sending functionalitly.
 function requestSetSliderRange() {
   if (validateThresholdRange()) showSetThresholdRange.value = true;
@@ -372,6 +369,18 @@ function saveConfrimThresholdRange() {
   } else {
     showFeedback('thresholdsRange', false, 'Error: Threshold range did not save successfully ');
   }
+}
+
+
+// ---------------------------
+//    Selected Device Methods
+// ---------------------------
+// Methods that relate selected devices
+// such as submiting and helper functions
+
+// returns the name of the micro computer a camera belongs to
+function getEdgeName(connId) {
+  return activeMicroComputers.value.find((com) => com.conn_id === connId)?.name ?? connId;
 }
 
 // when micro comp is clicked/ selected clear the value for selected camera to aviod errors.
@@ -470,9 +479,8 @@ function coundownTimer(time) {
   });
 }
 
-
 // Save the changes made to the camera controls
-async function saveChanges() {
+async function saveControlConfig() {
   if (!selectedCamera.value || !selectedConfig.value) return
   try {
     // ADD VALIDATION FOR CONTROLS
@@ -499,86 +507,6 @@ async function saveChanges() {
     showFeedback('controls', false, 'Something went wrong preparing the camera controls.');
   }
 }
-//console.log(controlConfig)
-//------------------------------------------------------------------------------------------------
-// All REST-ful api methods and variables have been commented out but not deleted as a redundancy
-//------------------------------------------------------------------------------------------------
-//fetch method for read function
-// async function fetchCameraConfig() {
-//     try {
-//         const response = await fetch(cameraConfigApiURL.value)
-//         if (!response.ok) {
-//             throw new Error(`HTTP error: ${response.status}`)
-//         }
-//         const data = await response.json()
-//         cameraFeedData.value = data
-//     } catch (error) {
-//         console.error('Error fetching camera data:', error)
-//     }
-// }
-// fetch method for update for config
-// async function postConfigData() {
-//     saveState.value = '' // reset before each attempt
-//     const requestOptions = {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json'
-//         },
-//         body: JSON.stringify({
-//             // if the new function are blank or empty use the data got by the read funciton
-//             brightness: parseInt(checkBlank(newBrightness.value, cameraFeedData.value?.brightness)),
-//             framerate: parseFloat(checkBlank(newFPS.value, cameraFeedData.value?.framerate)),
-//             hue: parseInt(checkBlank(newHue.value, cameraFeedData.value?.hue)),
-//             saturation: parseInt(checkBlank(newSaturation.value, cameraFeedData.value?.saturation))
-//         })
-//     };
-//     try {
-//         const response = await fetch(cameraConfigApiURL.value, requestOptions);
-//         if (!response.ok) {
-//             throw new Error(`HTTP error: ${response.status}`);
-//         }
-
-//         const contentType = response.headers.get("content-type");
-//         if (contentType && contentType.includes("application/json")) {
-//             const data = await response.json();
-//             console.log('Success:', data);
-//         } else {
-//             console.log('Success: Saved successfully (No JSON returned)');
-//         }
-//         saveState.value = 'success'
-//         // update gui after successfull post
-//         postConfigTrue()
-//     } catch (error) {
-//         console.error('Error updating camera:', error);
-//         saveState.value = 'error'
-//     }
-// }
-
-// post gui_update Config bool to true
-// async function postConfigTrue() {
-//     const requestOptions = {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json'
-//         },
-//         body: JSON.stringify({
-//             setpoint: false,
-//             config: true
-//         })
-//     };
-//     try {
-//         const response = await fetch(guiUpdateApiURL.value, requestOptions)
-//         if (!response.ok) {
-//             throw new Error(`HTTP error: ${response.status}`)
-//         }
-//         const data = await response.json()
-//     } catch (error) {
-//         console.error('Error fetching camera data:', error)
-//     }
-// }
-//------------------------------------------------------------------------------------------------
-// All REST-ful api methods and variables have been commented out but not deleted as a redundancy
-//------------------------------------------------------------------------------------------------
 
 // ------------------------------
 //        Sample data Methods
@@ -596,10 +524,7 @@ function findConfig(conn_id, camera_id) {
 // ------------------------------
 //          Methods
 // ------------------------------
-// returns the name of the micro computer a camera belongs to
-function edgeName(connId) {
-  return activeMicroComputers.value.find((com) => com.conn_id === connId)?.name ?? connId;
-}
+
 
 // control filter function for selected camera
 function controlFilter(controlName) {
@@ -645,39 +570,14 @@ function setDefault(controlName) {
   if (defualtValue === undefined) return
 
   switch (controlName) {
-    case 'Brightness': newBrightness.value = { ...newBrightness.value, value: defualtValue}; break
-    case 'Contrast': newContrast.value = { ...newContrast.value, value: defualtValue};; break
-    case 'Hue': newHue.value = { ...newHue.value, value: defualtValue};; break
-    case 'Saturation': newSaturation.value = { ...newSaturation.value, value: defualtValue};; break
-    case 'Gamma': newGamma.value = { ...newGamma.value, value: defualtValue};; break
+    case 'Brightness': newBrightness.value = { ...newBrightness.value, value: defualtValue }; break
+    case 'Contrast': newContrast.value = { ...newContrast.value, value: defualtValue}; break
+    case 'Hue': newHue.value = { ...newHue.value, value: defualtValue}; break
+    case 'Saturation': newSaturation.value = { ...newSaturation.value, value: defualtValue}; break
+    case 'Gamma': newGamma.value = { ...newGamma.value, value: defualtValue}; break
     case 'Gain': newGain.value = { ...newGain.value, value: defualtValue}; break
     case 'ExposureAbsolute': newExposureAbsolute.value = { ...newExposureAbsolute.value, value: defualtValue}; break
     case 'AutoExposure': newAutoExposure.value = defualtValue; break
-  }
-}
-
-// set frame rate to default
-function setDefaultFPS() {
-  if (isLive.value) {
-    // Add when API route becomes avaible
-  } else {
-    newFPS.value = 1
-  }
-}
-
-// ADD VALIDATION
-function saveFrameRate() {
-  if (!selectedCamera.value || !selectedConfig.value) return
-  saveState.value = ''
-  if (isLive.value) {
-    // TODO: there's currently no websocket path for frame rate
-    console.warn('Saving frame rate against a live camera is not supported yet.')
-  } else {
-    selectedConfig.value = {
-      ...selectedConfig.value,
-      fps: checkBlank(newFPS.value, selectedConfig.value.fps),
-    }
-    saveState.value = 'success'
   }
 }
 
@@ -711,7 +611,6 @@ function resetControlConfig() {
   }
 }
 
-
 // sets the default threshold for all deviation thresholds
 function resetAllThresholds() {
   if (isLive.value) {
@@ -731,7 +630,6 @@ function resetAllThresholds() {
     newAlertAbove.value = 105;
   }
 }
-
 
 // save thresholds
 async function saveThresholds() {
@@ -781,7 +679,7 @@ async function setServerDefaultThreshold() {
 }
 
 // --------------------
-//      Shared Config
+//    Shared Config
 // --------------------
 // state
 let sharedDataApplied = false;
@@ -1003,7 +901,7 @@ onMounted(() => {
                                 <select class="menu-input" id="cameraSelect" required v-model="selectedCamera">
                                     <option value="" disabled selected>Please select a camera</option>
                                     <option v-for="(cam, index) in activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`" :value="cam">
-                                        [ {{edgeName(cam.conn_id)}} - {{index + 1}} ] : {{cam.name}}
+                                        [ {{getEdgeName(cam.conn_id)}} - {{index + 1}} ] : {{cam.name}}
                                     </option>
                                 </select>
                             </div>
@@ -1148,7 +1046,7 @@ onMounted(() => {
                                     <ConfirmationBox
                                         v-model="showSaveAllControlsConfrim"
                                         message="Would you like to save all camera controls?"
-                                        :onConfirmFunction="saveChanges"/>
+                                        :onConfirmFunction="saveControlConfig"/>
                                     <button class="btn submit-btn" @click="showResetAllControlsConfrim = true">Reset Camera Controls</button>
                                     <ConfirmationBox
                                         v-model="showResetAllControlsConfrim"
@@ -1158,27 +1056,6 @@ onMounted(() => {
                                 <p v-if="feedback.controls"
                                    :class="feedback.controls.ok ? 'success' : 'error'"
                                    role="status"> {{ feedback.controls.message }}</p>
-                            </div>
-                            <!-- FPS -->
-                            <hr class="line-break" v-if="controlFilter('fps')">
-                            <h4 class="pt-3 pb-2 config-subtitle" v-if="controlFilter('fps')">Refresh Rate</h4>
-                            <div v-if="controlFilter('fps')">
-                                <label for="fps-range" class="config-label">Frame Rate</label>
-                                <div class="form-element">
-                                    <input type="range" class="slider-input" id="fps-range" v-model.number="newFPS" min="1" max="5" step="1">
-                                    <input type="number" class="number-input" id="fps-number" v-model.number="newFPS" min="1" max="5" step="1">
-                                </div>
-                                <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
-                                    <button class="btn submit-btn" @click="showSaveFrameRateConfrim = true">Save Frame Rate</button>
-                                    <ConfirmationBox
-                                        v-model="showSaveFrameRateConfrim"
-                                        message="Would you like to save the frame rate?"/>
-                                    <button type="button" class="btn submit-btn" @click="showResetFrameRateConfrim = true">Reset Frame Rate</button>
-                                    <ConfirmationBox
-                                        v-model="showResetFrameRateConfrim"
-                                        message="Would you like to reset the frame rate?"
-                                        :onConfirmFunction="setDefaultFPS"/>
-                                </div>
                             </div>
                             <!-- DIVIATION THRESHOLDS -->
                             <hr class="line-break" v-if="selectedCamera">
@@ -1222,7 +1099,6 @@ onMounted(() => {
                                     />
                                     <p v-for="e in divationErrors" class="error">{{e}}</p>
                                 </div>
-
                                 <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
                                     <button class="btn submit-btn" @click="requestSaveThresholds">Save Thresholds</button>
                                     <ConfirmationBox
