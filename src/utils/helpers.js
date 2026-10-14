@@ -6,3 +6,11 @@ export function isBlank(v) {
 export function checkBlank(newValue, currentValue) {
   return isBlank(newValue) ? currentValue : newValue;
 }
+
+// checks if a JS object is empty and returns a bool
+export function isEmpty(obj) {
+  for (const key in obj) {
+    if (Object.hasOwn(obj, key)) return false;
+  }
+  return true;
+}

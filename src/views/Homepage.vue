@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
-
+import { isEmpty } from '../utils/helpers'
 // --------------------
 //   Config Shortcut
 // --------------------
@@ -9,11 +9,13 @@ import { useRouter } from 'vue-router'
 import { useSharedDeviceData } from '../composables/useSharedDeviceData'
 const router = useRouter();
 const { setSharedMicroComputer, setSharedCamera, clearAllSharedDeviceData } = useSharedDeviceData();
-
+// --------------------
+//   Config Shortcut
+// --------------------
+import CameraFeed from '../components/CameraFeed.vue';
 // --------------------
 //   WebSocket
 // --------------------
-//import cameraFeed from '../components/CameraFeed.vue'
 import { useWebSocket } from '../composables/useWebSocket'
 // Point this at your server's websocket endpoint
 const {
@@ -560,22 +562,7 @@ onUnmounted(() => {
         </div>
         <div v-if="selectedCameraId" class="row mx-0 align-items-stretch mb-5 mt-4">
             <div class="col-lg-8 col-12 d-flex ps-0 mt-2">
-                <div class="feed-wrapper w-100 h-100">
-                    <div v-if="isLive && imageSrc" class="w-100 h-100">
-                        <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
-                    </div>
-                    <div v-else-if="hasSelectedCamera" class="w-100 h-100">
-                        <img :src="liveFeedSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
-                    </div>
-                    <div v-else-if="hasConnectedCamera" class="w-100 h-100">
-                        <img src="../assets/images/no-camera-selected.png" alt="No camera selected"
-                            class="feedbox w-100 h-100">
-                    </div>
-                    <div v-else class="w-100 h-100">
-                        <img src="../assets/images/no-camera-connected.png" alt="No Cameras Connected"
-                            class="feedbox w-100 h-100 ">
-                    </div>
-                </div>
+                <CameraFeed :imageSrc="imageSrc" :isLive="isLive" :isSelected="!isEmpty(selectedCameraInfo)"/>
             </div>
             <div class="col-lg-4 col-12 cam-info d-flex flex-column p-3 pe-0 mt-2">
                 <div class="row h-100 mx-0 align-content-between">
@@ -645,25 +632,11 @@ onUnmounted(() => {
     color: var(--camera-tab-text);
 }
 
-.feedbox {
-    border: 0.5rem solid slateblue;
-    border-radius: 1rem;
-    box-shadow: 0 0 0.45rem mediumslateblue;
-    background-color: var(--cam-bg);
-    object-fit: contain;
-    max-height: 480px;
-}
-
-.feed-wrapper {
-    max-width: 640px;
-    max-height: 480px;
-    margin: 0 auto;
-}
 
 .cam-info {
-    border: 0.5rem solid slateblue;
+    border: 0.5rem solid var(--nav-bg);
     border-radius: 1rem;
-    box-shadow: 0 0 0.45rem mediumslateblue;
+    box-shadow: 0 0 0.45rem var(--button-hover);
     background-color: var(--cam-bg);
     color: var(--nav-title);
 }
