@@ -632,25 +632,11 @@ onUnmounted(() => {
     color: var(--camera-tab-text);
 }
 
-.feedbox {
-    border: 0.5rem solid slateblue;
-    border-radius: 1rem;
-    box-shadow: 0 0 0.45rem mediumslateblue;
-    background-color: var(--cam-bg);
-    object-fit: contain;
-    max-height: 480px;
-}
-
-.feed-wrapper {
-    max-width: 640px;
-    max-height: 480px;
-    margin: 0 auto;
-}
 
 .cam-info {
-    border: 0.5rem solid slateblue;
+    border: 0.5rem solid var(--nav-bg);
     border-radius: 1rem;
-    box-shadow: 0 0 0.45rem mediumslateblue;
+    box-shadow: 0 0 0.45rem var(--button-hover);
     background-color: var(--cam-bg);
     color: var(--nav-title);
 }

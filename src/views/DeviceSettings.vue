@@ -1073,7 +1073,7 @@ onMounted(() => {
                 </form>
             </div>
             <!-- Camera feed -->
-            <div class="col-12">
+            <div class="col-12 d-flex ps-0 mt-2 justify-content-center">
                 <CameraFeed :imageSrc="imageSrc" :isLive="isLive" :isSelected="!isEmpty(selectedCamera)"/>
             </div>
         </div>

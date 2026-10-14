@@ -14,11 +14,14 @@ const props = defineProps({
   isLive: { type: Boolean, default: true },
   isSelected: { type: Boolean, default: true }
 });
+// --------------------
+//   Image Toggle
+// --------------------
 </script>
 <template>
-<!-- Global Toggle -->
+<!-- Global and physical Toggle -->
 <div>
-    <div class="feed-wrapper w-100 h-100" v-if="isSelected">
+    <div class="feed-wrapper w-100 h-100 d-flex ps-0" v-if="isSelected">
         <div v-if="isLive && imageSrc" class="w-100 h-100">
             <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
         </div>
@@ -44,6 +47,7 @@ const props = defineProps({
     object-fit: contain;
     max-height: 480px;
 }
+
 
 .feed-wrapper {
     max-width: 640px;
