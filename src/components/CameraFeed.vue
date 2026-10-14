@@ -1,14 +1,57 @@
 <script setup>
-import { onMounted } from 'vue'
-import { useWebSocket } from '../composables/useWebSocket'
+// import the gobal variable for camera feed toggle from local storage
 
-const { status, error, imageSrc, connect, disconnect } =
-    useWebSocket('ws://your-server/stream')
+// toggle arrows
+import arrowUp from '../assets/images/arrow-up.svg'
+import arrowDown from '../assets/images/arrow-down.svg'
 
-onMounted(() => connect())
+// --------------------
+//   Props
+// --------------------
+// Variables that are passed down from parent component
+const props = defineProps({
+  imageSrc: { type: String, required: true },
+  isLive: { type: Boolean, default: true },
+  isSelected: { type: Boolean, default: true }
+});
 </script>
 <template>
-    <div>
-        <img :src="imageSrc" alt="Camera Feed" />
+<!-- Global Toggle -->
+<div>
+    <div class="feed-wrapper col-12 d-flex mt-2 feed-row" v-if="isSelected">
+        <div v-if="isLive && imageSrc" class="w-100">
+            <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
+        </div>
+        <div v-else-if="isSelected" class="w-100">
+            <img src="../assets/images/fake-feed.png" alt="Sample Camera Feed" class="feedbox w-100 h-100">
+        </div>
+        <div v-else-if="!isSelected" class="w-100">
+            <img src="../assets/images/no-camera-selected.png" alt="No camera selected" class="feedbox w-100 h-100">
+        </div>
+        <div v-else class="w-100">
+            <img src="../assets/images/no-camera-connected.png" alt="No Cameras Connected" class="feedbox w-100 h-100 ">
+        </div>
     </div>
+</div>
 </template>
+<style scoped>
+.feed-row {
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.feedbox {
+    border: 0.5rem solid var(--nav-bg);
+    border-radius: 1rem;
+    box-shadow: 0 0 0.45rem var(--button-hover);
+    background-color: var(--cam-bg);
+    object-fit: contain;
+    max-height: 480px;
+}
+
+.feed-wrapper {
+    max-width: 640px;
+    max-height: 480px;
+    margin: 0 auto;
+}
+</style>

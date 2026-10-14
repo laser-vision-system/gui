@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, computed, reactive } from 'vue';
-import { isBlank, checkBlank } from '../utils/helpers'
+import { isBlank, checkBlank, isEmpty } from '../utils/helpers'
 
 // -------------------------
 //   Toggle section
@@ -19,6 +19,11 @@ const isControlsSection = ref(true);
 const isDeviationSection = ref(true);
 const isDeviationMinMaxConfigure = ref(false);
 
+
+// -----------------------------
+//   Camera Feed
+// -----------------------------
+import CameraFeed from '../components/CameraFeed.vue'
 // -----------------------------
 //   Config Shortcut
 // -----------------------------
@@ -93,6 +98,8 @@ import sampleCameraList from '../assets/data/sampleCameraList.json';
 import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.json';
 // list of micro computers
 import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json';
+
+
 
 // -------------------------
 //     Selected values
@@ -1067,27 +1074,12 @@ onMounted(() => {
             </div>
             <!-- Camera feed -->
             <div class="col-12">
-                <div class=" col-12 d-flex mt-2 feed-row" v-if="selectedCamera">
-                    <div v-if="isLive && imageSrc" class="w-100">
-                        <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
-                    </div>
-                    <div v-else-if="selectedConfig" class="w-100">
-                        <img src="../assets/images/fake-feed.png" alt="Sample Camera Feed" class="feedbox w-100 h-100">
-                    </div>
-                    <div v-else-if="!selectedCamera" class="w-100">
-                        <img src="../assets/images/no-camera-selected.png" alt="No camera selected" class="feedbox w-100 h-100">
-                    </div>
-                    <div v-else class="w-100">
-                        <img src="../assets/images/no-camera-connected.png" alt="No Cameras Connected" class="feedbox w-100 h-100 ">
-                    </div>
-                </div>
+                <CameraFeed :imageSrc="imageSrc" :isLive="isLive" :isSelected="!isEmpty(selectedCamera)"/>
             </div>
         </div>
     </div>
 </template>
 <style scoped>
-
-
 select {
     padding: 0.5em;
 }
@@ -1098,18 +1090,6 @@ option:hover{
     display: flex;
     flex-direction: column;
     padding: 0.5em;
-}
-.feed-row {
-    max-width: 640px;
-    margin: 0 auto;
-}
-.feedbox {
-    border: 0.5rem solid var(--nav-bg);
-    border-radius: 1rem;
-    box-shadow: 0 0 0.45rem var(--button-hover);
-    background-color: var(--cam-bg);
-    object-fit: contain;
-    max-height: 500px;
 }
 .deviation-range-slider {
    margin-left: 0rem;
