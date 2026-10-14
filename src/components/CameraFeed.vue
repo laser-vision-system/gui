@@ -18,8 +18,8 @@ const props = defineProps({
 <template>
 <!-- Global Toggle -->
 <div>
-    <div class="feed-wrapper col-12 d-flex mt-2 feed-row" v-if="isSelected">
-        <div v-if="isLive && imageSrc" class="w-100">
+    <div class="feed-wrapper w-100 h-100" v-if="isSelected">
+        <div v-if="isLive && imageSrc" class="w-100 h-100">
             <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
         </div>
         <div v-else-if="isSelected" class="w-100">
@@ -35,10 +35,6 @@ const props = defineProps({
 </div>
 </template>
 <style scoped>
-.feed-row {
-    max-width: 640px;
-    margin: 0 auto;
-}
 
 .feedbox {
     border: 0.5rem solid var(--nav-bg);
