@@ -164,7 +164,7 @@ const orderOfControl = (name) => {
 const byControlOrder = (a, b) => orderOfControl(a) - orderOfControl(b) || a.localeCompare(b);
 
 // Replaces the names of the labels
-const renamedLabels = (name) => CONTROL_LABELS[name] ?? name.replace(/([a-z])([A-Z])/g, '$1 $2');
+const renamedLabels = (name) => NICER_LABELS[name] ?? name.replace(/([a-z])([A-Z])/g, '$1 $2');
 
 // parse server entry into a flat object
 // e.g. { IntegerRange: { value, default, min, max, step } }
@@ -173,19 +173,19 @@ function parseControl(name, entry) {
   const controlType = Object.keys(entry ?? {})[0];
   // vlaue of the control e.g. (Brightnes: {controlBody})
   const controlBody = entry?.[controlType];
-  if (controlBody) return null;
+  if (!controlBody) return null;
 
   const contents = {
     controlType,
-    label: renamedLabels,
+    label: renamedLabels(name),
     value: controlBody.value,
     // fallback if the value field is left blank
-    orginal: controlBody.value,
+    original: controlBody.value,
     default: controlBody.default,
   };
 
   // handler for diferent control types
-  switch (contents) {
+  switch (controlType) {
     case 'IntegerRange':
       return {
         ...contents,
@@ -290,7 +290,7 @@ function validateCameraControl(name, control) {
   // validation for control type IntegerRange
   if (control.controlType === 'IntegerRange') {
     // a blank value falls back to the current value on save
-    if (isBlank(value)) return true;
+    if (isBlank(control.value)) return true;
 
     if (!Number.isInteger(control.value)) {
       cameraControlErrors.value.push(`Warning: ${control.label} must be a whole number`);
@@ -301,7 +301,7 @@ function validateCameraControl(name, control) {
       cameraControlErrors.value.push(`Warning: ${control.label} at ${control.value}, is under the minimum value of ${control.min}`);
       return false;
     }
-    if (value > control.max) {
+    if (control.value > control.max) {
       cameraControlErrors.value.push(`Warning: ${control.label} at ${control.value}, is over the maximum value of ${control.max}`);
       return false;
     }
@@ -314,8 +314,8 @@ function validateCameraControl(name, control) {
   }
 
   // validate control type Boolean
-  if (control.controlBody === 'Boolean' && typeof control.value !== 'boolean') {
-    cameraControlErrors.value.push(`Warning: ${ctrl.label} must be true or false`);
+  if (control.controlType === 'Boolean' && typeof control.value !== 'boolean') {
+    cameraControlErrors.value.push(`Warning: ${control.label} must be true or false`);
     return false;
   }
 
@@ -533,7 +533,7 @@ function buildControlsPayload() {
     if (!originalBody) continue; // camera doesn't have a control
     // build the payload for a control
     payload[name] = {
-      [ctrl.kind]: { ...originalBody, value: checkBlank(control.value, control.original) },
+      [control.controlType]: { ...originalBody, value: checkBlank(control.value, control.original) },
     };
   }
   // NOT IN CURRENT SPRINT BUT MAY NEED TO BE FIXED DEPENDING ON HOW THE CONTROLS ARE SET THROUGH
@@ -575,6 +575,7 @@ async function saveControlConfig() {
         ...selectedConfig.value, // keep the orginal values of conn_id and camera_id
         configuration: { ...selectedConfig.value.configuration, ...controlsPayload },
       };
+      loadCameraValues();
       showFeedback('controls', true, 'Camera controls saved (sample data)');
     }
   } catch (e) {
@@ -971,7 +972,7 @@ onMounted(() => {
                                                 </option>
                                         </select>
                                         <!-- Boonlean: switch -->
-                                        <div v-else-if="control.kind === 'Boolean'" class="form-check form-switch">
+                                        <div v-else-if="control.controlType === 'Boolean'" class="form-check form-switch">
                                             <input class="form-check-input" type="checkbox" role="switch" :id="`control-${name}`"
                                                 v-model="control.value" :disabled="!isControlEnabled(name)">
                                         </div>
@@ -979,6 +980,22 @@ onMounted(() => {
                                         <button type="button" class="btn submit-btn" @click="setDefaultControl(name)">Reset</button>
                                     </div>
                                 </div>
+                                <p v-for="e in cameraControlErrors" class="error">{{e}}</p>
+                                <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
+                                    <button class="btn submit-btn" @click="requestSaveControls">Save Camera Controls</button>
+                                    <ConfirmationBox
+                                        v-model="showSaveAllControlsConfrim"
+                                        message="Would you like to save all camera controls?"
+                                        :onConfirmFunction="saveControlConfig"/>
+                                    <button class="btn submit-btn" @click="showResetAllControlsConfrim = true">Reset Camera Controls</button>
+                                    <ConfirmationBox
+                                        v-model="showResetAllControlsConfrim"
+                                        message="Would you like to reset all camera controls?"
+                                        :onConfirmFunction="resetControlsConfig"/>
+                                </div>
+                                <p v-if="feedback.controls"
+                                   :class="feedback.controls.ok ? 'success' : 'error'"
+                                   role="status"> {{ feedback.controls.message }}</p>
                             </div>
                             <!-- DIVIATION THRESHOLDS -->
                             <hr class="line-break" v-if="selectedCamera">
