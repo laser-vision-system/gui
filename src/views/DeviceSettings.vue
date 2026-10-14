@@ -31,7 +31,12 @@ const { sharedMicroComputer, sharedCamera } = useSharedDeviceData();
 import MultiThumbSlider from '../components/MultiThumbRangeSlider.vue';
 // persistant data for the devation threshold range
 import {usePersistantSliderRange} from '../composables/usePersistantSliderRange';
-const { sliderRange, saveDeviationSliderRange, revertDeviationSliderRange, resetDeviationSliderRange } = usePersistantSliderRange();
+const {
+  // data
+  sliderRange,
+  // functions
+  saveDeviationSliderRange, revertDeviationSliderRange, resetDeviationSliderRange
+} = usePersistantSliderRange();
 // Diviation configration values
 const newAlertBelow = ref(null);
 const newWarnBelow = ref(null);
@@ -62,29 +67,18 @@ const {
   // state
   status,
   // data
-  edgeList: wsEdgeList, // renamed so no confusion between sample data and live data.
-  cameraList: wsCameraList,
-  imageSrc,
-  controlConfig,
-  defaultThresholds,
-  visionProcessingTechniques,
-  // connections
+  // some data is renamed so no confusion between sample data and live data.
+  edgeList: wsEdgeList, cameraList: wsCameraList,
+  imageSrc, controlConfig, defaultThresholds, visionProcessingTechniques,
+  // connection function
   connect,
   // Functions
   // Edge (micro computers)
-  listEdges,
-  setEdgeName,
-  setEdgeProcessingType,
+  listEdges, setEdgeName, setEdgeProcessingType,
   // Cameras
-  listCameras,
-  viewCamera,
-  stopViewingCamera,
-  setCameraName,
-  viewCameraConfig,
-  updateConfiguration,
-  setCameraThresholds,
-  setDefaultThreshold,
-  getDefaultThresholds,
+  listCameras, viewCamera, stopViewingCamera, setCameraName,
+  viewCameraConfig, updateConfiguration,
+  setCameraThresholds, setDefaultThreshold, getDefaultThresholds,
 } = useWebSocket('ws://' + location.hostname + ':8080/gui_ws');
 
 //  Check if the websocket is connected
@@ -122,15 +116,97 @@ const newCameraName = ref(null); // needs validation
 // -------------------------
 //      Camera Controls
 // -------------------------
+// Each control will have its own reactive entry with restpect to the selected camera's controls
+// Controls are keyed by their control name
+const controls = reactive({});
+// dynamic boolean
+const hasControls = computed(() => Object.keys(controls).length > 0);
 
-const newBrightness = ref(null);
-const newContrast = ref(null);
-const newHue = ref(null);
-const newSaturation = ref(null);
-const newGamma = ref(null);
-const newGain = ref(null);
-const newExposureAbsolute = ref(null);
-const newAutoExposure = ref(null);
+// -----GLOBAL CONSTANTS-----
+// Display order of controls
+// If their is a control that is sent by the camera that isn't listed will be appended alphabetically
+const CONTROL_ORDER = [
+  'AutoExposure', 'ExposureAbsolute', 'ExposureAutoPriority',
+  'AutoWhiteBalance', 'WhiteBalance',
+  'Brightness', 'Contrast', 'Saturation', 'Hue', 'Gamma', 'Gain', 'Sharpness',
+  'PowerLineFrequency',
+];
+
+// Manual change for the label names for the camera controls
+const NICER_LABELS = {
+  ExposureAbsolute: 'Exposure (Absolute)',
+};
+
+// Some camera controls are dependent of others and need to accounted for
+// e.g. AutoExposer when set to auto blocks ExposureAbsolute
+// This is based on the UVC convention
+const CONTROL_DEPENDENCIES = {
+  ExposureAbsolute: (c) => !c.AutoExposure || c.AutoExposure.value === 1,
+  WhiteBalance: (c) => !c.AutoWhiteBalance || c.AutoWhiteBalance.value === false,
+};
+
+// function to check if the controls should be blocked or not by other control settings
+function isControlEnabled(name) {
+  const rule = CONTROL_DEPENDENCIES[name];
+  return rule ? rule(controls) : true;
+}
+
+// -----ARROW FUNCTIONS-----
+
+// returns the first known index of a value given its name
+// It is used by the byControlOrder sorting list to insure the controls listed in CONTROL_ORDER are shown first.
+const orderOfControl = (name) => {
+  const i = CONTROL_ORDER.indexOf(name);
+  return i === -1 ? CONTROL_ORDER.length : i;
+};
+
+// Lists of the controls sorted in the order defined in the CONTROL_ORDER list
+const byControlOrder = (a, b) => orderOfControl(a) - orderOfControl(b) || a.localeCompare(b);
+
+// Replaces the names of the labels
+const renamedLabels = (name) => CONTROL_LABELS[name] ?? name.replace(/([a-z])([A-Z])/g, '$1 $2');
+
+// parse server entry into a flat object
+// e.g. { IntegerRange: { value, default, min, max, step } }
+function parseControl(name, entry) {
+  // control type e.g. (Menu, Integer Range, Boolean)
+  const controlType = Object.keys(entry ?? {})[0];
+  // vlaue of the control e.g. (Brightnes: {controlBody})
+  const controlBody = entry?.[controlType];
+  if (controlBody) return null;
+
+  const contents = {
+    controlType,
+    label: renamedLabels,
+    value: controlBody.value,
+    // fallback if the value field is left blank
+    orginal: controlBody.value,
+    default: controlBody.default,
+  };
+
+  // handler for diferent control types
+  switch (contents) {
+    case 'IntegerRange':
+      return {
+        ...contents,
+        min: controlBody.min, max: controlBody.max,
+        step: controlBody.step ?? 1
+      };
+    case 'Menu':
+      return {
+        ...contents,
+        items: (controlBody.items ?? []).map((item) => ({
+          id: item.id, name: item.item?.name ?? String(item.id)
+        })),
+      };
+    case 'Boolean':
+      return controlBody;
+      default:
+        console.warn(`Unknown control kind "${contents}" for ${name}, skipping`);
+        return null;
+  }
+}
+
 
 // -------------------------
 //   Feedback Messages
@@ -210,45 +286,51 @@ const THRESHOLD_MIN = 0;
 const THRESHOLD_MAX = 200;
 
 // Camera Controls
-function validateCameraControlMinMax(name, range, value) {
-  if (isBlank(value)) return true;
+function validateCameraControl(name, control) {
+  // validation for control type IntegerRange
+  if (control.controlType === 'IntegerRange') {
+    // a blank value falls back to the current value on save
+    if (isBlank(value)) return true;
 
-  if (!Number.isInteger(value)) {
-    cameraControlErrors.value.push(`Warning: ${name} must be a whole number`);
+    if (!Number.isInteger(control.value)) {
+      cameraControlErrors.value.push(`Warning: ${control.label} must be a whole number`);
+      return false;
+    }
+
+    if (control.value < control.min) {
+      cameraControlErrors.value.push(`Warning: ${control.label} at ${control.value}, is under the minimum value of ${control.min}`);
+      return false;
+    }
+    if (value > control.max) {
+      cameraControlErrors.value.push(`Warning: ${control.label} at ${control.value}, is over the maximum value of ${control.max}`);
+      return false;
+    }
+  }
+
+  // vaildate control type Menu
+  if (control.controlType === 'Menu' && !control.items.some((item) => item.id === control.value)) {
+    cameraControlErrors.value.push(`Warning: Invalid option has been selected ${control.label}.`);
     return false;
   }
 
-  if (value < range.min) {
-    cameraControlErrors.value.push(`Warning: ${name} at ${value}, is under the minimum value of ${range.min}`);
-    return false;
-  }
-  if (value > range.max) {
-    cameraControlErrors.value.push(`Warning: ${name} at ${value}, is over the maximum value of ${range.max}`);
+  // validate control type Boolean
+  if (control.controlBody === 'Boolean' && typeof control.value !== 'boolean') {
+    cameraControlErrors.value.push(`Warning: ${ctrl.label} must be true or false`);
     return false;
   }
 
   return true;
 }
 
-function validateAllCameraControlsMinMax() {
+
+// loops through all camera controls and validates them
+function validateAllCameraControls() {
   cameraControlErrors.value = [];
   if (!selectedConfig.value) return false;
 
-  const original = selectedConfig.value.configuration;
-  const integerControls = {
-    Brightness: newBrightness, Contrast: newContrast, Hue: newHue,
-    Saturation: newSaturation, Gamma: newGamma, Gain: newGain,
-    ExposureAbsolute: newExposureAbsolute,
-  }
-
   let result = true;
-  for (const [name, valueRef] of Object.entries(integerControls)) {
-    if (!original?.[name]) continue; // camera doesn't support this control
-    const range = original[name].IntegerRange;
-    if (!range) continue;
-    if (!validateCameraControlMinMax(name, range, valueRef.value?.value)) {
-      result = false;
-    }
+  for (const [name, control] of Object.entries(controls)) {
+    if (!validateCameraControl(name, control)) result = false;
   }
 
   return result;
@@ -353,7 +435,7 @@ function requestSetSliderRange() {
   if (validateThresholdRange()) showSetThresholdRange.value = true;
 }
 function requestSaveControls() {
-  if (validateAllCameraControlsMinMax()) showSaveAllControlsConfrim.value = true;
+  if (validateAllCameraControls()) showSaveAllControlsConfrim.value = true;
 }
 function requestSaveThresholds() {
   if (validateDeviation()) showSaveThresholdsConfrim.value = true;
@@ -439,26 +521,20 @@ async function renameCamera() {
   }
 }
 
-// build camera control payload does not include the fps (we will figure that out later)
+// build camera control payload
 function buildControlsPayload() {
   if (!selectedConfig.value) return null
 
   const original = selectedConfig.value.configuration
   const payload = {}
 
-  const integerControls = {
-    Brightness: newBrightness, Contrast: newContrast, Hue: newHue,
-    Saturation: newSaturation, Gamma: newGamma, Gain: newGain,
-    ExposureAbsolute: newExposureAbsolute,
-  }
-  for (const [name, valueRef] of Object.entries(integerControls)) {
-    if (!original?.[name]) continue // camera doesn't support this control
-    const current = original[name].IntegerRange?.value
-    const resolved = checkBlank(valueRef.value?.value, current)
-    if (resolved === null || resolved === undefined) continue
+  for (const [name, control] of Object.entries(controls)) {
+    const originalBody = original?.[name]?.[control.controlType];
+    if (!originalBody) continue; // camera doesn't have a control
+    // build the payload for a control
     payload[name] = {
-      IntegerRange: {...original[name].IntegerRange, value:  resolved,},
-    }
+      [ctrl.kind]: { ...originalBody, value: checkBlank(control.value, control.original) },
+    };
   }
   // NOT IN CURRENT SPRINT BUT MAY NEED TO BE FIXED DEPENDING ON HOW THE CONTROLS ARE SET THROUGH
   if (original?.AutoExposure) {
@@ -467,7 +543,7 @@ function buildControlsPayload() {
       Menu: {...original.AutoExposure.Menu, value: { ConValueMenu: checkBlank(newAutoExposure.value, current) },},
     }
   }
-  return payload
+  return payload;
 }
 
 // Timeout timer function
@@ -503,7 +579,6 @@ async function saveControlConfig() {
     }
   } catch (e) {
     console.error('Error updating camera:', e);
-    saveState.value = 'error';
     showFeedback('controls', false, 'Something went wrong preparing the camera controls.');
   }
 }
@@ -522,90 +597,36 @@ function findConfig(conn_id, camera_id) {
 }
 
 // ------------------------------
-//          Methods
+//       Helper Methods
 // ------------------------------
-
-
-// control filter function for selected camera
-function controlFilter(controlName) {
-  return selectedConfig.value?.configuration?.[controlName] ?? null
-}
 
 // Load current values from the matched config. must be used after select config is set
 function loadCameraValues() {
-  if (!selectedConfig.value) {
-    newFPS.value = null
-    newBrightness.value = null
-    newContrast.value = null
-    newHue.value = null
-    newSaturation.value = null
-    newGamma.value = null
-    newGain.value = null
-    newExposureAbsolute.value = null
-    newAutoExposure.value = null
-    return
-  }
+  // clear the previous camera's controls
+  Object.keys(controls).forEach((key) => delete controls[key]);
 
-  const config = selectedConfig.value.configuration
+  const config = selectedConfig.value?.configuration;
+  if (!config) return;
 
-  // load values
-  newBrightness.value = config.Brightness?.IntegerRange ?? null
-  newContrast.value = config.Contrast?.IntegerRange ?? null
-  newHue.value = config.Hue?.IntegerRange ?? null
-  newSaturation.value = config.Saturation?.IntegerRange ?? null
-  newGamma.value = config.Gamma?.IntegerRange ?? null
-  newGain.value = config.Gain?.IntegerRange ?? null
-  newExposureAbsolute.value = config.ExposureAbsolute?.IntegerRange ?? null
-  newAutoExposure.value = config.AutoExposure?.Menu ?? null
+  // display the controls in the stated order so v-for renders control in the desired order
+  Object.keys(config).sort(byControlOrder).forEach((name) => {
+    const parsed = parseControl(name, config[name]);
+    if (parsed) controls[name] = parsed;
+  });
 }
-// set selected control values to the defualt settings
-function setDefault(controlName) {
-  const control = controlFilter(controlName)
-  if (!control) return
 
-  const defualtValue = control.IntegerRange?.default ?? control.Menu?.default
-  if (defualtValue === undefined) return
-
-  switch (controlName) {
-    case 'Brightness': newBrightness.value = { ...newBrightness.value, value: defualtValue }; break
-    case 'Contrast': newContrast.value = { ...newContrast.value, value: defualtValue}; break
-    case 'Hue': newHue.value = { ...newHue.value, value: defualtValue}; break
-    case 'Saturation': newSaturation.value = { ...newSaturation.value, value: defualtValue}; break
-    case 'Gamma': newGamma.value = { ...newGamma.value, value: defualtValue}; break
-    case 'Gain': newGain.value = { ...newGain.value, value: defualtValue}; break
-    case 'ExposureAbsolute': newExposureAbsolute.value = { ...newExposureAbsolute.value, value: defualtValue}; break
-    case 'AutoExposure': newAutoExposure.value = defualtValue; break
-  }
+// set selected control value to the defualt settings
+function setDefaultControl(name) {
+  const control = controls[name];
+  // return if there is no control or defined default value.
+  if (!control || control.default === undefined) return;
+  control.value = control.default;
 }
 
 // set all values to default
-function resetControlConfig() {
-  if (!selectedConfig.value) return
-
-  const config = selectedConfig.value.configuration
-
-  // Map of control name -> the ref that holds its form value
-  const controlRefs = {
-    Brightness: newBrightness,
-    Contrast: newContrast,
-    Saturation: newSaturation,
-    Hue: newHue,
-    Gamma: newGamma,
-    Gain: newGain,
-    ExposureAbsolute: newExposureAbsolute,
-    AutoExposure: newAutoExposure,
-  }
-
-  // loop through the name
-  for (const [controlName, targetRef] of Object.entries(controlRefs)) {
-    const control = config[controlName]
-    if (!control) continue // camera doesn't have this control
-
-    const def = control.IntegerRange?.default ?? control.Menu?.default
-    if (def === undefined) continue
-
-    targetRef.value = control.IntegerRange ? {...targetRef.value, value: def} : def
-  }
+function resetControlsConfig() {
+  // reset the control to default for each control
+  Object.keys(controls).forEach((name) => setDefaultControl(name));
 }
 
 // sets the default threshold for all deviation thresholds
@@ -859,7 +880,6 @@ onMounted(() => {
                                     <label for="vision-process" class="config-label">Select Vision Processing Method</label>
                                     <div class="form-element">
                                         <select class="submenu-input " id="vision-process" v-model.number="newVisionProcessing">
-                                            <!-- TODO: change from static data to server hosted data-->
                                             <option value="" disabled>Please select a Vision Processing Method</option>
                                             <option v-for="(technique,index) in visionProcessingTechniques" :key="technique" :value="technique">
                                                 [{{index + 1}}] : {{technique}}
@@ -926,133 +946,39 @@ onMounted(() => {
                                 @click="isControlsSection = !isControlsSection">
                                 Camera Controls
                             </h4>
+                            <div v-if="isControlsSection && selectedCamera">
+                                <p v-if="!hasControls" class="config-label">Wating for controls from the camera...</p>
 
-                            <div v-if="isControlsSection">
-                                <div v-if="controlFilter('Brightness')">
-                                    <label for="brightness-range" class="config-label">Brightness</label>
+                                <div v-for="(control,name) in controls" :key="name">
+                                    <label :for="`control-${name}`" class="config-label">{{control.label}}</label>
                                     <div class="form-element">
-                                        <input type="range" class="slider-input" id="brightness-range" v-model.number="newBrightness.value"
-                                            :min="newBrightness.min"
-                                            :max="newBrightness.max"
-                                            :step="newBrightness.step">
-                                        <input type="number" class="number-input" id="brightness-number" v-model.number="newBrightness.value"
-                                            :min="newBrightness.min"
-                                            :max="newBrightness.max"
-                                            :step="newBrightness.step">
-                                        <button type="button" class="btn submit-btn" @click="setDefault('Brightness')">Reset</button>
-                                    </div>
-                                </div>
-                                <div v-if="controlFilter('Contrast')">
-                                    <label for="contrast-range" class="config-label">Contrast</label>
-                                    <div class="form-element">
-                                        <input type="range" class="slider-input" id="contrast-range" v-model.number="newContrast.value"
-                                            :min="newContrast.min"
-                                            :max="newContrast.max"
-                                            :step="newContrast.step">
-                                        <input type="number" class="number-input" id="contrast-number" v-model.number="newContrast.value"
-                                            :min="newContrast.min"
-                                            :max="newContrast.max"
-                                            :step="newContrast.step">
-                                        <button type="button" class="btn submit-btn" @click="setDefault('Contrast')">Reset</button>
-                                    </div>
-                                </div>
-                                <div v-if="controlFilter('Hue')">
-                                    <label for="hue-range" class="config-label">Hue</label>
-                                    <div class="form-element">
-                                        <input type="range" class="slider-input" id="hue-range" v-model.number="newHue.value"
-                                            :min="newHue.min"
-                                            :max="newHue.max"
-                                            :step="newHue.step">
-                                        <input type="number" class="number-input" id="hue-number" v-model.number="newHue.value"
-                                            :min="newHue.min"
-                                            :max="newHue.max"
-                                            :step="newHue.step">
-                                        <button type="button" class="btn submit-btn" @click="setDefault('Hue')">Reset</button>
-                                    </div>
-                                </div>
-                                <div v-if="controlFilter('Saturation')">
-                                    <label for="saturation-range" class="config-label">Saturation</label>
-                                    <div class="form-element">
-                                        <input type="range" class="slider-input" id="saturation-range" v-model.number="newSaturation.value"
-                                            :min="newSaturation.min"
-                                            :max="newSaturation.max"
-                                            :step="newSaturation.step">
-                                        <input type="number" class="number-input" id="saturation-number" v-model.number="newSaturation.value"
-                                            :min="newSaturation.min"
-                                            :max="newSaturation.max"
-                                            :step="newSaturation.step">
-                                        <button type="button" class="btn submit-btn" @click="setDefault('Saturation')">Reset</button>
-                                    </div>
-                                </div>
-                                <div v-if="controlFilter('Gamma')">
-                                    <label for="gamma-range" class="config-label">Gamma</label>
-                                    <div class="form-element">
-                                        <input type="range" class="slider-input" id="gamma-range" v-model.number="newGamma.value"
-                                            :min="newGamma.min"
-                                            :max="newGamma.max"
-                                            :step="newGamma.step">
-                                        <input type="number" class="number-input" id="gamma-number" v-model.number="newGamma.value"
-                                            :min="newGamma.min"
-                                            :max="newGamma.max"
-                                            :step="newGamma.step">
-                                        <button type="button" class="btn submit-btn" @click="setDefault('Gamma')">Reset</button>
-                                    </div>
-                                </div>
-                                <div v-if="controlFilter('Gain')">
-                                    <label for="gain-range" class="config-label">Gain</label>
-                                    <div class="form-element">
-                                        <input type="range" class="slider-input" id="gain-range" v-model.number="newGain.value"
-                                            :min="newGain.min"
-                                            :max="newGain.max"
-                                            :step="newGain.step">
-                                        <input type="number" class="number-input" id="gain-number" v-model.number="newGain.value"
-                                            :min="newGain.min"
-                                            :max="newGain.max"
-                                            :step="newGain.step">
-                                        <button type="button" class="btn submit-btn" @click="setDefault('Gain')">Reset</button>
-                                    </div>
-                                </div>
-                                <div v-if="controlFilter('AutoExposure')">
-                                    <label for="autoExposure" class="config-label">Auto Exposure</label>
-                                    <div class="form-element">
-                                        <select class="menu-input" id="autoExposure" v-model.number="newAutoExposure">
-                                            <option v-for="item in controlFilter('AutoExposure').Menu.items" :key="item.id" :value="item.id">
-                                                {{ item.item.Name }}
-                                            </option>
+                                        <!-- Integer range [range slider and number input] -->
+                                        <template v-if="control.controlType === 'IntegerRange'">
+                                            <input type="range" class="slider-input" :id="`control-${name}`"
+                                                v-model.number="control.value"
+                                                :min="control.min" :max="control.max" :step="control.step"
+                                                :disabled="!isControlEnabled(name)">
+                                            <input type="number" class="number-input" :id="`control-${name}-number`"
+                                                v-model.number="control.value"
+                                                :min="control.min" :max="control.max" :step="control.step"
+                                                :disabled="!isControlEnabled(name)">
+                                        </template>
+                                        <!-- Menu drop down -->
+                                        <select v-else-if="control.controlType === 'Menu'" class="menu-input" :id="`control-${name}`"
+                                            v-model.number="control.value" :disabled="!isControlEnabled(name)">
+                                                <option  v-for="item in control.items" :key="item.id" :value="item.id">
+                                                    {{ item.name }}
+                                                </option>
                                         </select>
-                                        <button type="button" class="btn submit-btn" @click="setDefault('AutoExposure')">Reset</button>
+                                        <!-- Boonlean: switch -->
+                                        <div v-else-if="control.kind === 'Boolean'" class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" role="switch" :id="`control-${name}`"
+                                                v-model="control.value" :disabled="!isControlEnabled(name)">
+                                        </div>
+                                        <!-- reset to defualt button -->
+                                        <button type="button" class="btn submit-btn" @click="setDefaultControl(name)">Reset</button>
                                     </div>
                                 </div>
-                                <div v-if="controlFilter('ExposureAbsolute')">
-                                    <label for="exposure-range" class="config-label">Exposure (Absolute)</label>
-                                    <div class="form-element">
-                                        <input type="range" class="slider-input" id="exposure-range" v-model.number="newExposureAbsolute.value"
-                                        :min="newExposureAbsolute.min"
-                                            :max="newExposureAbsolute.max"
-                                            :step="newExposureAbsolute.step">
-                                        <input type="number" class="number-input" id="exposure-number" v-model.number="newExposureAbsolute.value"
-                                            :min="newExposureAbsolute.min"
-                                            :max="newExposureAbsolute.max"
-                                            :step="newExposureAbsolute.step">
-                                        <button type="button" class="btn submit-btn" @click="setDefault('ExposureAbsolute')">Reset</button>
-                                    </div>
-                                </div>
-                                <p v-for="e in cameraControlErrors" class="error">{{e}}</p>
-                                <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
-                                    <button class="btn submit-btn" @click="requestSaveControls">Save Camera Controls</button>
-                                    <ConfirmationBox
-                                        v-model="showSaveAllControlsConfrim"
-                                        message="Would you like to save all camera controls?"
-                                        :onConfirmFunction="saveControlConfig"/>
-                                    <button class="btn submit-btn" @click="showResetAllControlsConfrim = true">Reset Camera Controls</button>
-                                    <ConfirmationBox
-                                        v-model="showResetAllControlsConfrim"
-                                        message="Would you like to reset all camera controls?"
-                                        :onConfirmFunction="resetControlConfig"/>
-                                </div>
-                                <p v-if="feedback.controls"
-                                   :class="feedback.controls.ok ? 'success' : 'error'"
-                                   role="status"> {{ feedback.controls.message }}</p>
                             </div>
                             <!-- DIVIATION THRESHOLDS -->
                             <hr class="line-break" v-if="selectedCamera">
