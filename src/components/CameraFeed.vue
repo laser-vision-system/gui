@@ -1,10 +1,11 @@
 <script setup>
 // import the gobal variable for camera feed toggle from local storage
-
+import { usePersistentGlobalData } from '../composables/usePersistentGlobalData';
+const { globalCameraFeedBoolean } = usePersistentGlobalData();
 // toggle arrows
 import arrowUp from '../assets/images/arrow-up.svg'
 import arrowDown from '../assets/images/arrow-down.svg'
-
+const showCameraFeed = ref(false);
 // --------------------
 //   Props
 // --------------------
@@ -19,8 +20,8 @@ const props = defineProps({
 // --------------------
 </script>
 <template>
-<!-- Global and physical Toggle -->
-<div>
+<!-- Global and Local Toggle -->
+<div v-if="globalCameraFeedBoolean || showCameraFeed">
     <div class="feed-wrapper w-100 h-100 d-flex ps-0" v-if="isSelected">
         <div v-if="isLive && imageSrc" class="w-100 h-100">
             <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">

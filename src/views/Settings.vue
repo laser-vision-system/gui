@@ -255,8 +255,15 @@ onMounted(() => {
                         <span class="slider round"></span>
                     </label>
                 </div>
-                <h3 class="config-subtitle">Camera Feed Toggle</h3>
-
+                <h3 class="config-subtitle pt-4">Camera Feed</h3>
+                <div class="col-12 text-center py-2">
+                    <h5 class="config-label" v-if="globalCameraFeedBoolean">Camera Feed: ON</h5>
+                    <h5 class="config-label" v-else>Camera Feed: OFF</h5>
+                    <label class="switch">
+                        <input type="checkbox" class="switch-input" :checked="globalCameraFeedBoolean" @change="toggleGlobalCameraFeed">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
             </div>
 
             <hr class="line-break">
