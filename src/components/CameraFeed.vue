@@ -1,10 +1,11 @@
 <script setup>
 // import the gobal variable for camera feed toggle from local storage
-
+import { usePersistentGlobalData } from '../composables/usePersistentGlobalData';
+const { globalCameraFeedBoolean } = usePersistentGlobalData();
 // toggle arrows
 import arrowUp from '../assets/images/arrow-up.svg'
 import arrowDown from '../assets/images/arrow-down.svg'
-
+const showCameraFeed = ref(false);
 // --------------------
 //   Props
 // --------------------
@@ -19,20 +20,24 @@ const props = defineProps({
 // --------------------
 </script>
 <template>
-<!-- Global and physical Toggle -->
+<!-- Local Toggle Icon -->
 <div>
-    <div class="feed-wrapper w-100 h-100 d-flex ps-0" v-if="isSelected">
-        <div v-if="isLive && imageSrc" class="w-100 h-100">
-            <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
-        </div>
-        <div v-else-if="isSelected" class="w-100">
-            <img src="../assets/images/fake-feed.png" alt="Sample Camera Feed" class="feedbox w-100 h-100">
-        </div>
-        <div v-else-if="!isSelected" class="w-100">
-            <img src="../assets/images/no-camera-selected.png" alt="No camera selected" class="feedbox w-100 h-100">
-        </div>
-        <div v-else class="w-100">
-            <img src="../assets/images/no-camera-connected.png" alt="No Cameras Connected" class="feedbox w-100 h-100 ">
+    <img src="" alt="">
+    <!-- Global and Local Toggle -->
+    <div v-if="globalCameraFeedBoolean || showCameraFeed">
+        <div class="feed-wrapper w-100 h-100 d-flex ps-0" v-if="isSelected">
+            <div v-if="isLive && imageSrc" class="w-100 h-100">
+                <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
+            </div>
+            <div v-else-if="isSelected" class="w-100">
+                <img src="../assets/images/fake-feed.png" alt="Sample Camera Feed" class="feedbox w-100 h-100">
+            </div>
+            <div v-else-if="!isSelected" class="w-100">
+                <img src="../assets/images/no-camera-selected.png" alt="No camera selected" class="feedbox w-100 h-100">
+            </div>
+            <div v-else class="w-100">
+                <img src="../assets/images/no-camera-connected.png" alt="No Cameras Connected" class="feedbox w-100 h-100 ">
+            </div>
         </div>
     </div>
 </div>

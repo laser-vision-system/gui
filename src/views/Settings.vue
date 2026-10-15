@@ -3,6 +3,8 @@ import { ref, reactive, onMounted } from 'vue';
 // composables
 import { useTheme } from '../composables/useTheme';
 const { theme, toggleTheme } = useTheme();
+import { usePersistentGlobalData } from '../composables/usePersistentGlobalData';
+const { toggleGlobalCameraFeed, globalCameraFeedBoolean } = usePersistentGlobalData();
 // icons
 import arrowUp from '../assets/images/arrow-up.svg';
 import arrowDown from '../assets/images/arrow-down.svg';
@@ -250,6 +252,15 @@ onMounted(() => {
                     <h5 class="config-label" v-if="theme === 'light'">Light Mode</h5>
                     <label class="switch">
                         <input type="checkbox" class="switch-input" :checked="theme === 'dark'" @change="toggleTheme">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <h3 class="config-subtitle pt-4">Camera Feed</h3>
+                <div class="col-12 text-center py-2">
+                    <h5 class="config-label" v-if="globalCameraFeedBoolean">Camera Feed: ON</h5>
+                    <h5 class="config-label" v-else>Camera Feed: OFF</h5>
+                    <label class="switch">
+                        <input type="checkbox" class="switch-input" :checked="globalCameraFeedBoolean" @change="toggleGlobalCameraFeed">
                         <span class="slider round"></span>
                     </label>
                 </div>

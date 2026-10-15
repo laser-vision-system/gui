@@ -1,4 +1,4 @@
-import { ref, watch} from 'vue';
+import { ref } from 'vue';
 
 const DEFAULTS = { min: 80, max: 120 };
 const STORAGE_KEY = 'multi-thumb-slider-range';
@@ -17,7 +17,7 @@ function load() {
 // Module level singlton
 const sliderRange = ref(load());
 // shared functions
-export function usePersistantSliderRange() {
+export function usePersistentSliderRange() {
   // saves the sliderRange of the deviation
   const saveDeviationSliderRange = () => {
     if (sliderRange.value.min >= sliderRange.value.max) {

@@ -39,13 +39,13 @@ const { sharedMicroComputer, sharedCamera } = useSharedDeviceData();
 // -----------------------------
 import MultiThumbSlider from '../components/MultiThumbRangeSlider.vue';
 // persistant data for the devation threshold range
-import {usePersistantSliderRange} from '../composables/usePersistantSliderRange';
+import {usePersistentSliderRange} from '../composables/usePersistentSliderRange';
 const {
   // data
   sliderRange,
   // functions
   saveDeviationSliderRange, revertDeviationSliderRange, resetDeviationSliderRange
-} = usePersistantSliderRange();
+} = usePersistentSliderRange();
 // Diviation configration values
 const newAlertBelow = ref(null);
 const newWarnBelow = ref(null);
