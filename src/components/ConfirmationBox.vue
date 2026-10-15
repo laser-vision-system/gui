@@ -45,7 +45,7 @@ function onCancel() {
 
 </script>
 <template>
-    <Teleport to="body">
+    <teleport to="body">
         <div v-if="modelValue" class="confirmation-window" @click.self="onCancel">
             <div class="confirm-box" role="dialog" aria-modal="true">
                 <p class="confirm-message">{{message}}</p>
@@ -59,7 +59,7 @@ function onCancel() {
                 </div>
             </div>
         </div>
-    </Teleport>
+    </teleport>
 </template>
 <style scoped>
 .confirmation-window {

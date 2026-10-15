@@ -21,9 +21,13 @@ const isDeviationMinMaxConfigure = ref(false);
 
 
 // -----------------------------
-//   Camera Feed
+//   Imported Components
 // -----------------------------
+// Components which have been improted for code reuse
+// Camera Feed Component: For displaying the Image feed of the slected camera
 import CameraFeed from '../components/CameraFeed.vue'
+// Hint Popup: to show message discriptions from
+import Hints from '../components/HintPopup.vue'
 // -----------------------------
 //   Config Shortcut
 // -----------------------------
