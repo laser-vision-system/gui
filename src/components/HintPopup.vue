@@ -113,10 +113,10 @@ onBeforeUnmount(removeListeners);
     max-width: min(260px, 80vw);
     padding: 10px 14px;
     border-radius: 8px;
-    background: var(--color-background, #fff);
-    color: var(--color-text, #222);
-    border: 1px solid var(--color-border, #ccc);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    border: 3px solid var(--button-hover);
+    box-shadow: 0 5px 20px var(--nav-bg);
 }
 /* Alignment variants */
 .hint-box--center { left: 50%; transform: translateX(-50%); }

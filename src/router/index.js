@@ -5,7 +5,7 @@ import Settings from "../views/Settings.vue";
 const routes = [
   { path: "/", component: Homepage },
   { path: "/device-settings", component: DeviceSettings },
-  { path: "/settings", component: Settings }
+  { path: "/global-settings", component: Settings }
 ];
 const router = createRouter({
   // change back to createWebHistory when deploying on server
