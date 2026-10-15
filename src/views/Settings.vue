@@ -253,6 +253,8 @@ onMounted(() => {
                         <span class="slider round"></span>
                     </label>
                 </div>
+                <h3 class="config-subtitle">Camera Feed Toggle</h3>
+
             </div>
 
             <hr class="line-break">
