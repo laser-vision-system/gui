@@ -31,7 +31,7 @@
 
 :root.dark {
     /* Bootstrap Overrides */
-    --bs-body-bg: #778899;
+    --bs-body-bg: #8D99AE;
     --bs-body-color: white;
     /*--bs-success-rgb: 106, 90, 205;*/
     --bs-border-color: silver;

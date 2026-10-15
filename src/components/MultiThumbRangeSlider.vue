@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch } from "vue";
-
+// Hint Popup: to show message discriptions from
+import Hints from '../components/HintPopup.vue'
 // --------------------
 //   Props
 // --------------------
@@ -222,7 +223,10 @@ watch(warnAbove, (newValue) => {
 
             <!-- Alert Below number input -->
             <label class="threshold-number-input alert-number">
-                <span>Alert Below</span>
+                <span class="">Alert Below
+                    <Hints size="12"
+                    :message="'Alert below signifies the lowest alert threshold for the deviation measured by the system, once a laser’s measured deviation passes this value, the laser being monitored is in need of readjustment and a red notification will display the homepage to alert the user.'"/>
+                </span>
                 <input
                     type="number"
                     :min="alertBelowRange.min"
@@ -231,10 +235,14 @@ watch(warnAbove, (newValue) => {
                     :value="alertBelow"
                     @change="onAlertBelowInput"
                 />
+
             </label>
             <!-- Warn Below number input -->
             <label class="threshold-number-input warn-number">
-                <span>Warn Below</span>
+                <span>Warn Below
+                    <Hints size="12"
+                    :message="'Warn below signifies the lowest warning threshold for the deviation measured by the system, once a laser’s measured deviation falls below this value it is considered at risk and an yellow notification will display on the homepage. If the deviation value stays above this point it is considered by the system to in a safe range and no notifications will be shown in the homepage.'"/>
+                </span>
                 <input
                     type="number"
                     :min="warnBelowRange.min"
@@ -243,10 +251,14 @@ watch(warnAbove, (newValue) => {
                     :value="warnBelow"
                     @change="onWarnBelowInput"
                 />
+
             </label>
             <!-- Warn Above number input -->
             <label class="threshold-number-input warn-number">
-                <span>Warn Above</span>
+                <span>Warn Above
+                    <Hints size="12"
+                    :message="'Warn above signifies the highest warning threshold for the deviation measured by the system, once a laser’s measured deviation goes passed this value it is considered at risk and a yellow notification will display on the homepage. If the deviation value stays bellow this point it is considered by the system to be in a safe range and no notifications will be shown in the homepage.'"/>
+                </span>
                 <input
                 type="number"
                 :min="warnAboveRange.min"
@@ -258,7 +270,10 @@ watch(warnAbove, (newValue) => {
             </label>
             <!-- Alert Above number input -->
             <label class="threshold-number-input alert-number">
-                <span>Alert Above</span>
+                <span>Alert Above
+                    <Hints size="12" align="right"
+                    :message="'Alert above signifies the highest alert threshold for the deviation measured by the system, once a laser’s measured deviation has passed this value, the laser being monitored is in need of readjustment and a red notification will display on the homepage to alert the user.'"/>
+                </span>
                 <input
                     type="number"
                     :min="alertAboveRange.min"
@@ -393,7 +408,7 @@ watch(warnAbove, (newValue) => {
         flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
-        gap: 1rem;
+        gap: 0.25rem;
         margin-top: 1rem;
         margin-left: 2rem;
         margin-right: 2rem;
@@ -410,7 +425,7 @@ watch(warnAbove, (newValue) => {
     }
 
     .threshold-number-input input {
-        width: 4.5rem;
+        width: 4.2rem;
         padding: 0.25rem;
         border-radius: 0.5rem;
         background-color: var(--bs-body-bg);
