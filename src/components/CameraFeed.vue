@@ -20,20 +20,24 @@ const props = defineProps({
 // --------------------
 </script>
 <template>
-<!-- Global and Local Toggle -->
-<div v-if="globalCameraFeedBoolean || showCameraFeed">
-    <div class="feed-wrapper w-100 h-100 d-flex ps-0" v-if="isSelected">
-        <div v-if="isLive && imageSrc" class="w-100 h-100">
-            <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
-        </div>
-        <div v-else-if="isSelected" class="w-100">
-            <img src="../assets/images/fake-feed.png" alt="Sample Camera Feed" class="feedbox w-100 h-100">
-        </div>
-        <div v-else-if="!isSelected" class="w-100">
-            <img src="../assets/images/no-camera-selected.png" alt="No camera selected" class="feedbox w-100 h-100">
-        </div>
-        <div v-else class="w-100">
-            <img src="../assets/images/no-camera-connected.png" alt="No Cameras Connected" class="feedbox w-100 h-100 ">
+<!-- Local Toggle Icon -->
+<div>
+    <img src="" alt="">
+    <!-- Global and Local Toggle -->
+    <div v-if="globalCameraFeedBoolean || showCameraFeed">
+        <div class="feed-wrapper w-100 h-100 d-flex ps-0" v-if="isSelected">
+            <div v-if="isLive && imageSrc" class="w-100 h-100">
+                <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
+            </div>
+            <div v-else-if="isSelected" class="w-100">
+                <img src="../assets/images/fake-feed.png" alt="Sample Camera Feed" class="feedbox w-100 h-100">
+            </div>
+            <div v-else-if="!isSelected" class="w-100">
+                <img src="../assets/images/no-camera-selected.png" alt="No camera selected" class="feedbox w-100 h-100">
+            </div>
+            <div v-else class="w-100">
+                <img src="../assets/images/no-camera-connected.png" alt="No Cameras Connected" class="feedbox w-100 h-100 ">
+            </div>
         </div>
     </div>
 </div>
