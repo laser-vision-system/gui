@@ -3,6 +3,8 @@ import { ref, reactive, onMounted } from 'vue';
 // composables
 import { useTheme } from '../composables/useTheme';
 const { theme, toggleTheme } = useTheme();
+import { usePersistentGlobalData } from '../composables/usePersistentGlobalData';
+const { toggleGlobalCameraFeed, globalCameraFeedBoolean } = usePersistentGlobalData();
 // icons
 import arrowUp from '../assets/images/arrow-up.svg';
 import arrowDown from '../assets/images/arrow-down.svg';
