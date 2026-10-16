@@ -437,7 +437,8 @@ onUnmounted(() => {
                                 <p><strong>ID:</strong> {{ selectedCameraInfo.camera_id }}</p>
                                 <p><strong>Name:</strong> {{ selectedCameraInfo.name }}</p>
                                 <!-- <p><strong>Intensity:</strong> {{ selectedCameraInfo.intensity }}</p> -->
-                                <p><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) + '%' }}</p>
+                                <p v-if="Number(selectedCameraId.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) + '%' }}</p>
+                                <p v-else><strong>Deviation:</strong> --</p>
                                 <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
                                 <table class="table border border-2 hardware-info">
                                     <tbody>
