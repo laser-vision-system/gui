@@ -28,16 +28,16 @@ export function useWebSocket(url) {
   const controlConfig = ref(null);
   // Active Camera / selected camera
   const activeCamera = ref(null);
-  // default Threasholds
+  // default thresholds
   const defaultThresholds = ref(null);
   // Vision Processing Techniques
   const visionProcessingTechniques = ref([]);
   // server Alert
   const serverAlert = ref(null);
 
-  // Array of Known ID feilds  just add any more ids that are needed to this array of the time comes
+  // Array of Known ID fields  just add any more ids that are needed to this array of the time comes
   const ID_KEYS = ['conn_id', 'camera_id', 'edge_id' , 'conn'];
-  // Creates regex alturation string out of the array of ids
+  // Creates regex or conditions out of the array of ids
   const ID_KEYS_REGEX_OPTIONS = ID_KEYS.join('|');
   //
 
@@ -56,7 +56,7 @@ export function useWebSocket(url) {
     return jsonString.replace(new RegExp(`"(${ID_KEYS_REGEX_OPTIONS})":(-?\\d+)`, 'g'), '"$1":"$2"');
   }
 
-  // unquoter for the outgoing id feilds
+  // unquoter for the outgoing id fields
   function unquoteIds(jsonString) {
     // replaces the string with a number on the out
     return jsonString.replace(new RegExp(`"(${ID_KEYS_REGEX_OPTIONS})":"(-?\\d+)"`, 'g'), '"$1":$2');
@@ -80,12 +80,12 @@ export function useWebSocket(url) {
       console.error('Failed to parse server message', e, text);
       return { type: null, data: null };
     }
-    // if the message doesnt have a payload
+    // if the message doesn't have a payload
     if (typeof parsed === 'string') {
       return { type: parsed, data: null };
     }
 
-    // if the mesasge is has a type and payload (e.g. configuration or camera maps) most messages
+    // if the message is has a type and payload (e.g. configuration or camera maps) most messages
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       const keys = Object.keys(parsed);
       if (keys.length === 1) {
@@ -93,7 +93,7 @@ export function useWebSocket(url) {
         return { type, data: parsed[type] ?? null };
       }
     }
-    // MESSAGE COULD NOT BE HANDLEDED
+    // MESSAGE COULD NOT BE HANDLED
     console.error('Unexpected server message shape', parsed);
     return { type: null, data: null };
   }
@@ -115,7 +115,7 @@ export function useWebSocket(url) {
     }
   }
   // ---------------------------
-  //   Comfrim sent message
+  //   Confirm sent message
   // ---------------------------
   // Time in ms
   const FLUSH_CHECK = 100;
@@ -140,7 +140,7 @@ export function useWebSocket(url) {
   }
 
   async function sendConfirmed(type, data) {
-    // save the web socket incase of reconnect.
+    // save the web socket in case of reconnect.
     const wSocket = socket;
     if (!send(type, data)) {
       return { ok: false, error: 'Socket is not open' };
@@ -357,7 +357,7 @@ export function useWebSocket(url) {
         }
         break;
       }
-      // Camera Disconnect (not used in GUI as it does not care about disconnecting that is handeled on the edge side.)
+      // Camera Disconnect (not used in GUI as it does not care about disconnecting that is handled on the edge side.)
       case 'CameraDisconnected': {
         const { conn_id, camera_id } = data;
         const key = `${conn_id},${camera_id}`;
@@ -524,7 +524,7 @@ export function useWebSocket(url) {
     });
   }
 
-  // Set Defualt vlaue of the servers camera thresholds
+  // Set Default value of the servers camera thresholds
   function setDefaultThreshold(alertBelow, warnBelow, warnAbove, alertAbove) {
     return sendConfirmed('SetDefaultThreshold', {
       warn_below_threshold: warnBelow,
@@ -534,7 +534,7 @@ export function useWebSocket(url) {
     });
   }
 
-  // get defualt thresholds
+  // get default thresholds
   function getDefaultThresholds() {
     send('GetDefaultThresholds');
   }

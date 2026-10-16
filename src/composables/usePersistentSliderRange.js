@@ -14,7 +14,7 @@ function load() {
   }
   return { ...DEFAULTS };
 }
-// Module level singlton
+// Module level singleton
 const sliderRange = ref(load());
 // shared functions
 export function usePersistentSliderRange() {
@@ -37,7 +37,7 @@ export function usePersistentSliderRange() {
     sliderRange.value = load();
   }
 
-  // sets the min and max values to the defualt values that are hard coded.
+  // sets the min and max values to the default values that are hard coded.
   const resetDeviationSliderRange = () => {
     sliderRange.value = { ...DEFAULTS };
   }

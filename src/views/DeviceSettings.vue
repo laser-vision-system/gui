@@ -23,10 +23,10 @@ const isDeviationMinMaxConfigure = ref(false);
 // -----------------------------
 //   Imported Components
 // -----------------------------
-// Components which have been improted for code reuse
-// Camera Feed Component: For displaying the Image feed of the slected camera
+// Components which have been imported for code reuse
+// Camera Feed Component: For displaying the Image feed of the selected camera
 import CameraFeed from '../components/CameraFeed.vue'
-// Hint Popup: to show message discriptions from
+// Hint Popup: to show message descriptions from
 import Hints from '../components/HintPopup.vue'
 // -----------------------------
 //   Config Shortcut
@@ -38,7 +38,7 @@ const { sharedMicroComputer, sharedCamera } = useSharedDeviceData();
 //   Multi Thumb range slider
 // -----------------------------
 import MultiThumbSlider from '../components/MultiThumbRangeSlider.vue';
-// persistant data for the devation threshold range
+// persistent data for the deviation threshold range
 import {usePersistentSliderRange} from '../composables/usePersistentSliderRange';
 const {
   // data
@@ -46,25 +46,25 @@ const {
   // functions
   saveDeviationSliderRange, revertDeviationSliderRange, resetDeviationSliderRange
 } = usePersistentSliderRange();
-// Diviation configration values
+// Deviation configuration values
 const newAlertBelow = ref(null);
 const newWarnBelow = ref(null);
 const newWarnAbove = ref(null);
 const newAlertAbove = ref(null);
 
 // -----------------------------
-//   Confrimation pop up window
+//   Confirmation pop up window
 // -----------------------------
 import ConfirmationBox from '../components/ConfirmationBox.vue';
 // Show Booleans
-const showRenameMicroCompConfrim = ref(false);
-const showSelectVisionProcessingConfrim = ref(false);
-const showRenameCameraConfrim = ref(false);
-const showSaveAllControlsConfrim = ref(false);
-const showResetAllControlsConfrim = ref(false);
-const showSaveThresholdsConfrim = ref(false);
-const showResetThresholdsConfrim = ref(false);
-const showSetDefaultThresholdConfrim = ref(false);
+const showRenameMicroCompConfirm = ref(false);
+const showSelectVisionProcessingConfirm = ref(false);
+const showRenameCameraConfirm = ref(false);
+const showSaveAllControlsConfirm = ref(false);
+const showResetAllControlsConfirm = ref(false);
+const showSaveThresholdsConfirm = ref(false);
+const showResetThresholdsConfirm = ref(false);
+const showSetDefaultThresholdConfirm = ref(false);
 const showSetThresholdRange = ref(false);
 
 // --------------------
@@ -127,7 +127,7 @@ const newCameraName = ref(null); // needs validation
 // -------------------------
 //      Camera Controls
 // -------------------------
-// Each control will have its own reactive entry with restpect to the selected camera's controls
+// Each control will have its own reactive entry with respect to the selected camera's controls
 // Controls are keyed by their control name
 const controls = reactive({});
 // dynamic boolean
@@ -182,7 +182,7 @@ const renamedLabels = (name) => NICER_LABELS[name] ?? name.replace(/([a-z])([A-Z
 function parseControl(name, entry) {
   // control type e.g. (Menu, Integer Range, Boolean)
   const controlType = Object.keys(entry ?? {})[0];
-  // vlaue of the control e.g. (Brightnes: {controlBody})
+  // value of the control e.g. (Brightness: {controlBody})
   const controlBody = entry?.[controlType];
   if (!controlBody) return null;
 
@@ -195,7 +195,7 @@ function parseControl(name, entry) {
     default: controlBody.default,
   };
 
-  // handler for diferent control types
+  // handler for different control types
   switch (controlType) {
     case 'IntegerRange':
       return {
@@ -273,7 +273,7 @@ const activeCameras = computed(() => {
   const source = isLive.value ? wsCameraList.value : sampleCameraList.cameras
   const active = source.filter((cam) => cam.state === 'Active')
 
-  // if no option is selecetd or the all option is selected.
+  // if no option is selected or the all option is selected.
   if (!selectedMicroComputer.value || selectedMicroComputer.value === 'all') {
     return active
   }
@@ -283,7 +283,7 @@ const activeCameras = computed(() => {
 });
 
 // --------------------
-//   CUSTOM VALDIATION
+//   CUSTOM VALIDATION
 // --------------------
 // All validate function return a bool, either true (is valid) or false (failed the validation)
 // Validation Errors
@@ -292,7 +292,7 @@ const deviationSliderRangeErrors = ref([]);
 const cameraControlErrors = ref([]);
 const cameraNameErrors = ref([]);
 const microComputerNameErrors = ref([]);
-// global cosntants
+// global constants
 const THRESHOLD_MIN = 0;
 const THRESHOLD_MAX = 200;
 
@@ -318,7 +318,7 @@ function validateCameraControl(name, control) {
     }
   }
 
-  // vaildate control type Menu
+  // validate control type Menu
   if (control.controlType === 'Menu' && !control.items.some((item) => item.id === control.value)) {
     cameraControlErrors.value.push(`Warning: Invalid option has been selected ${control.label}.`);
     return false;
@@ -349,7 +349,7 @@ function validateAllCameraControls() {
 
 // Validate deviation Thresholds:
 function validateDeviation() {
-  // reset varables both global and local
+  // reset variables both global and local
   let result = true;
   deviationErrors.value = [];
 
@@ -441,22 +441,22 @@ function validateCameraName() {
 // ---------------------------
 //    Validated Save Methods
 // ---------------------------
-// request functions for the validation before save / sending functionalitly.
+// request functions for the validation before save / sending.
 function requestSetSliderRange() {
   if (validateThresholdRange()) showSetThresholdRange.value = true;
 }
 function requestSaveControls() {
-  if (validateAllCameraControls()) showSaveAllControlsConfrim.value = true;
+  if (validateAllCameraControls()) showSaveAllControlsConfirm.value = true;
 }
 function requestSaveThresholds() {
-  if (validateDeviation()) showSaveThresholdsConfrim.value = true;
+  if (validateDeviation()) showSaveThresholdsConfirm.value = true;
 }
 function requestSaveDefaultThresholds() {
-  if (validateDeviation()) showSetDefaultThresholdConfrim.value = true;
+  if (validateDeviation()) showSetDefaultThresholdConfirm.value = true;
 }
 
-// save confrimation for local Storage
-function saveConfrimThresholdRange() {
+// save Confirmation for local Storage
+function saveConfirmThresholdRange() {
   if (saveDeviationSliderRange()) {
     showFeedback('thresholdsRange', true, 'Thresholds Range has been saved successfully');
   } else {
@@ -469,14 +469,14 @@ function saveConfrimThresholdRange() {
 //    Selected Device Methods
 // ---------------------------
 // Methods that relate selected devices
-// such as submiting and helper functions
+// such as submitting and helper functions
 
 // returns the name of the micro computer a camera belongs to
 function getEdgeName(connId) {
   return activeMicroComputers.value.find((com) => com.conn_id === connId)?.name ?? connId;
 }
 
-// when micro comp is clicked/ selected clear the value for selected camera to aviod errors.
+// when micro comp is clicked/ selected clear the value for selected camera to avoid errors.
 function clearSelectedCamera() {
   if (!selectedCamera.value) return
   // no need to reset if camera is part of the selected option
@@ -494,7 +494,7 @@ async function renameMicroComputer() {
     const result = await sendWithFeedback('microComputerName', 'Rename', () =>
       setEdgeName(selectedMicroComputer.value.conn_id, newMicroComputerName.value));
     // one second await timer
-    await coundownTimer(1000);
+    await countdownTimer(1000);
     if (result.ok) listEdges();
   } else {
     selectedMicroComputer.value.name = newMicroComputerName.value;
@@ -503,12 +503,12 @@ async function renameMicroComputer() {
 }
 
 // Select Vision processing method.
-//  the method for saving/ submiting the selected vision processing method
+//  the method for saving/ submitting the selected vision processing method
 async function submitVisionProcessing() {
   if (!selectedMicroComputer.value || newVisionProcessing.value == null) return;
   if (isLive.value) {
     await sendWithFeedback('visionProcessing', 'Vision Processing Technique', () =>
-      // API function for submiting the chosen vision processing
+      // API function for submitting the chosen vision processing
       setEdgeProcessingType(selectedMicroComputer.value.conn_id, newVisionProcessing.value));
   } else {
     selectedMicroComputer.value.Menu.value.ConValueMenu = newVisionProcessing.value;
@@ -524,7 +524,7 @@ async function renameCamera() {
     const result = await sendWithFeedback('camera', 'Camera Rename', () =>
       setCameraName(selectedCamera.value.conn_id, selectedCamera.value.camera_id, newCameraName.value));
     // one second await timer
-    await coundownTimer(1000);
+    await countdownTimer(1000);
     if (result.ok) listCameras(); // fetch the new camera list after renaming the camera
   } else {
     selectedCamera.value.name = newCameraName.value;
@@ -558,7 +558,7 @@ function buildControlsPayload() {
 }
 
 // Timeout timer function
-function coundownTimer(time) {
+function countdownTimer(time) {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve("resolved");
@@ -578,12 +578,12 @@ async function saveControlConfig() {
         updateConfiguration(conn_id, camera_id, JSON.stringify(controlsPayload)));
       if (!result.ok) return;
       // one second await timer
-      await coundownTimer(1000);
+      await countdownTimer(1000);
       // request to view the camera config.
       viewCameraConfig(conn_id, camera_id);
     } else {
       selectedConfig.value = {
-        ...selectedConfig.value, // keep the orginal values of conn_id and camera_id
+        ...selectedConfig.value, // keep the original values of conn_id and camera_id
         configuration: { ...selectedConfig.value.configuration, ...controlsPayload },
       };
       loadCameraValues();
@@ -627,7 +627,7 @@ function loadCameraValues() {
   });
 }
 
-// set selected control value to the defualt settings
+// set selected control value to the default settings
 function setDefaultControl(name) {
   const control = controls[name];
   // return if there is no control or defined default value.
@@ -689,7 +689,7 @@ async function saveThresholds() {
   }
 }
 
-// set global defualt threshold on server
+// set global default threshold on server
 async function setServerDefaultThreshold() {
   if (!selectedCamera.value) return
 
@@ -704,7 +704,7 @@ async function setServerDefaultThreshold() {
     // update the default values
     if (result.ok) getDefaultThresholds();
   } else {
-    showFeedback('thresholds', true, 'Defualt Thresholds saved (sample data)');
+    showFeedback('thresholds', true, 'default Thresholds saved (sample data)');
   }
 }
 
@@ -739,7 +739,7 @@ function applySharedData() {
 //        Watchers
 // --------------------
 
-// watch the seleceted camera to load it's values when it changes
+// watch the selected camera to load it's values when it changes
 watch(selectedCamera, (cam, oldCam) => {
 
   selectedConfig.value = null;
@@ -781,7 +781,7 @@ watch(controlConfig, (config) => {
   }
 })
 
-// watch the camera list to keep track of the connected and disconeted cameras to keep the camera feed fresh
+// watch the camera list to keep track of the connected and disconnected cameras to keep the camera feed fresh
 watch(wsCameraList, () => {
   if (!isLive.value || !selectedCamera.value) return
 
@@ -878,9 +878,9 @@ onMounted(() => {
                                     <label for="rename" class="config-label">Rename µ-Computer</label>
                                     <div class="form-element">
                                         <input type="text" id="rename" class="text-input" v-model="newMicroComputerName">
-                                        <button type="button" class="btn submit-btn" @click="showRenameMicroCompConfrim = true">Rename</button>
+                                        <button type="button" class="btn submit-btn" @click="showRenameMicroCompConfirm = true">Rename</button>
                                         <ConfirmationBox
-                                            v-model="showRenameMicroCompConfrim"
+                                            v-model="showRenameMicroCompConfirm"
                                             :message="'Rename the selected micro-computer to ' + newMicroComputerName + '?'"
                                             :onConfirmFunction="renameMicroComputer"/>
                                     </div>
@@ -897,10 +897,10 @@ onMounted(() => {
                                                 [{{index + 1}}] : {{technique}}
                                             </option>
                                         </select>
-                                        <button type="button" class="btn submit-btn" @click="showSelectVisionProcessingConfrim = true">Select</button>
+                                        <button type="button" class="btn submit-btn" @click="showSelectVisionProcessingConfirm = true">Select</button>
                                         <ConfirmationBox
-                                        v-model="showSelectVisionProcessingConfrim"
-                                        message="Please click Confrim to chanage the Vision Processing Method"
+                                        v-model="showSelectVisionProcessingConfirm"
+                                        message="Please click Confirm to change the Vision Processing Method"
                                         :onConfirmFunction="submitVisionProcessing"/>
                                     </div>
                                 </div>
@@ -939,9 +939,9 @@ onMounted(() => {
                                 <label for="rename" class="config-label">Rename Camera</label>
                                 <div class="form-element">
                                     <input type="text" id="rename" class="text-input" v-model="newCameraName">
-                                    <button type="button" class="btn submit-btn" @click="showRenameCameraConfrim = true">Rename</button>
+                                    <button type="button" class="btn submit-btn" @click="showRenameCameraConfirm = true">Rename</button>
                                     <ConfirmationBox
-                                    v-model="showRenameCameraConfrim"
+                                    v-model="showRenameCameraConfirm"
                                     :message="'Rename the selected camera to ' + newCameraName + '?'"
                                     :onConfirmFunction="renameCamera"/>
                                 </div>
@@ -987,7 +987,7 @@ onMounted(() => {
                                             <input class="form-check-input" type="checkbox" role="switch" :id="`control-${name}`"
                                                 v-model="control.value" :disabled="!isControlEnabled(name)">
                                         </div>
-                                        <!-- reset to defualt button -->
+                                        <!-- reset to default button -->
                                         <button type="button" class="btn submit-btn" @click="setDefaultControl(name)">Reset</button>
                                     </div>
                                 </div>
@@ -995,12 +995,12 @@ onMounted(() => {
                                 <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
                                     <button class="btn submit-btn" @click="requestSaveControls">Save Camera Controls</button>
                                     <ConfirmationBox
-                                        v-model="showSaveAllControlsConfrim"
+                                        v-model="showSaveAllControlsConfirm"
                                         message="Would you like to save all camera controls?"
                                         :onConfirmFunction="saveControlConfig"/>
-                                    <button class="btn submit-btn" @click="showResetAllControlsConfrim = true">Reset Camera Controls</button>
+                                    <button class="btn submit-btn" @click="showResetAllControlsConfirm = true">Reset Camera Controls</button>
                                     <ConfirmationBox
-                                        v-model="showResetAllControlsConfrim"
+                                        v-model="showResetAllControlsConfirm"
                                         message="Would you like to reset all camera controls?"
                                         :onConfirmFunction="resetControlsConfig"/>
                                 </div>
@@ -1008,7 +1008,7 @@ onMounted(() => {
                                    :class="feedback.controls.ok ? 'success' : 'error'"
                                    role="status"> {{ feedback.controls.message }}</p>
                             </div>
-                            <!-- DIVIATION THRESHOLDS -->
+                            <!-- DEVIATION THRESHOLDS -->
                             <hr class="line-break" v-if="selectedCamera">
                             <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">
                                 <img
@@ -1031,7 +1031,7 @@ onMounted(() => {
                                         <ConfirmationBox
                                             v-model="showSetThresholdRange"
                                             message="Would you like to save the deviation threshold range?"
-                                            :onConfirmFunction="saveConfrimThresholdRange"/>
+                                            :onConfirmFunction="saveConfirmThresholdRange"/>
                                         <button class="btn submit-btn" @click="revertDeviationSliderRange">Cancel</button>
                                         <button class="btn submit-btn" @click="resetDeviationSliderRange">Set Default Range</button>
                                     </div>
@@ -1053,18 +1053,18 @@ onMounted(() => {
                                 <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
                                     <button class="btn submit-btn" @click="requestSaveThresholds">Save Thresholds</button>
                                     <ConfirmationBox
-                                        v-model="showSaveThresholdsConfrim"
+                                        v-model="showSaveThresholdsConfirm"
                                         message="Would you like to save the Deviation Thresholds?"
                                         :onConfirmFunction="saveThresholds"/>
-                                    <button type="button" class="btn submit-btn" @click="showResetThresholdsConfrim = true">Reset to Default</button>
+                                    <button type="button" class="btn submit-btn" @click="showResetThresholdsConfirm = true">Reset to Default</button>
                                     <ConfirmationBox
-                                        v-model="showResetThresholdsConfrim"
-                                        message="Would you like to reset all Devation Thresholds to default?"
+                                        v-model="showResetThresholdsConfirm"
+                                        message="Would you like to reset all Deviation Thresholds to default?"
                                         :onConfirmFunction="resetAllThresholds"/>
                                     <button type="button" class="btn submit-btn" @click="requestSaveDefaultThresholds">Save Global Default Thresholds</button>
                                     <ConfirmationBox
-                                        v-model="showSetDefaultThresholdConfrim"
-                                        message="Would you like to set the defualt value for the thresholds?"
+                                        v-model="showSetDefaultThresholdConfirm"
+                                        message="Would you like to set the default value for the thresholds?"
                                         :onConfirmFunction="setServerDefaultThreshold"/>
                                 </div>
                                 <p v-if="feedback.thresholds"
