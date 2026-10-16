@@ -224,7 +224,7 @@ watch(warnAbove, (newValue) => {
             <!-- Alert Below number input -->
             <label class="threshold-number-input alert-number">
                 <span class="">Alert Below
-                    <Hints size="12"
+                    <Hints :size="12"
                     :message="'Alert below signifies the lowest alert threshold for the deviation measured by the system, once a laser’s measured deviation passes this value, the laser being monitored is in need of readjustment and a red notification will display the homepage to alert the user.'"/>
                 </span>
                 <input
@@ -240,7 +240,7 @@ watch(warnAbove, (newValue) => {
             <!-- Warn Below number input -->
             <label class="threshold-number-input warn-number">
                 <span>Warn Below
-                    <Hints size="12"
+                    <Hints :size="12"
                     :message="'Warn below signifies the lowest warning threshold for the deviation measured by the system, once a laser’s measured deviation falls below this value it is considered at risk and an yellow notification will display on the homepage. If the deviation value stays above this point it is considered by the system to in a safe range and no notifications will be shown in the homepage.'"/>
                 </span>
                 <input
@@ -256,7 +256,7 @@ watch(warnAbove, (newValue) => {
             <!-- Warn Above number input -->
             <label class="threshold-number-input warn-number">
                 <span>Warn Above
-                    <Hints size="12"
+                    <Hints :size="12"
                     :message="'Warn above signifies the highest warning threshold for the deviation measured by the system, once a laser’s measured deviation goes passed this value it is considered at risk and a yellow notification will display on the homepage. If the deviation value stays bellow this point it is considered by the system to be in a safe range and no notifications will be shown in the homepage.'"/>
                 </span>
                 <input
@@ -271,7 +271,7 @@ watch(warnAbove, (newValue) => {
             <!-- Alert Above number input -->
             <label class="threshold-number-input alert-number">
                 <span>Alert Above
-                    <Hints size="12" align="right"
+                    <Hints :size="12" align="right"
                     :message="'Alert above signifies the highest alert threshold for the deviation measured by the system, once a laser’s measured deviation has passed this value, the laser being monitored is in need of readjustment and a red notification will display on the homepage to alert the user.'"/>
                 </span>
                 <input
