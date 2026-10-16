@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 import { isEmpty } from '../utils/helpers'
+
 // --------------------
 //   Config Shortcut
 // --------------------
@@ -9,10 +10,12 @@ import { useRouter } from 'vue-router'
 import { useSharedDeviceData } from '../composables/useSharedDeviceData'
 const router = useRouter();
 const { setSharedMicroComputer, setSharedCamera, clearAllSharedDeviceData } = useSharedDeviceData();
+
 // --------------------
 //   Config Shortcut
 // --------------------
 import CameraFeed from '../components/CameraFeed.vue';
+
 // --------------------
 //   WebSocket
 // --------------------
@@ -55,30 +58,14 @@ const sampleCameras = ref(sampleCameraList.cameras)
 const sampleAnalysis = ref(sampleImageAnalysis.GUIImageAnalysis)
 const sampleCameraConfigData = ref(sampleCameraConfiguration.configurations)
 const sampleMicroComputers = ref(sampleMicroComputerList.microComputers)
-//const WebSocketURL = ref('') // API URL for camera stream Data
-//const cameraConfigApiURL = ref('/api/configuration') // API URL for camera config Data
-//const cameraFeedApiURL = ref('/api/image') // API URL for camera feed Data
-//const cameraInfoApiURL = ref('/api/camera_info') // API URL for camera info
-//const guiUpdateApiURL = ref('/api/gui_update') // API URL for gui update setpoint and config
-/*const cameraFeedsData = ref([{
-    id: '00',
-    name: 'cam00',
-    description: 'Primary Camera',
-    fps: null,
-    brightness: null,
-    hue: null,
-    saturation: null,
-    intensity: null,
-    deviation: null,
-    isConnected: false,
-    isSelected: false
-}]) // is replaced by the camera data when read.*/
+
 //const setpointState = ref(false)
 const liveFeedSrc = ref(null) // dynamic image source
 //let pollInterval = null
 const selectedCameraId = ref(null)
 const cameraSetpoints = ref({})
 const alertsExpanded = ref(true) // alert system variable
+
 // --------------------
 //        Computed
 // --------------------
@@ -238,32 +225,14 @@ const selectedCameraInfo = computed(() => {
 const isSetpointActive = computed(() => {
     return selectedCameraId.value && selectedCameraId.value in cameraSetpoints.value
 })
-/*const hasSelectedCamera = computed(() => {
-    return cameraFeedsData.value.some(feed => feed.isSelected)
-})
-const hasConnectedCamera = computed(() => {
-    return cameraFeedsData.value.some(feed => feed.isConnected)
-})
-const selectedCamera = computed(() =>
-    cameraFeedsData.value.find(feed => feed.isSelected) ?? null
-)*/
 // alert system
 const toggleAlerts = computed(() => {
     alertsExpanded.value = !alertsExpanded.value
 })
+
 // --------------------
 //        Methods
 // --------------------
-// Select a camera by ID
-function selectCamera(feedId) {
-    mergedCameraData.value.forEach(feed => {
-        if (feed.camera_id === feedId) {
-            feed.isSelected = !feed.isSelected  // toggle the clicked camera
-        } else {
-            feed.isSelected = false  // deselect all others
-        }
-    })
-}
 // select one camera at a time by ID
 const toggleCameraSelection = (cameraId) => {
     const [conn_id, camera_id] = cameraId.split('-')
@@ -273,81 +242,6 @@ const toggleCameraSelection = (cameraId) => {
     } else {
         selectedCameraId.value = cameraId
         viewCamera(conn_id, camera_id)
-    }
-}
-// fetch method for Read camera config API call
-async function fetchCameraConfig() {
-    try {
-        const response = await fetch(cameraConfigApiURL.value)
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`)
-        }
-
-        const data = await response.json()
-
-        sampleCameras.value.forEach(feed => {
-            feed.fps = data.framerate
-            feed.brightness = data.brightness
-            feed.hue = data.hue
-            feed.saturation = data.saturation
-            feed.isConnected = true
-        })
-    } catch (error) {
-        console.error('Failed to fetch camera configuration:', error)
-
-        cameraFeedsData.value.forEach(feed => {
-            feed.isConnected = false
-        })
-    }
-}
-// fetch method for camera info
-async function fetchCameraInfo() {
-    try {
-        const response = await fetch(cameraInfoApiURL.value)
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`)
-        }
-
-        const data = await response.json()
-
-        sampleCameras.value.forEach(feed => {
-            feed.intensity = data.intensity
-            feed.deviation = data.deviation
-        })
-    } catch (error) {
-        console.error('Failed to fetch camera configuration:', error)
-
-        sampleCameraData.value.forEach(feed => {
-            feed.isConnected = false
-        })
-    }
-}
-// post gui_update Set setpoint bool to true
-async function postSetpointTrue() {
-    const requestOptions = {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            setpoint: true,
-            config: false
-        })
-    };
-    try {
-        const response = await fetch(guiUpdateApiURL.value, requestOptions)
-        if (!response.ok) {
-            throw new Error(`HTTP error: ${response.status}`)
-        }
-        const data = await response.text()
-        setpointState.value = true
-        setTimeout(() => {
-            setpointState.value = false;
-        }, 5000);
-    } catch (error) {
-        console.error('Error fetching camera data:', error)
     }
 }
 const updateSetpoint = () => {
@@ -378,7 +272,7 @@ const forgetCameraBtn = (connId, cameraId) => {
 const forgetEdgeBtn = (connId) => {
     forgetEdge(connId)
 }
-// camera card traffic light system (using sample JSON data)
+// camera card traffic light system
 function getCardColour(cam) {
     if (!cam) return 'bg-dark'
 
@@ -399,31 +293,6 @@ function getCardColour(cam) {
         return 'bg-dark'
     }
 }
-// requests camera feed
-async function fetchCameraFeed() {
-    if (!hasSelectedCamera.value) return
-    // Append timestamp to bust browser image cache on each poll
-    liveFeedSrc.value = `${cameraFeedApiURL.value}?t=${Date.now()}`
-}
-
-function startPolling() {
-    stopPolling() // clear any existing interval first
-    fetchCameraFeed() // fetch immediately, then start interval
-    pollInterval = setInterval(() => {
-        fetchCameraFeed()
-        fetchCameraInfo()
-    }, 1000 / (cameraFeedsData.value.find(f => f.isSelected)?.fps ?? 2))
-}
-
-function stopPolling() {
-    if (pollInterval) {
-        clearInterval(pollInterval)
-        pollInterval = null
-    }
-
-    liveFeedSrc.value = null
-}
-
 
 // --------------------
 //    Config Shortcut
@@ -441,32 +310,17 @@ function configureMicroComputer(connID) {
 // --------------------
 //        Watchers
 // --------------------
-// Start/stop polling whenever the selected camera changes
-/*watch(
-    () => cameraFeedsData.value.map(f => f.isSelected),
-    () => {
-        if (hasSelectedCamera.value) {
-            startPolling()
-        } else {
-            stopPolling()
-        }
-    }
-)*/
+
 // -------------------------------
 //        onMount and unMount
 // -------------------------------
 onMounted(async () => {
   connect();
   clearAllSharedDeviceData();
-
-    // await fetchCameraConfig()
-    // await fetchCameraInfo()
-    // if (hasSelectedCamera.value) startPolling()
 })
 
 onUnmounted(() => {
     // Clean up on unmount
-    // stopPolling()
 })
 </script>
 <template>
