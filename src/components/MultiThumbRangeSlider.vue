@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from "vue";
-// Hint Popup: to show message discriptions from
+// Hint Popup: to show message descriptions from
 import Hints from '../components/HintPopup.vue'
 // --------------------
 //   Props
@@ -27,7 +27,7 @@ const alertAbove = defineModel("alertAbove", { type: Number, default: 120 });
 //   V-model Data
 // --------------------
 
-// ref verable to track the active thumb being moved
+// ref variable to track the active thumb being moved
 const activeThumb = ref(null);
 
 // --------------------
@@ -40,7 +40,7 @@ function toPercentage(value) {
 };
 
 
-// used by the thumb handeler function to block overlap between thumbs.
+// used by the thumb handler function to block overlap between thumbs.
 function clampRange(value, low, high) {
   return Math.min(Math.max(value, low), high)
 };
@@ -99,19 +99,19 @@ const trackCSS = computed(() => ({
   var(--range-alert) ${alertAbovePercentage.value}%, var(--range-alert) 100%)`,
 }));
 
-// array size for the salced notches
+// array size for the scaled notches
 const NUMBER_OF_INTERVALS = 10;
 
 const scaledNotches = computed(() => {
   const notches = [];
-  const increament = ((props.max - props.min) / NUMBER_OF_INTERVALS);
+  const increment = ((props.max - props.min) / NUMBER_OF_INTERVALS);
   let counter = props.min;
   notches.push({
     value: Math.round(props.min * 100) / 100,
     percent: toPercentage(props.min),
   });
   for (let i = 0; i <= (NUMBER_OF_INTERVALS - 1); i++) {
-    counter += increament;
+    counter += increment;
     notches.push({
       value: Math.round(counter * 100) / 100,
       percent: toPercentage(counter),
@@ -121,7 +121,7 @@ const scaledNotches = computed(() => {
 })
 
 // ---------------------------
-//   Thumb Input event vlaues
+//   Thumb Input event values
 // ---------------------------
 const onAlertBelowInput = thumbManager(alertBelow, alertBelowRange);
 const onWarnBelowInput = thumbManager(warnBelow, warnBelowRange);
@@ -207,7 +207,7 @@ watch(warnAbove, (newValue) => {
                 aria-label="Alert Above"
             />
         </div>
-        <!-- Sacle Notches -->
+        <!-- Scaled Notches -->
         <div class="scale-labels">
             <span
                 v-for="notch in scaledNotches"
@@ -304,7 +304,7 @@ watch(warnAbove, (newValue) => {
         align-items: center;
     }
 
-    /* Shares on visable track and makes the other ones Invisible */
+    /* Shares on visible track and makes the other ones Invisible */
     .track {
         position: absolute;
         left: var(--track-inset);
@@ -313,7 +313,7 @@ watch(warnAbove, (newValue) => {
         border-radius: 999px;
     }
 
-    /*  one visable track that is shared by 4 thumb inputs */
+    /*  one visible track that is shared by 4 thumb inputs */
     .thumb {
         position: absolute;
         left: 0;
@@ -340,7 +340,7 @@ watch(warnAbove, (newValue) => {
       z-index: 5;
     }
 
-    /* Make the thumb tracks invisable so only the main track is showing */
+    /* Make the thumb tracks invisible so only the main track is showing */
     /* Chrome and Safari */
     .thumb::-webkit-slider-runnable-track {
       appearance: none;

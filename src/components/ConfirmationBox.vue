@@ -24,7 +24,7 @@ const emit = defineEmits(['update:modelValue', 'confirm', 'cancel'])
 // --------------------
 //        Methods
 // --------------------
-// Function to handle confrimation event
+// Function to handle confirmation event
 function onConfirm() {
   // execute function
   if (typeof props.onConfirmFunction === 'function') {
@@ -35,7 +35,7 @@ function onConfirm() {
   // reset visiabilySate on event
   emit('update:modelValue', false)
 }
-// Function that handles cancelation event
+// Function that handles cancel event
 function onCancel() {
   // emits
   emit('cancel')

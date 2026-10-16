@@ -11,11 +11,11 @@ function loadGlobalCameraFeedBoolean() {
   } catch (e) {
     console.warn("Could not load saved global camera feed toggle", e);
   }
-  // defualt value
+  // default value
   return false;
 }
 // -------------------------------
-//    module level singltons
+//    module level singleton
 // -------------------------------
 const globalCameraFeedBoolean = ref(loadGlobalCameraFeedBoolean()); // true || false
 

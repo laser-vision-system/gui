@@ -6,7 +6,7 @@ export default defineConfig({
   base: "",
   plugins: [
     vue(),
-    // uncoment below for single file build
+    // uncomment below for single file build
     //viteSingleFile()
   ],
   server: {

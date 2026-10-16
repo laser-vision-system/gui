@@ -8,9 +8,9 @@ const { toggleGlobalCameraFeed, globalCameraFeedBoolean } = usePersistentGlobalD
 // icons
 import arrowUp from '../assets/images/arrow-up.svg';
 import arrowDown from '../assets/images/arrow-down.svg';
-// conponents
+// Components
 import ConfirmationBox from '../components/ConfirmationBox.vue';
-// helper funtions
+// helper functions
 import {checkBlank, isBlank} from '../utils/helpers'
 // --------------------------
 //        V-model values
@@ -21,9 +21,9 @@ const isGUI = ref(true);
 const isServer = ref(true);
 const isSetServerDefault = ref(true);
 
-// show confrimation window values
-const showSetDefaultConfrim = ref(false);
-const showResetDefaultConfrim = ref(false);
+// show confirmation window values
+const showSetDefaultConfirm = ref(false);
+const showResetDefaultConfirm = ref(false);
 
 // Restful API routes
 const urlGetServerDefault = ref('/api/default_config');
@@ -83,7 +83,7 @@ const serverSettings = reactive({
 const validationServerDefaultsErrors = ref([]);
 
 // --------------------------
-//       Resful Methods
+//       Restful Methods
 // --------------------------
 
 // get default settings
@@ -101,7 +101,7 @@ async function getDefaultSettings() {
   }
 }
 
-// post new defualt settings
+// post new default settings
 async function postDefaultServerSettingsData() {
   saveState.value = '';
 
@@ -173,11 +173,11 @@ async function loadServerDefaultData() {
   serverSettings.camera_err_threshold.value = serverSettingsData.value.camera_err_threshold;
 }
 
-// Reset Defualt value
+// Reset default value
 function resetServerDefault(key) {
   serverSettings[key].value = serverSettings[key].default;
 }
-// Rest all Defualt values
+// Rest all default values
 function resetAllServerDefaults() {
   serverSettings.websocket_poll_interval.value = serverSettings.websocket_poll_interval.default;
   serverSettings.update_delay.value = serverSettings.update_delay.default;
@@ -212,7 +212,7 @@ function validateServerSetting(name, min, max, value) {
 
 
 function validateAllServerSettings() {
-  // clear the periouse warning messages
+  // clear the previous warning messages
   validationServerDefaultsErrors.value = [];
   let result = true;
   for (const setting of Object.values(serverSettings)) {
@@ -224,7 +224,7 @@ function validateAllServerSettings() {
 }
 
 function requestSaveServerSettingsData() {
-  if (validateAllServerSettings()) showSetDefaultConfrim.value = true;
+  if (validateAllServerSettings()) showSetDefaultConfirm.value = true;
 }
 
 // -------------------------------
@@ -308,19 +308,19 @@ onMounted(() => {
                     <div class="text-center d-flex flex-row justify-content-center gap-3 py-2">
                         <!-- Server Setting from -->
                         <button class="btn submit-btn" @click="requestSaveServerSettingsData">Save Server Defaults</button>
-                        <button class="btn submit-btn" @click="showResetDefaultConfrim = !showResetDefaultConfrim">Reset Server Defaults</button>
+                        <button class="btn submit-btn" @click="showResetDefaultConfirm = !showResetDefaultConfirm">Reset Server Defaults</button>
                     </div>
                     <ConfirmationBox
-                        v-model="showSetDefaultConfrim"
-                        message="Would you like to save these as the defualt server settings?"
+                        v-model="showSetDefaultConfirm"
+                        message="Would you like to save these as the default server settings?"
                         :onConfirmFunction="postDefaultServerSettingsData"
                     />
                     <ConfirmationBox
-                        v-model="showResetDefaultConfrim"
-                        message="Would you like to reset the defualt server settings to it's previous values?"
+                        v-model="showResetDefaultConfirm"
+                        message="Would you like to reset the default server settings to it's previous values?"
                         :onConfirmFunction="resetAllServerDefaults"
                     />
-                    <!-- Submision Confrimation -->
+                    <!-- Submission Confirmation -->
                     <p v-if="saveState === 'success'" class="success">The default settings have been successfuly updated.</p>
                     <p v-if="saveState === 'error'" class="error">An error has occured when updating the default settings.</p>
 
