@@ -31,10 +31,7 @@ const {
   imageSrc,
   analysis,
   connect,
-  disconnect,
   // functions
-  listEdges,
-  listCameras,
   setpoint,
   viewCamera,
   stopViewingCamera,
@@ -47,21 +44,17 @@ const {
 const isLive = computed(() => status.value === 'CONNECTED')
 
 // --------------------
-//        Data
+//     Sample Data
 // --------------------
 import sampleCameraList from '../assets/data/sampleCameraList.json'
 import sampleImageAnalysis from '../assets/data/sampleImageAnalysis.json'
-import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.json'
 import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json'
 import sampleDisconnectedEdgeList from '../assets/data/sampleDisconnectedEdgeList.json'
-const sampleCameras = ref(sampleCameraList.cameras)
-const sampleAnalysis = ref(sampleImageAnalysis.GUIImageAnalysis)
-const sampleCameraConfigData = ref(sampleCameraConfiguration.configurations)
-const sampleMicroComputers = ref(sampleMicroComputerList.microComputers)
 
+// --------------------
+//      ref Values
+// --------------------
 //const setpointState = ref(false)
-const liveFeedSrc = ref(null) // dynamic image source
-//let pollInterval = null
 const selectedCameraId = ref(null)
 const cameraSetpoints = ref({})
 const alertsExpanded = ref(true) // alert system variable
@@ -112,8 +105,9 @@ const sortedDeviationAlerts = computed(() => {
         })
 })
 const disconnectedMicroComs = computed(() => {
-    const disconnectedEdgeList = loadDisconnectedEdgesList.value
-    return disconnectedEdgeList
+    if (!loadDisconnectedEdgesList.value) return []
+
+    return loadDisconnectedEdgesList.value
     .map(disconnection => ({
         ...disconnection,
         alertMsg: `[DISCONNECTION] ${disconnection.name} has disconnected.`,
@@ -121,6 +115,8 @@ const disconnectedMicroComs = computed(() => {
     }))
 })
 const disconnectedCameras = computed(() => {
+    if (!mergedCameraData.value) return []
+
     return mergedCameraData.value
     .filter(connection => connection.state === 'Disconnected')
     .map(disconnection => {
@@ -138,21 +134,23 @@ const disconnectedCameras = computed(() => {
     })
 })
 const disconnectionAlerts = computed(() => {
+    if (!disconnectedMicroComs.value && !disconnectedCameras.value) return []
+
     return [...disconnectedMicroComs.value, ...disconnectedCameras.value]
 })
 // grab active microCom list from websocket or sample data
 const loadActiveEdgesList = computed(() => {
-    const source = isLive.value && wsEdgeList.value.length > 0 ? wsEdgeList.value : sampleMicroComputerList.microComputers
+    const source = isLive.value && wsEdgeList.value.length > 0 ? wsEdgeList.value : sampleMicroComputerList.microComputers // WILL CHANGE TO NULL
     return source
 })
 // grab disconnected microCom list from websocket or sample data
 const loadDisconnectedEdgesList = computed(() => {
-    const source = isLive.value && wsDisconnectedEdgeList.value.length > 0 ? wsDisconnectedEdgeList.value : sampleDisconnectedEdgeList.microComputers
+    const source = isLive.value && wsDisconnectedEdgeList.value.length > 0 ? wsDisconnectedEdgeList.value : sampleDisconnectedEdgeList.microComputers // WILL CHANGE TO NULL
     return source
 })
 // grab camera list from websocket or sample data
 const loadCameraList = computed(() => {
-    const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : sampleCameraList.cameras
+    const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : sampleCameraList.cameras // WILL CHANGE TO NULL
     return source
 })
 // grab image analysis from websocket or sample data
@@ -162,58 +160,65 @@ const loadImageAnalysis = computed(() => {
 })
 // merge camera list with microcomputer, image analysis & selection details
 const mergedCameraData = computed(() => {
-    const camDataList = loadCameraList.value
-    const imageAnalysisData = loadImageAnalysis.value
-    const edgeDataList = loadActiveEdgesList.value
-    const result = []
-
-    for (const camera of camDataList) {
-		let matchingData = ref(null)
-		if (imageAnalysisData !== null) {
-            if (imageAnalysisData.conn_id === camera.conn_id && imageAnalysisData.camera_id === camera.camera_id) {
-				matchingData = imageAnalysisData
-			}
-		}
-        const matchingComData = edgeDataList.find(
-            connection => connection.conn_id === camera.conn_id
-        )
-
-        result.push({
-            ...camera,
-            intensity: matchingData ? matchingData.intensity : 0,
-            deviation: matchingData && !isNaN(Number(matchingData.deviation)) ? Number(matchingData.deviation) : '--',
-            microComName: matchingComData ? matchingComData.name : null,
-            microComState: matchingComData ? matchingComData.state : null,
-            isSelected: selectedCameraId.value === `${camera.conn_id}-${camera.camera_id}`
-        })
+    if (!loadActiveEdgesList.value && !loadCameraList.value) { // catches undefined (empty values)
+        return []
     }
-    return result
+    else {
+        const result = []
+
+        for (const camera of loadCameraList.value) {
+            let matchingData = ref(null)
+            if (loadImageAnalysis.value !== null) {
+                if (loadImageAnalysis.value.conn_id === camera.conn_id && loadImageAnalysis.value.camera_id === camera.camera_id) {
+                    matchingData = loadImageAnalysis.value
+                }
+            }
+            const matchingComData = loadActiveEdgesList.value.find(
+                connection => connection.conn_id === camera.conn_id
+            )
+
+            result.push({
+                ...camera,
+                intensity: matchingData ? matchingData.intensity : 0,
+                deviation: matchingData && !isNaN(Number(matchingData.deviation)) ? Number(matchingData.deviation) : '--',
+                microComName: matchingComData ? matchingComData.name : null,
+                microComState: matchingComData ? matchingComData.state : null,
+                isSelected: selectedCameraId.value === `${camera.conn_id}-${camera.camera_id}`
+            })
+        }
+        return result
+    }
 })
 // group by microcomputer & for active cameras
 const activeMergedData = computed(() => {
-    const sections = {}
+    if (!mergedCameraData.value) {
+        return []
+    }
+    else {
+        const sections = {}
 
-    mergedCameraData.value.forEach(camera => {
-        const id = camera.conn_id
+        mergedCameraData.value.forEach(camera => {
+            const id = camera.conn_id
 
-        // initialise sections if they don't exist yet
-        if (!sections[id]) {
-            sections[id] = {
-                conn_id: id,
-                microComName: camera.microComName,
-                microComState: camera.microComState,
-                activeCameras: [],
+            // initialise sections if they don't exist yet
+            if (!sections[id]) {
+                sections[id] = {
+                    conn_id: id,
+                    microComName: camera.microComName,
+                    microComState: camera.microComState,
+                    activeCameras: [],
+                }
             }
-        }
 
-        // evaluate for active cameras only if Pi is active
-        if (sections[id].microComState === 'Active') {
-            if (camera.state === 'Active') {
-                sections[id].activeCameras.push(camera)
+            // evaluate for active cameras only if Pi is active
+            if (sections[id].microComState === 'Active') {
+                if (camera.state === 'Active') {
+                    sections[id].activeCameras.push(camera)
+                }
             }
-        }
-    })
-    return sections
+        })
+        return sections
+    }
 })
 // returns camera info based on selected camera
 const selectedCameraInfo = computed(() => {
@@ -353,27 +358,32 @@ onUnmounted(() => {
         <div class="row mx-0 mt-2 mb-2 align-items-start">
             <div class="col-lg-8 col-12 ps-0">
                 <h3 class="cam-title">Connections:</h3>
-                    <div v-for="(section, conn_id) in activeMergedData" :key="conn_id">
-                        <div v-if="section.microComState === 'Active'">
-                            <h4 class="microCom-title d-flex flex-row gap-2">{{ section.microComName }}
-                                <span class="badge bg-secondary">
-                                    {{ section.microComState }}
-                                </span>
-                                <button type="button" class="badge submit-btn border-0"
-                                        @click="configureMicroComputer(section.conn_id)">Configure</button>
-                            </h4>
-                            <div class="row d-flex justify-content-start p-2 g-2">
-                                <div class="col-3 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
-                                    <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
-                                        <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
-                                            <h5 class="card-title">{{ cam.name }}</h5>
-                                                <p v-if="Number(cam.deviation)" class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
-                                                <p v-else class="card-text">{{ cam.deviation }}</p>
+                    <div v-if="activeMergedData">
+                        <div v-for="(section, conn_id) in activeMergedData" :key="conn_id">
+                            <div v-if="section.microComState === 'Active'">
+                                <h4 class="microCom-title d-flex flex-row gap-2">{{ section.microComName }}
+                                    <span class="badge bg-secondary">
+                                        {{ section.microComState }}
+                                    </span>
+                                    <button type="button" class="badge submit-btn border-0"
+                                            @click="configureMicroComputer(section.conn_id)">Configure</button>
+                                </h4>
+                                <div class="row d-flex justify-content-start p-2 g-2">
+                                    <div class="col-3 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
+                                        <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
+                                            <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
+                                                <h5 class="card-title">{{ cam.name }}</h5>
+                                                    <p v-if="Number(cam.deviation)" class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
+                                                    <p v-else class="card-text">{{ cam.deviation }}</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                    <div v-else>
+                        &nbsp
                     </div>
             </div>
             <div class="col-lg-4 col-12 mt-lg-5 pe-0 text-center">
@@ -427,7 +437,8 @@ onUnmounted(() => {
                                 <p><strong>ID:</strong> {{ selectedCameraInfo.camera_id }}</p>
                                 <p><strong>Name:</strong> {{ selectedCameraInfo.name }}</p>
                                 <!-- <p><strong>Intensity:</strong> {{ selectedCameraInfo.intensity }}</p> -->
-                                <p><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) + '%' }}</p>
+                                <p v-if="Number(selectedCameraId.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) + '%' }}</p>
+                                <p v-else><strong>Deviation:</strong> --</p>
                                 <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
                                 <table class="table border border-2 hardware-info">
                                     <tbody>
