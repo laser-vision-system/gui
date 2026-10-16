@@ -1,6 +1,7 @@
 <script setup>
 // import the gobal variable for camera feed toggle from local storage
 import { usePersistentGlobalData } from '../composables/usePersistentGlobalData';
+import { ref } from 'vue';
 const { globalCameraFeedBoolean } = usePersistentGlobalData();
 // toggle arrows
 import arrowUp from '../assets/images/arrow-up.svg'
