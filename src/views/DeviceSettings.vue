@@ -1077,7 +1077,7 @@ onMounted(() => {
                 </form>
             </div>
             <!-- Camera feed -->
-            <div class="col-12 d-flex ps-0 mt-2 justify-content-center">
+            <div class="col-12 d-flex ps-0 mt-2 justify-content-center py-3">
                 <CameraFeed :imageSrc="imageSrc" :isLive="isLive" :isSelected="!isEmpty(selectedCamera)"/>
             </div>
         </div>
