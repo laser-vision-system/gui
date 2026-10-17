@@ -92,19 +92,6 @@ onBeforeUnmount(removeListeners);
   vertical-align: middle;
 }
 
-.hint-image {
-    display: block;
-    filter: var(--filter-background);
-}
-
-.hint-button {
-  display: block;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-}
-
 .hint-box{
     position: absolute;
     top: calc(100% + 8px);

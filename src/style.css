@@ -171,6 +171,7 @@
     border-radius: 2em;
     margin-left: 4.5rem;
 }
+
 .slider-input:hover{
     accent-color: var(--button-hover);
 }
@@ -182,6 +183,7 @@
     gap: 1em;
     padding: 0.20em;
 }
+
 .error {
     background: var(--range-alert);
     border-radius: 1rem;
@@ -191,6 +193,7 @@
     margin-bottom: 0.75rem;
     text-align: center;
 }
+
 .success {
     background: var(--range-safe);
     border-radius: 1rem;
@@ -199,4 +202,17 @@
     margin-top: 0.75rem;
     margin-bottom: 0.75rem;
     text-align: center;
+}
+
+.hint-image {
+    display: block;
+    filter: var(--filter-background);
+}
+
+.hint-button {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
 }
