@@ -1,24 +1,17 @@
-# Docker image
+# Vite Configuration (BEFORE YOU BUILD)
+The build files must be stored in the document root of you webserver. For example in an apache webserver the document root for a website is:
+```
+/var/www/html
+```
+You can either deploy the contents of the dist directory in the document root or in a nested directory inside the document root.
 
-In order to run our docker image you will need to pull the image from github. to start off with make sure you are logged in to login to the github docker registery by doing the following:
+If you have picked to deploy the build in a nested directory, make sure to configure the `base` variable in the vite.config.js file. 
+
 ```
-# Create a new personal access token (classic) with the appropriate scopes for the tasks you want to accomplish. If your organization requires SSO, you must enable SSO for your new token.
-# Select the read:packages scope to download container images and read their metadata. 
-export CR_PAT=YOUR_TOKEN 
-echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin 
-```
-After you are logged in run the following command to pull the image:
-```
-# For raspbery pi's or MAC machines
-docker pull ghcr.io/cos40005-p12/gui-arm64:BRANCH
-# For other hardware 
-docker pull ghcr.io/cos40005-p12/gui-amd64:BRANCH
-```
-If you want to make and run a container for testing run the following:
-```
-sudo docker run -p 5173:8080 --rm --name gui ghcr.io/cos40005-p12/gui-CPUARCHITECTURE:BRANCH
-```
-For deployment on the server instead run the following:
-```
-sudo docker run -p 5173:8080 --name gui ghcr.io/cos40005-p12/gui-CPUARCHITECTURE:BRANCH
+export default defineConfig({
+  // this assumes that the built files are stored at 
+  // /var/www/html/CUSTOM/NESTED/DRIECTORY
+  base: "CUSTOM/NESTED/DRIECTORY",
+  ... 
+})
 ```
