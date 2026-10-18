@@ -87,7 +87,9 @@ const scaledNotches = computed(() => {
   return Array.from({ length: NUMBER_OF_INTERVALS + 1 }, (_, i) => {
     const value = min + i * increment;
     return {
-      value: Math.round(value * 100) / 100,
+      // rounds it to the closest whole number
+      // making the scale look nicer
+      value: (Math.round(value * 100) / 100).toFixed(0),
       percent: toPercentage(value),
     };
   });
@@ -136,9 +138,9 @@ function toPercentage(value) {
 </template>
 <style scoped>
 .deviation-bar {
-    --track-height: 0.75rem;
+    --track-height: 1.75rem;
     --marker-width: 0.25rem;
-    --marker-height: 1.75rem;
+    --marker-height: 2rem;
     width: 100%;
     padding: 4rem 0.65rem 1rem;
     box-sizing: border-box;
@@ -194,7 +196,7 @@ function toPercentage(value) {
   border: 3px solid var(--marker-color);
   background: var(--bs-body-bg);
   color: var(--bs-body-color);
-  font-size: 14pt;
+  font-size: 18pt;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -212,23 +214,23 @@ function toPercentage(value) {
 .scale-labels {
   position: relative;
   height: 1.5rem;
-  margin-top: 1.25rem;
+  margin-top: 0.75rem;
   z-index: 1;
 }
 .scale-notch {
   position: absolute;
   transform: translateX(-50%);
-  font-size: 8pt;
+  font-size: 10pt;
   color: var(--bs-body-color);
   z-index: 1;
 }
 .scale-notch::before {
   content: "";
   position: absolute;
-  top: -1rem;
-  left: 50%;
+  top: -1.5rem;
+  left: 45%;
   width: 2px;
-  height: 0.6rem;
+  height: 1.25rem;
   background: currentColor;
   z-index: 1;
 }
