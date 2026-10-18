@@ -12,9 +12,11 @@ const router = useRouter();
 const { setSharedMicroComputer, setSharedCamera, clearAllSharedDeviceData } = useSharedDeviceData();
 
 // --------------------
-//   Config Shortcut
+//   Component Imports
 // --------------------
-import CameraFeed from '../components/CameraFeed.vue';
+import CameraFeed from '../components/CameraFeed.vue'
+import DeviationBar from '../components/DeviationBar.vue'
+
 
 // --------------------
 //   WebSocket
@@ -440,7 +442,7 @@ onUnmounted(() => {
                                 <p v-if="Number(selectedCameraId.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) + '%' }}</p>
                                 <p v-else><strong>Deviation:</strong> --</p>
                                 <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
-                                <table class="table border border-2 hardware-info">
+                                 <table class="table border border-2 hardware-info">
                                     <tbody>
                                         <tr>
                                             <th class="bg-danger text-white">Alert below:</th>
@@ -470,6 +472,14 @@ onUnmounted(() => {
                                 </div>
                             </div>
                         </div>
+                        <!-- Deviation Bar -->
+                        <DeviationBar
+                        :alertBelow="selectedCameraInfo.alert_below_threshold"
+                        :warnBelow="selectedCameraInfo.warn_below_threshold"
+                        :warnAbove="selectedCameraInfo.warn_above_threshold"
+                        :alertAbove="selectedCameraInfo.alert_above_threshold"
+                        :deviation="0.98"
+                        />
                     </div>
                 </div>
             </div>

@@ -64,22 +64,22 @@ function thumbManager(modelReference, rangeReference) {
 
 // range for the red alert below slider section
 const alertBelowRange = computed(() => ({
-  min: props.min, max: warnBelow.value
+  min: props.min, max: warnBelow.value - props.step
 }));
 
 // range for the yellow warn below slider section
 const warnBelowRange = computed(() => ({
-  min: alertBelow.value, max: warnAbove.value
+  min: alertBelow.value + props.step, max: warnAbove.value - props.step
 }));
 
 // range for yellow warn above slider section
 const warnAboveRange = computed(() => ({
-  min: warnBelow.value, max: alertAbove.value
+  min: warnBelow.value + props.step , max: alertAbove.value - props.step
 }));
 
 // range for the red alert above slider section
 const alertAboveRange = computed(() => ({
-  min: warnAbove.value, max: props.max
+  min: warnAbove.value + props.step, max: props.max
 }));
 
 // calculated percentages
@@ -143,6 +143,9 @@ watch(warnAbove, (newValue) => {
     warnAbove.value = 100.01;
   }
 })
+
+
+
 </script>
 <template>
     <div class="multi-thumb-slider">
@@ -232,7 +235,7 @@ watch(warnAbove, (newValue) => {
                     :min="alertBelowRange.min"
                     :max="alertBelowRange.max"
                     :step="step"
-                    :value="alertBelow"
+                    :value="alertBelow.toFixed(2)"
                     @change="onAlertBelowInput"
                 />
 
@@ -248,7 +251,7 @@ watch(warnAbove, (newValue) => {
                     :min="warnBelowRange.min"
                     :max="warnBelowRange.max"
                     :step="step"
-                    :value="warnBelow"
+                    :value="warnBelow.toFixed(2)"
                     @change="onWarnBelowInput"
                 />
 
@@ -264,7 +267,7 @@ watch(warnAbove, (newValue) => {
                 :min="warnAboveRange.min"
                 :max="warnAboveRange.max"
                 :step="step"
-                :value="warnAbove"
+                :value="warnAbove.toFixed(2)"
                 @change="onWarnAboveInput"
                 />
             </label>
@@ -279,7 +282,7 @@ watch(warnAbove, (newValue) => {
                     :min="alertAboveRange.min"
                     :max="alertAboveRange.max"
                     :step="step"
-                    :value="alertAbove"
+                    :value="alertAbove.toFixed(2)"
                     @change="onAlertAboveInput"
                 />
             </label>
@@ -425,7 +428,7 @@ watch(warnAbove, (newValue) => {
     }
 
     .threshold-number-input input {
-        width: 4.2rem;
+        width: 4.8rem;
         padding: 0.25rem;
         border-radius: 0.5rem;
         background-color: var(--bs-body-bg);
