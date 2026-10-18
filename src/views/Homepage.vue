@@ -478,7 +478,7 @@ onUnmounted(() => {
             <!-- Spacing gap -->
             <div class="py-2"></div>
             <div class="col-12 deviation-wrapper text-center">
-                <h3>Deviation Bar</h3>
+                <h3>Deviation Scale</h3>
                 <!-- Deviation Bar -->
                 <DeviationBar
                 :alertBelow="selectedCameraInfo.alert_below_threshold * 100"
