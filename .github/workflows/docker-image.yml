@@ -36,16 +36,8 @@ jobs:
         include:
           - os: ubuntu-22.04-arm
             arch: arm64
-            build: dev
           - os: ubuntu-22.04
             arch: amd64
-            build: release
-          - os: ubuntu-22.04-arm
-            arch: arm64
-            build: release
-          - os: ubuntu-22.04
-            arch: amd64
-            build: dev
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -76,10 +68,9 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          build-args: BUILD_TARGET=${{ matrix.build }}
           context: .
           push: true
-          tags: ${{env.REGISTRY}}/${{env.IMAGE_NAME}}:${{matrix.arch}}-${{matrix.build}}-${{steps.meta.outputs.tags}}
+          tags: ${{env.REGISTRY}}/${{env.IMAGE_NAME}}:${{matrix.arch}}-${{steps.meta.outputs.tags}}
           builder: container-builder
           platforms: linux/${{ matrix.arch }}
           cache-from: type=gha
