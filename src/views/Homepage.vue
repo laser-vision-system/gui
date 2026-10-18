@@ -12,9 +12,10 @@ const router = useRouter()
 const { setSharedMicroComputer, setSharedCamera, clearAllSharedDeviceData } = useSharedDeviceData()
 
 // --------------------
-//   Config Shortcut
+//   Component Imports
 // --------------------
 import CameraFeed from '../components/CameraFeed.vue'
+import DeviationBar from '../components/DeviationBar.vue'
 import { usePersistentGlobalData } from '../composables/usePersistentGlobalData'
 const { globalCameraFeedBoolean } = usePersistentGlobalData()
 
@@ -509,6 +510,19 @@ onUnmounted(() => {
                     </div>
                 </div>
             </div>
+            <!-- Spacing gap -->
+            <div class="py-2"></div>
+            <div class="col-12 deviation-wrapper text-center">
+                <h3>Deviation Scale</h3>
+                <!-- Deviation Bar -->
+                <DeviationBar
+                :alertBelow="selectedCameraInfo.alert_below_threshold * 100"
+                :warnBelow="selectedCameraInfo.warn_below_threshold * 100"
+                :warnAbove="selectedCameraInfo.warn_above_threshold * 100"
+                :alertAbove="selectedCameraInfo.alert_above_threshold * 100"
+                :deviation="selectedCameraInfo.deviation * 100"
+                />
+            </div>
         </div>
     </div>
 </template>
@@ -591,5 +605,13 @@ onUnmounted(() => {
 .cam-title {
     margin-top: 1.5rem;
     color: var(--nav-title);
+}
+
+.deviation-wrapper{
+    border: 0.5rem solid var(--nav-bg);
+    border-radius: 1rem;
+    box-shadow: 0 0 0.45rem var(--button-hover);
+    padding: 2rem;
+    background-color: var(--cam-bg);
 }
 </style>
