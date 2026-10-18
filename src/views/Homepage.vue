@@ -442,7 +442,7 @@ onUnmounted(() => {
                                 <p v-if="Number(selectedCameraId.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) + '%' }}</p>
                                 <p v-else><strong>Deviation:</strong> --</p>
                                 <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
-                                 <!-- <table class="table border border-2 hardware-info">
+                                  <table class="table border border-2 hardware-info">
                                     <tbody>
                                         <tr>
                                             <th class="bg-danger text-white">Alert below:</th>
@@ -465,7 +465,7 @@ onUnmounted(() => {
                                             <td>{{ Math.round(selectedCameraInfo.alert_above_threshold * 100) + '%' }}</td>
                                         </tr>
                                     </tbody>
-                                </table> -->
+                                </table>
                                 <div class="button-group">
                                     <button class="btn submit-btn" :disabled="!selectedCameraId" @click="updateSetpoint">{{ isSetpointActive ? 'Recalibrate' : 'Calibrate' }}</button>
                                     <button class="btn submit-btn" @click="configureCamera(selectedCameraInfo.conn_id,selectedCameraInfo.camera_id)">Configure</button>
@@ -485,7 +485,7 @@ onUnmounted(() => {
                 :warnBelow="selectedCameraInfo.warn_below_threshold * 100"
                 :warnAbove="selectedCameraInfo.warn_above_threshold * 100"
                 :alertAbove="selectedCameraInfo.alert_above_threshold * 100"
-                :deviation="0.75 * 100"
+                :deviation="selectedCameraInfo.deviation * 100"
                 />
             </div>
         </div>
