@@ -8,13 +8,15 @@ import { isEmpty } from '../utils/helpers'
 // import router and useSharedDeviceData.js for shortcuts
 import { useRouter } from 'vue-router'
 import { useSharedDeviceData } from '../composables/useSharedDeviceData'
-const router = useRouter();
-const { setSharedMicroComputer, setSharedCamera, clearAllSharedDeviceData } = useSharedDeviceData();
+const router = useRouter()
+const { setSharedMicroComputer, setSharedCamera, clearAllSharedDeviceData } = useSharedDeviceData()
 
 // --------------------
 //   Config Shortcut
 // --------------------
-import CameraFeed from '../components/CameraFeed.vue';
+import CameraFeed from '../components/CameraFeed.vue'
+import { usePersistentGlobalData } from '../composables/usePersistentGlobalData'
+const { globalCameraFeedBoolean } = usePersistentGlobalData()
 
 // --------------------
 //   WebSocket
@@ -59,6 +61,7 @@ const activeTab = ref('conns') // tracks active tab state (defaults to connectio
 const selectedCameraId = ref(null)
 const cameraSetpoints = ref({})
 const alertsExpanded = ref(true) // alert system variable
+const activeFeeds = ref({})
 
 // --------------------
 //        Computed
@@ -241,13 +244,10 @@ const toggleAlerts = computed(() => {
 // --------------------
 // select one camera at a time by ID
 const toggleCameraSelection = (cameraId) => {
-    const [conn_id, camera_id] = cameraId.split('-')
     if (selectedCameraId.value === cameraId) {
         selectedCameraId.value = null
-        stopViewingCamera(conn_id, camera_id)
     } else {
         selectedCameraId.value = cameraId
-        viewCamera(conn_id, camera_id)
     }
 }
 const updateSetpoint = () => {
@@ -265,6 +265,19 @@ const updateSetpoint = () => {
     } catch (error) {
         console.error("The setpoint() function threw an error:", error)
     }*/
+}
+const isFeedActive = (cameraId) => {
+    // returns bool for active feed (true) or no active feed (false)
+    return !!activeFeeds.value[cameraId]
+}
+const liveFeedBtn = (connId, cameraId) => {
+    activeFeeds.value[`${connId}-${cameraId}`] = !activeFeeds.value[`${connId}-${cameraId}`]
+
+    if (activeFeeds.value[`${connId}-${cameraId}`]) {
+        viewCamera(connId, cameraId)
+    } else {
+        stopViewingCamera(connId, cameraId)
+    }
 }
 // button to send force retry camera command to server
 const forceRetryCameraBtn = (connId, cameraId) => {
@@ -400,12 +413,11 @@ onUnmounted(() => {
                             &nbsp
                         </div>
                     </div>
-                    <div v-if="selectedCameraId" class="row mx-0 align-items-stretch mb-5 mt-4">
-                        <div class="cam-info p-3 pe-0 mt-2">
+                    <div v-if="selectedCameraId" class="row mx-0 align-items-stretch mb-4 mt-4">
+                        <div class="cam-info p-3 mt-2">
                             <div class="row h-100 mx-0 align-content-between">
                                 <div class="col-12 px-0">
                                     <h3 class="mb-2">Camera Info</h3>
-                                    <div class="col-lg-7 col-9">
                                         <div v-if="selectedCameraInfo">
                                             <p><strong>ID:</strong> {{ selectedCameraInfo.camera_id }}</p>
                                             <p><strong>Name:</strong> {{ selectedCameraInfo.name }}</p>
@@ -438,15 +450,21 @@ onUnmounted(() => {
                                                 </tbody>
                                             </table>
                                             <div class="button-group">
-                                                <button class="btn submit-btn" :disabled="!selectedCameraId" @click="updateSetpoint">{{ isSetpointActive ? 'Recalibrate' : 'Calibrate' }}</button>
-                                                <button class="btn submit-btn" @click="configureCamera(selectedCameraInfo.conn_id,selectedCameraInfo.camera_id)">Configure</button>
+                                                <button class="btn submit-btn" :disabled="!selectedCameraId" @click="updateSetpoint">
+                                                    {{ isSetpointActive ? 'Recalibrate' : 'Calibrate' }}
+                                                </button>
+                                                <button class="btn submit-btn" @click="configureCamera(selectedCameraInfo.conn_id,selectedCameraInfo.camera_id)">
+                                                    Configure
+                                                </button>
+                                                <button v-if="globalCameraFeedBoolean" class="btn submit-btn" :class="isFeedActive(`${selectedCameraInfo.conn_id}-${selectedCameraInfo.camera_id}`)" @click="liveFeedBtn(selectedCameraInfo.conn_id, selectedCameraInfo.camera_id)">
+                                                    {{ isFeedActive(`${selectedCameraInfo.conn_id}-${selectedCameraInfo.camera_id}`) ? 'Hide Live Feed' : 'View Live Feed' }}
+                                                </button>
                                             </div>
                                         </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div>
+                        <div v-if="isFeedActive(`${selectedCameraInfo.conn_id}-${selectedCameraInfo.camera_id}`)">
                             <CameraFeed :imageSrc="imageSrc" :isLive="isLive" :isSelected="!isEmpty(selectedCameraInfo)"/>
                         </div>
                     </div>
@@ -481,8 +499,8 @@ onUnmounted(() => {
                                 <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
                                     <td v-if="cam.state === 'Broken'">{{ cam.name }}
                                         <div class="button-group">
-                                            <button class="btn submit-btn" @click="forceRetryCameraBtn(cam.conn_id, camera_id)">Force Retry</button>
-                                            <button class="btn submit-btn" @click="forgetCameraBtn(cam.conn_id, camera_id)">Forget</button>
+                                            <button class="btn submit-btn" @click="forceRetryCameraBtn(cam.conn_id, cam.camera_id)">Force Retry</button>
+                                            <button class="btn submit-btn" @click="forgetCameraBtn(cam.conn_id, cam.camera_id)">Forget</button>
                                         </div>
                                     </td>
                                 </tr>
