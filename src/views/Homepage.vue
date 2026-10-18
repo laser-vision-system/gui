@@ -442,7 +442,7 @@ onUnmounted(() => {
                                 <p v-if="Number(selectedCameraId.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) + '%' }}</p>
                                 <p v-else><strong>Deviation:</strong> --</p>
                                 <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
-                                 <table class="table border border-2 hardware-info">
+                                 <!-- <table class="table border border-2 hardware-info">
                                     <tbody>
                                         <tr>
                                             <th class="bg-danger text-white">Alert below:</th>
@@ -465,23 +465,28 @@ onUnmounted(() => {
                                             <td>{{ Math.round(selectedCameraInfo.alert_above_threshold * 100) + '%' }}</td>
                                         </tr>
                                     </tbody>
-                                </table>
+                                </table> -->
                                 <div class="button-group">
                                     <button class="btn submit-btn" :disabled="!selectedCameraId" @click="updateSetpoint">{{ isSetpointActive ? 'Recalibrate' : 'Calibrate' }}</button>
                                     <button class="btn submit-btn" @click="configureCamera(selectedCameraInfo.conn_id,selectedCameraInfo.camera_id)">Configure</button>
                                 </div>
                             </div>
                         </div>
-                        <!-- Deviation Bar -->
-                        <DeviationBar
-                        :alertBelow="selectedCameraInfo.alert_below_threshold"
-                        :warnBelow="selectedCameraInfo.warn_below_threshold"
-                        :warnAbove="selectedCameraInfo.warn_above_threshold"
-                        :alertAbove="selectedCameraInfo.alert_above_threshold"
-                        :deviation="0.98"
-                        />
                     </div>
                 </div>
+            </div>
+            <!-- Spacing gap -->
+            <div class="py-2"></div>
+            <div class="col-12 deviation-wrapper text-center">
+                <h3>Deviation Bar</h3>
+                <!-- Deviation Bar -->
+                <DeviationBar
+                :alertBelow="selectedCameraInfo.alert_below_threshold * 100"
+                :warnBelow="selectedCameraInfo.warn_below_threshold * 100"
+                :warnAbove="selectedCameraInfo.warn_above_threshold * 100"
+                :alertAbove="selectedCameraInfo.alert_above_threshold * 100"
+                :deviation="0.75 * 100"
+                />
             </div>
         </div>
     </div>
@@ -543,5 +548,13 @@ onUnmounted(() => {
 .cam-title {
     margin-top: 1.5rem;
     color: var(--nav-title);
+}
+
+.deviation-wrapper{
+    border: 0.5rem solid var(--nav-bg);
+    border-radius: 1rem;
+    box-shadow: 0 0 0.45rem var(--button-hover);
+    padding: 2rem;
+    background-color: var(--cam-bg);
 }
 </style>

@@ -36,10 +36,11 @@ const NUMBER_OF_INTERVALS = 10;
 const range = computed(() => {
   const base = toValue(sliderRange) ?? {};
   let min = Number.isFinite(base.min) ? base.min : 90;
-  let max = Number.isFinite(base.max) ? base.min : 110;
+  let max = Number.isFinite(base.max) ? base.max : 110;
   // adds padding to deviation bar if the global min max values are cutting of the thresholds
   if (props.alertBelow < min) min = props.alertBelow - RANGE_PADDING;
   if (props.alertAbove > max) max = props.alertAbove + RANGE_PADDING;
+  if(max <= min) max = min + 1;
 
   return { min, max };
 });
@@ -61,7 +62,7 @@ const trackCSS = computed(() => ({
 }));
 
 // Deviation marker
-const markerPct = computed(() => toPercentage(props.deviation));
+const markerPercent = computed(() => toPercentage(props.deviation));
 
 // check for the deviation marker being off the scale
 const isOffScale = computed(
@@ -77,35 +78,26 @@ const status = computed(() => {
 
 
 const formattedDeviation = computed(() => {
-  props.deviation.toFixed(2);
-})
+  return props.deviation.toFixed(2);
+});
 
 const scaledNotches = computed(() => {
   const { min, max } = range.value;
   const increment = (max - min) / NUMBER_OF_INTERVALS;
-  const notches = [];
-  let counter = min;
-  notches.push({
-    value: Math.round(min * 100) / 100,
-    percent: toPercentage(min),
+  return Array.from({ length: NUMBER_OF_INTERVALS + 1 }, (_, i) => {
+    const value = min + i * increment;
+    return {
+      value: Math.round(value * 100) / 100,
+      percent: toPercentage(value),
+    };
   });
-  for (let i = 0; i <= (NUMBER_OF_INTERVALS - 1); i++) {
-    counter += increment;
-    notches.push({
-      value: Math.round(counter * 100) / 100,
-      percent: toPercentage(counter),
-    });
-  }
-  return notches;
-})
+});
 // -----------------------
 //       Functions
 // -----------------------
 
 // Positions on the track from 0 - 100
 function toPercentage(value) {
-  // in case the deviation is ever 0
-  if (value === 0) return 0;
   const { min, max } = range.value;
   const span = max - min;
   return Math.min(Math.max(((value - min) / span) * 100, 0), 100);
@@ -122,8 +114,7 @@ function toPercentage(value) {
         <div
             class="marker"
             :class="[`is-${status}`, { 'is-off-scale': isOffScale }]"
-            :style="{ left: `${markerPct}%` }"
-        >
+            :style="{ left: `${markerPercent}%` }">
             <span class="marker-label">
             {{ formattedDeviation }}
             <span v-if="isOffScale" aria-hidden="true">{{ deviation < range.min ? "«" : "»" }}</span>
@@ -135,7 +126,7 @@ function toPercentage(value) {
     <div class="scale-labels">
       <span
         v-for="notch in scaledNotches"
-        :key="notch.key"
+        :key="notch.value"
         class="scale-notch"
         :style="{ left: `${notch.percent}%` }">
         {{ notch.value }}
@@ -146,10 +137,10 @@ function toPercentage(value) {
 <style scoped>
 .deviation-bar {
     --track-height: 0.75rem;
-    --marker-width: 3px;
+    --marker-width: 0.25rem;
     --marker-height: 1.75rem;
     width: 100%;
-    padding: 2.75rem 1.25rem 0.5rem;
+    padding: 4rem 0.65rem 1rem;
     box-sizing: border-box;
 }
 
@@ -161,10 +152,10 @@ function toPercentage(value) {
 .track {
   position: absolute;
   inset: 0;
-  border-radius: 999px;
+  border-radius: 0.2rem;
 }
 
-/* ---------- Marker ---------- */
+
 .marker {
   --marker-color: var(--range-safe);
   position: absolute;
@@ -173,6 +164,7 @@ function toPercentage(value) {
   height: 0;
   width: 0;
   transition: left 0.35s ease;
+
 }
 
 .marker.is-warn { --marker-color: var(--range-warn); }
@@ -186,22 +178,49 @@ function toPercentage(value) {
   top: calc(var(--marker-height) / -2);
   width: var(--marker-width);
   height: var(--marker-height);
-  border-radius: 999px;
-  background: var(--bs-body-color);
-  box-shadow: 0 0 0 2px var(--bs-body-bg);
+  border-radius: 0.2rem;
+  background: var(--marker-color);
+  box-shadow: 0 0 0 2px var(--bs-body-color);
+  z-index: 2;
 }
 
+.marker-label {
+  position: absolute;
+  bottom: calc(var(--marker-height) / 2 + 0.5rem);
+  left: 0;
+  transform: translateX(-50%);
+  padding: 0.1rem 0.25rem;
+  border-radius: 0.5rem;
+  border: 3px solid var(--marker-color);
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  font-size: 14pt;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.marker-pointer {
+  position: absolute;
+  bottom: calc(var(--marker-height) / 2 + 0.1rem);
+  left: 0;
+  transform: translateX(-50%);
+  border-left: 0.35rem solid transparent;
+  border-right: 0.35rem solid transparent;
+  border-top: 0.45rem solid var(--marker-color);
+}
 
 .scale-labels {
   position: relative;
   height: 1.5rem;
   margin-top: 1.25rem;
+  z-index: 1;
 }
 .scale-notch {
   position: absolute;
   transform: translateX(-50%);
-  font-size: 10pt;
+  font-size: 8pt;
   color: var(--bs-body-color);
+  z-index: 1;
 }
 .scale-notch::before {
   content: "";
@@ -211,5 +230,6 @@ function toPercentage(value) {
   width: 2px;
   height: 0.6rem;
   background: currentColor;
+  z-index: 1;
 }
 </style>

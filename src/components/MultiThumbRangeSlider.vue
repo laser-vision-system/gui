@@ -103,21 +103,15 @@ const trackCSS = computed(() => ({
 const NUMBER_OF_INTERVALS = 10;
 
 const scaledNotches = computed(() => {
-  const notches = [];
   const increment = ((props.max - props.min) / NUMBER_OF_INTERVALS);
-  let counter = props.min;
-  notches.push({
-    value: Math.round(props.min * 100) / 100,
-    percent: toPercentage(props.min),
+
+  return Array.from({ length: NUMBER_OF_INTERVALS + 1 }, (_, i) => {
+    const value = props.min + i * increment;
+    return {
+      value: Math.round(value * 100) / 100,
+      percent: toPercentage(value),
+    };
   });
-  for (let i = 0; i <= (NUMBER_OF_INTERVALS - 1); i++) {
-    counter += increment;
-    notches.push({
-      value: Math.round(counter * 100) / 100,
-      percent: toPercentage(counter),
-    });
-  }
-  return notches;
 })
 
 // ---------------------------
