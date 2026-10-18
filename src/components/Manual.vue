@@ -16,6 +16,7 @@
 </template>
 <style scoped>
 .footer{
+    color: var(--camera-tab-text);
     background-color: var(--nav-bg);
     height: 3rem;
     flex-shrink: 0;

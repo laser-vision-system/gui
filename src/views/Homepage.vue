@@ -8,13 +8,15 @@ import { isEmpty } from '../utils/helpers'
 // import router and useSharedDeviceData.js for shortcuts
 import { useRouter } from 'vue-router'
 import { useSharedDeviceData } from '../composables/useSharedDeviceData'
-const router = useRouter();
-const { setSharedMicroComputer, setSharedCamera, clearAllSharedDeviceData } = useSharedDeviceData();
+const router = useRouter()
+const { setSharedMicroComputer, setSharedCamera, clearAllSharedDeviceData } = useSharedDeviceData()
 
 // --------------------
 //   Config Shortcut
 // --------------------
-import CameraFeed from '../components/CameraFeed.vue';
+import CameraFeed from '../components/CameraFeed.vue'
+import { usePersistentGlobalData } from '../composables/usePersistentGlobalData'
+const { globalCameraFeedBoolean } = usePersistentGlobalData()
 
 // --------------------
 //   WebSocket
@@ -55,9 +57,11 @@ import sampleDisconnectedEdgeList from '../assets/data/sampleDisconnectedEdgeLis
 //      ref Values
 // --------------------
 //const setpointState = ref(false)
+const activeTab = ref('conns') // tracks active tab state (defaults to connections tab)
 const selectedCameraId = ref(null)
 const cameraSetpoints = ref({})
 const alertsExpanded = ref(true) // alert system variable
+const activeFeeds = ref({})
 
 // --------------------
 //        Computed
@@ -240,13 +244,10 @@ const toggleAlerts = computed(() => {
 // --------------------
 // select one camera at a time by ID
 const toggleCameraSelection = (cameraId) => {
-    const [conn_id, camera_id] = cameraId.split('-')
     if (selectedCameraId.value === cameraId) {
         selectedCameraId.value = null
-        stopViewingCamera(conn_id, camera_id)
     } else {
         selectedCameraId.value = cameraId
-        viewCamera(conn_id, camera_id)
     }
 }
 const updateSetpoint = () => {
@@ -264,6 +265,19 @@ const updateSetpoint = () => {
     } catch (error) {
         console.error("The setpoint() function threw an error:", error)
     }*/
+}
+const isFeedActive = (cameraId) => {
+    // returns bool for active feed (true) or no active feed (false)
+    return !!activeFeeds.value[cameraId]
+}
+const liveFeedBtn = (connId, cameraId) => {
+    activeFeeds.value[`${connId}-${cameraId}`] = !activeFeeds.value[`${connId}-${cameraId}`]
+
+    if (activeFeeds.value[`${connId}-${cameraId}`]) {
+        viewCamera(connId, cameraId)
+    } else {
+        stopViewingCamera(connId, cameraId)
+    }
 }
 // button to send force retry camera command to server
 const forceRetryCameraBtn = (connId, cameraId) => {
@@ -355,121 +369,143 @@ onUnmounted(() => {
                     </div>
                 </div>
         </div>
-        <div class="row mx-0 mt-2 mb-2 align-items-start">
-            <div class="col-lg-8 col-12 ps-0">
-                <h3 class="cam-title">Connections:</h3>
-                    <div v-if="activeMergedData">
-                        <div v-for="(section, conn_id) in activeMergedData" :key="conn_id">
-                            <div v-if="section.microComState === 'Active'">
-                                <h4 class="microCom-title d-flex flex-row gap-2">{{ section.microComName }}
-                                    <span class="badge bg-secondary">
-                                        {{ section.microComState }}
-                                    </span>
-                                    <button type="button" class="badge submit-btn border-0"
-                                            @click="configureMicroComputer(section.conn_id)">Configure</button>
-                                </h4>
-                                <div class="row d-flex justify-content-start p-2 g-2">
-                                    <div class="col-3 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
-                                        <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
-                                            <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
-                                                <h5 class="card-title">{{ cam.name }}</h5>
-                                                    <p v-if="Number(cam.deviation)" class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
-                                                    <p v-else class="card-text">{{ cam.deviation }}</p>
+        <div class="row mx-0 mt-2 mb-4 align-items-start">
+            <ul class="nav nav-tabs custom-tabs border-bottom-0">
+                <li class="nav-item">
+                    <button class="nav-link" :class="{ active: activeTab === 'conns' }" @click="activeTab = 'conns'">
+                        Connections
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" :class="{ active: activeTab === 'disconns' }" @click="activeTab = 'disconns'">
+                        Disconnections
+                    </button>
+                </li>
+            </ul>
+            <div class="tab-content p-3 border rounded-top-0 rounded-bottom-3 rounded-end-3">
+                <div v-if="activeTab === 'conns'" class="tab-pane active">
+                    <div class="col-lg-8 col-12 ps-0">
+                        <div v-if="activeMergedData">
+                            <div v-for="(section, conn_id) in activeMergedData" :key="conn_id">
+                                <div v-if="section.microComState === 'Active'">
+                                    <h4 class="microCom-title d-flex flex-row gap-2">{{ section.microComName }}
+                                        <span class="badge bg-secondary">
+                                            {{ section.microComState }}
+                                        </span>
+                                        <button type="button" class="badge submit-btn border-0"
+                                                @click="configureMicroComputer(section.conn_id)">Configure</button>
+                                    </h4>
+                                    <div class="row d-flex justify-content-start p-2 g-2">
+                                        <div class="col-3 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
+                                            <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
+                                                <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
+                                                    <h5 class="card-title">{{ cam.name }}</h5>
+                                                        <p v-if="Number(cam.deviation)" class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
+                                                        <p v-else class="card-text">{{ cam.deviation }}</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        <div v-else>
+                            &nbsp
+                        </div>
                     </div>
-                    <div v-else>
-                        &nbsp
-                    </div>
-            </div>
-            <div class="col-lg-4 col-12 mt-lg-5 pe-0 text-center">
-                <table class="table border border-2 hardware-info">
-                    <tbody>
-                        <tr>
-                            <th scope="col" class="table-dark">Disconnected microComputers</th>
-                        </tr>
-                        <tr v-for="com in disconnectedMicroComs" :key="com.conn_id">
-                            <td>{{ com.name }}
-                                <div class="button-group">
-                                    <button class="btn submit-btn" @click="forgetEdgeBtn(com.conn_id)">Forget</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col" class="table-dark">Disconnected Cameras</th>
-                        </tr>
-                        <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
-                            <td v-if="cam.state === 'Disconnected'">{{ cam.name }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <table class="table border border-2 hardware-info">
-                    <tbody>
-                        <tr>
-                            <th scope="col" class="table-dark">Broken Cameras</th>
-                        </tr>
-                        <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
-                            <td v-if="cam.state === 'Broken'">{{ cam.name }}
-                                <div class="button-group">
-                                    <button class="btn submit-btn" @click="forceRetryCameraBtn(cam.conn_id, camera_id)">Force Retry</button>
-                                    <button class="btn submit-btn" @click="forgetCameraBtn(cam.conn_id, camera_id)">Forget</button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div v-if="selectedCameraId" class="row mx-0 align-items-stretch mb-5 mt-4">
-            <div class="col-lg-8 col-12 d-flex ps-0 mt-2">
-                <CameraFeed :imageSrc="imageSrc" :isLive="isLive" :isSelected="!isEmpty(selectedCameraInfo)"/>
-            </div>
-            <div class="col-lg-4 col-12 cam-info d-flex flex-column p-3 pe-0 mt-2">
-                <div class="row h-100 mx-0 align-content-between">
-                    <div class="col-12 px-0">
-                        <h3 class="mb-2">Camera Info</h3>
-                        <div class="col-lg-7 col-9">
-                            <div v-if="selectedCameraInfo">
-                                <p><strong>ID:</strong> {{ selectedCameraInfo.camera_id }}</p>
-                                <p><strong>Name:</strong> {{ selectedCameraInfo.name }}</p>
-                                <!-- <p><strong>Intensity:</strong> {{ selectedCameraInfo.intensity }}</p> -->
-                                <p v-if="Number(selectedCameraId.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) + '%' }}</p>
-                                <p v-else><strong>Deviation:</strong> --</p>
-                                <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
-                                <table class="table border border-2 hardware-info">
-                                    <tbody>
-                                        <tr>
-                                            <th class="bg-danger text-white">Alert below:</th>
-                                            <td>{{ Math.round(selectedCameraInfo.alert_below_threshold * 100) + '%' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th class="bg-warning text-dark">Warn below:</th>
-                                            <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100) + '%' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th class="bg-success text-white">No alert:</th>
-                                            <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100)}}-{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th class="bg-warning text-dark">Warn above:</th>
-                                            <td>{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th class="bg-danger text-white">Alert above:</th>
-                                            <td>{{ Math.round(selectedCameraInfo.alert_above_threshold * 100) + '%' }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                <div class="button-group">
-                                    <button class="btn submit-btn" :disabled="!selectedCameraId" @click="updateSetpoint">{{ isSetpointActive ? 'Recalibrate' : 'Calibrate' }}</button>
-                                    <button class="btn submit-btn" @click="configureCamera(selectedCameraInfo.conn_id,selectedCameraInfo.camera_id)">Configure</button>
+                    <div v-if="selectedCameraId" class="row mx-0 align-items-stretch mb-4 mt-4">
+                        <div class="cam-info p-3 mt-2">
+                            <div class="row h-100 mx-0 align-content-between">
+                                <div class="col-12 px-0">
+                                    <h3 class="mb-2">Camera Info</h3>
+                                        <div v-if="selectedCameraInfo">
+                                            <p><strong>ID:</strong> {{ selectedCameraInfo.camera_id }}</p>
+                                            <p><strong>Name:</strong> {{ selectedCameraInfo.name }}</p>
+                                            <!-- <p><strong>Intensity:</strong> {{ selectedCameraInfo.intensity }}</p> -->
+                                            <p v-if="Number(selectedCameraId.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) + '%' }}</p>
+                                            <p v-else><strong>Deviation:</strong> --</p>
+                                            <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
+                                            <table class="table border border-2 hardware-info">
+                                                <tbody>
+                                                    <tr>
+                                                        <th class="bg-danger text-white">Alert below:</th>
+                                                        <td>{{ Math.round(selectedCameraInfo.alert_below_threshold * 100) + '%' }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="bg-warning text-dark">Warn below:</th>
+                                                        <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100) + '%' }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="bg-success text-white">No alert:</th>
+                                                        <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100)}}-{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="bg-warning text-dark">Warn above:</th>
+                                                        <td>{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="bg-danger text-white">Alert above:</th>
+                                                        <td>{{ Math.round(selectedCameraInfo.alert_above_threshold * 100) + '%' }}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                            <div class="button-group">
+                                                <button class="btn submit-btn" :disabled="!selectedCameraId" @click="updateSetpoint">
+                                                    {{ isSetpointActive ? 'Recalibrate' : 'Calibrate' }}
+                                                </button>
+                                                <button class="btn submit-btn" @click="configureCamera(selectedCameraInfo.conn_id,selectedCameraInfo.camera_id)">
+                                                    Configure
+                                                </button>
+                                                <button v-if="globalCameraFeedBoolean" class="btn submit-btn" :class="isFeedActive(`${selectedCameraInfo.conn_id}-${selectedCameraInfo.camera_id}`)" @click="liveFeedBtn(selectedCameraInfo.conn_id, selectedCameraInfo.camera_id)">
+                                                    {{ isFeedActive(`${selectedCameraInfo.conn_id}-${selectedCameraInfo.camera_id}`) ? 'Hide Live Feed' : 'View Live Feed' }}
+                                                </button>
+                                            </div>
+                                        </div>
                                 </div>
                             </div>
                         </div>
+                        <div v-if="isFeedActive(`${selectedCameraInfo.conn_id}-${selectedCameraInfo.camera_id}`)">
+                            <CameraFeed :imageSrc="imageSrc" :isLive="isLive" :isSelected="!isEmpty(selectedCameraInfo)"/>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="activeTab === 'disconns'" class="tab-pane active">
+                    <div class="col-lg-4 col-12 mt-lg-5 pe-0 text-center">
+                        <table class="table border border-2 hardware-info">
+                            <tbody>
+                                <tr>
+                                    <th scope="col" class="table-dark">Disconnected microComputers</th>
+                                </tr>
+                                <tr v-for="com in disconnectedMicroComs" :key="com.conn_id">
+                                    <td>{{ com.name }}
+                                        <div class="button-group">
+                                            <button class="btn submit-btn" @click="forgetEdgeBtn(com.conn_id)">Forget</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="col" class="table-dark">Disconnected Cameras</th>
+                                </tr>
+                                <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
+                                    <td v-if="cam.state === 'Disconnected'">{{ cam.name }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <table class="table border border-2 hardware-info">
+                            <tbody>
+                                <tr>
+                                    <th scope="col" class="table-dark">Broken Cameras</th>
+                                </tr>
+                                <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
+                                    <td v-if="cam.state === 'Broken'">{{ cam.name }}
+                                        <div class="button-group">
+                                            <button class="btn submit-btn" @click="forceRetryCameraBtn(cam.conn_id, cam.camera_id)">Force Retry</button>
+                                            <button class="btn submit-btn" @click="forgetCameraBtn(cam.conn_id, cam.camera_id)">Forget</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -477,6 +513,28 @@ onUnmounted(() => {
     </div>
 </template>
 <style scoped>
+.custom-tabs .nav-link {
+    color: var(--nav-title);
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    /* this matches Bootstrap 5's responsive h3 size */
+    font-size: calc(1.3rem + .6vw);
+    font-weight: 500;
+}
+.custom-tabs .nav-link:hover {
+    color: var(--button-hover);
+}
+.custom-tabs .nav-link.active {
+    color: var(--nav-title);
+    background-color: var(--bs-body-bg);
+    border-color: var(--bs-border-color) var(--bs-border-color) transparent;
+    margin-bottom: -1px; 
+    position: relative;
+    z-index: 2;
+}
 .camera-tab {
     min-height: 80px;
     overflow-y: auto;
