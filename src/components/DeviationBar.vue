@@ -196,7 +196,7 @@ function toPercentage(value) {
   border: 3px solid var(--marker-color);
   background: var(--bs-body-bg);
   color: var(--bs-body-color);
-  font-size: 18pt;
+  font-size: 16pt;
   font-weight: 600;
   white-space: nowrap;
 }
