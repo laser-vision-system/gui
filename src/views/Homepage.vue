@@ -609,4 +609,5 @@ onUnmounted(() => {
 .deviation-wrapper{
     padding: 1rem;
 }
+
 </style>

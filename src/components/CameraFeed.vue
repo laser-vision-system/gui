@@ -49,9 +49,7 @@ const props = defineProps({
     box-shadow: 0 0 0.45rem var(--button-hover);
     background-color: var(--cam-bg);
     object-fit: contain;
-    max-height: 480px;
 }
-
 
 .feed-wrapper {
     max-width: 640px;
