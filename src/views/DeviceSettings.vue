@@ -29,6 +29,13 @@ const isCameraFeed = ref(true);
 import CameraFeed from '../components/CameraFeed.vue'
 // Hint Popup: to show message descriptions from
 import Hints from '../components/HintPopup.vue'
+
+// -----------------------------
+//   Global Camera toggle
+// -----------------------------
+import { usePersistentGlobalData } from '../composables/usePersistentGlobalData';
+const { globalCameraFeedBoolean } = usePersistentGlobalData();
+
 // -----------------------------
 //   Config Shortcut
 // -----------------------------
@@ -777,7 +784,7 @@ watch(selectedCamera, (cam, oldCam) => {
     viewCamera(cam.conn_id, cam.camera_id)
     viewCameraConfig(cam.conn_id, cam.camera_id)
     // selectedConfig gets filled in by the controlConfig watcher below once the server replies
-  } else {
+  } else  {
     selectedConfig.value = findConfig(cam.conn_id, cam.camera_id)
     loadCameraValues()
   }
@@ -973,7 +980,7 @@ onMounted(() => {
                                 Camera Controls
                             </h4>
                             <div v-if="isControlsSection && selectedCamera">
-                                <p v-if="!hasControls" class="config-label">Wating for controls from the camera...</p>
+                                <p v-if="!hasControls" class="config-label">Waiting for controls from the camera...</p>
 
                                 <div v-for="(control,name) in controls" :key="name">
                                     <label :for="`control-${name}`" class="config-label">{{control.label}}</label>
@@ -1024,32 +1031,35 @@ onMounted(() => {
                             </div>
                             <!-- DEVIATION THRESHOLDS -->
                             <hr class="line-break" v-if="selectedCamera">
-                            <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">
+                            <p class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">
                                 <img
                                 :src="isDeviationSection ? arrowDown : arrowUp"
                                 alt="toggle button" width="25" height="25" class="toggle-button"
                                 @click="isDeviationSection = !isDeviationSection">
                                 Deviation Thresholds
-                                <button class="btn submit-btn" @click="isDeviationMinMaxConfigure = !isDeviationMinMaxConfigure">Configure Range</button>
-                            </h4>
-                            <div v-if="isDeviationSection">
-                                <div v-if="isDeviationMinMaxConfigure">
-                                    <div class="text-center d-flex flex-row justify-content-center gap-3 deviation-range-slider">
-                                        <label for="slider-range-min" class="config-label">Min</label>
-                                        <input type="number" id="slider-range-min" class="number-input" v-model.number="sliderRange.min" :min="THRESHOLD_MIN" :max="sliderRange.max - 1">
-                                        <label for="slider-range-max" class="config-label">Max</label>
-                                        <input type="number" id="slider-range-max" class="number-input" v-model.number="sliderRange.max" :min="sliderRange.min + 1" :max="THRESHOLD_MAX">
-                                    </div>
-                                    <div class="d-flex flex-row justify-content-center gap-3 py-3">
-                                        <button class="btn submit-btn" @click="requestSetSliderRange">Set Range</button>
-                                        <ConfirmationBox
-                                            v-model="showSetThresholdRange"
-                                            message="Would you like to save the deviation threshold range?"
-                                            :onConfirmFunction="saveConfirmThresholdRange"/>
-                                        <button class="btn submit-btn" @click="revertDeviationSliderRange">Cancel</button>
-                                        <button class="btn submit-btn" @click="resetDeviationSliderRange">Set Default Range</button>
-                                    </div>
+                                <button class="btn submit-btn" @click="isDeviationMinMaxConfigure = !isDeviationMinMaxConfigure">
+                                    <p class="p-0 m-0" v-if="!isDeviationMinMaxConfigure">Configure Range</p>
+                                    <p class="p-0 m-0" v-else>Close Configuration</p>
+                                </button>
+                            </p>
+                            <div v-if="isDeviationMinMaxConfigure">
+                                <div class="text-center d-flex flex-row justify-content-center gap-3 deviation-range-slider">
+                                    <label for="slider-range-min" class="config-label">Min</label>
+                                    <input type="number" id="slider-range-min" class="number-input" v-model.number="sliderRange.min" :min="THRESHOLD_MIN" :max="sliderRange.max - 1">
+                                    <label for="slider-range-max" class="config-label">Max</label>
+                                    <input type="number" id="slider-range-max" class="number-input" v-model.number="sliderRange.max" :min="sliderRange.min + 1" :max="THRESHOLD_MAX">
                                 </div>
+                                <div class="d-flex flex-row justify-content-center gap-3 py-3">
+                                    <button class="btn submit-btn" @click="requestSetSliderRange">Set Range</button>
+                                    <ConfirmationBox
+                                        v-model="showSetThresholdRange"
+                                        message="Would you like to save the deviation threshold range?"
+                                        :onConfirmFunction="saveConfirmThresholdRange"/>
+                                    <button class="btn submit-btn" @click="revertDeviationSliderRange">Cancel</button>
+                                    <button class="btn submit-btn" @click="resetDeviationSliderRange">Set Default Range</button>
+                                </div>
+                            </div>
+                            <div v-if="isDeviationSection">
                                 <p v-for="e in deviationSliderRangeErrors" class="error">{{e}}</p>
                                 <p v-if="feedback.thresholdsRange"
                                    :class="feedback.thresholdsRange.ok ? 'success' : 'error'"
@@ -1098,8 +1108,8 @@ onMounted(() => {
                 @click="toggleCameraFeed">
                 Camera Feed
             </h4>
-            <div class="col-12 d-flex ps-0 mt-2 justify-content-center py-3" v-if="isCameraFeed">
-                <CameraFeed :imageSrc="imageSrc" :isLive="isLive" :isSelected="!isEmpty(selectedCamera)"/>
+            <div class="col-12 d-flex ps-0 mt-2 justify-content-center py-3" v-if="selectedCamera">
+                <CameraFeed :imageSrc="imageSrc" :isLive="isLive" :isSelected="isCameraFeed"/>
             </div>
         </div>
     </div>

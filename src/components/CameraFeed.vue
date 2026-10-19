@@ -3,9 +3,7 @@
 import { usePersistentGlobalData } from '../composables/usePersistentGlobalData';
 import { ref } from 'vue';
 const { globalCameraFeedBoolean } = usePersistentGlobalData();
-// toggle arrows
-import arrowUp from '../assets/images/arrow-up.svg'
-import arrowDown from '../assets/images/arrow-down.svg'
+
 const showCameraFeed = ref(false);
 // --------------------
 //   Props
@@ -25,7 +23,7 @@ const props = defineProps({
 <div>
     <img src="" alt="">
     <!-- Global and Local Toggle -->
-    <div v-if="globalCameraFeedBoolean || showCameraFeed">
+    <div v-if="globalCameraFeedBoolean || props.isSelected">
         <div class="feed-wrapper w-100 h-100 d-flex ps-0" v-if="isSelected">
             <div v-if="isLive && imageSrc" class="w-100 h-100">
                 <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
