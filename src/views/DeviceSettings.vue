@@ -18,6 +18,7 @@ const isRenameCameraSection = ref(true);
 const isControlsSection = ref(true);
 const isDeviationSection = ref(true);
 const isDeviationMinMaxConfigure = ref(false);
+const isCameraFeed = ref(true);
 
 
 // -----------------------------
@@ -612,6 +613,17 @@ function findConfig(conn_id, camera_id) {
 //       Helper Methods
 // ------------------------------
 
+// Toggle Camera Feed
+function toggleCameraFeed() {
+  // toggle
+  isCameraFeed.value = !isCameraFeed.value;
+  if (isCameraFeed.value) {
+    viewCamera(selectedCamera.value.conn_id, selectedCamera.value.camera_id);
+  } else {
+    stopViewingCamera(selectedCamera.value.conn_id, selectedCamera.value.camera_id);
+  }
+}
+
 // Load current values from the matched config. must be used after select config is set
 function loadCameraValues() {
   // clear the previous camera's controls
@@ -826,6 +838,8 @@ watch([isLive, wsEdgeList, wsCameraList], () => {
   applySharedData();
   newMicroComputerName.value = selectedMicroComputer.value.name;
 }, { immediate: true });
+
+
 
 // -------------------------------
 //        onMount
@@ -1077,7 +1091,14 @@ onMounted(() => {
                 </form>
             </div>
             <!-- Camera feed -->
-            <div class="col-12 d-flex ps-0 mt-2 justify-content-center py-3">
+            <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">
+                <img
+                :src="isCameraFeed ? arrowDown : arrowUp"
+                alt="toggle button" width="30" height="30" class="toggle-button"
+                @click="toggleCameraFeed">
+                Camera Feed
+            </h4>
+            <div class="col-12 d-flex ps-0 mt-2 justify-content-center py-3" v-if="isCameraFeed">
                 <CameraFeed :imageSrc="imageSrc" :isLive="isLive" :isSelected="!isEmpty(selectedCamera)"/>
             </div>
         </div>
