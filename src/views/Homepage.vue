@@ -53,7 +53,8 @@ import sampleCameraList from '../assets/data/sampleCameraList.json'
 import sampleImageAnalysis from '../assets/data/sampleImageAnalysis.json'
 import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json'
 import sampleDisconnectedEdgeList from '../assets/data/sampleDisconnectedEdgeList.json'
-
+// uncomment for deployment :)
+// sampleDisconnectedEdgeList.microComputers = null;
 // --------------------
 //      ref Values
 // --------------------
@@ -86,7 +87,7 @@ const deviationAlerts = computed(() => {
                                 alertMsg = `[MODERATE] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                                 alertType = 'warning'
                 } else if ((analysis.deviation < analysis.alert_below_threshold) || (analysis.deviation > analysis.alert_above_threshold)) {
-                    alertMsg = `[HIGH] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
+                    alertMsg = `[HIGH] ${analysis.name} --- Deviation: $import sampleDisconnectedEdgeList from '../assets/data/sampleDisconnectedEdgeList.json'{Math.round(analysis.deviation * 100)}%`
                     alertType = 'danger'
                 }
                 return {
