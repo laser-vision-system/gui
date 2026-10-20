@@ -84,7 +84,7 @@ const {
   status,
   // data
   // some data is renamed so no confusion between sample data and live data.
-  edgeList: wsEdgeList, cameraList: wsCameraList,
+  edgeList: wsEdgeList, settingsCameraList: wsCameraList,
   imageSrc, controlConfig, defaultThresholds, visionProcessingTechniques,
   // connection function
   connect,

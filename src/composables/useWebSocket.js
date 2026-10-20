@@ -17,13 +17,18 @@ export function useWebSocket(url) {
   // CameraDetails: { name, state, warnBelowThreshold, alertBelowThreshold }
   // state: 'Active' | 'Disconnected' | 'Broken' | 'Limbo' | 'Invalid'
   const cameras = ref({});
-  // camera list java array
+  // camera list java array for Homepage
   // Array: { connId, cameraId, name, state, (alert and warn, above and below) thresholds,  deviation}
   const cameraList = computed(() => Object.values(cameras.value).map((camera) => ({
     ...camera,
     deviation: deviations.value[`${camera.conn_id},${camera.camera_id}`] ?? null,
   }))
   );
+
+  // separate camera list for device settings as the one for the homepage constantly updates
+  // which messes with the watchers of the device settings view causing the settings to constantly reset
+  const settingsCameraList = computed(() => Object.values(cameras.value));
+
   // active camera feed
   const imageSrc = ref('');
   // Image Analysis for active camera stores the deviation values
@@ -606,6 +611,7 @@ export function useWebSocket(url) {
     disconnectedEdgeList,
     cameras,
     cameraList,
+    settingsCameraList,
     imageSrc,
     deviations,
     controlConfig,
