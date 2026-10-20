@@ -18,12 +18,16 @@ export function useWebSocket(url) {
   // state: 'Active' | 'Disconnected' | 'Broken' | 'Limbo' | 'Invalid'
   const cameras = ref({});
   // camera list java array
-  // Array: { connId, cameraId, name, state }
-  const cameraList = computed(() => Object.values(cameras.value));
+  // Array: { connId, cameraId, name, state, (alert and warn, above and below) thresholds,  deviation}
+  const cameraList = computed(() => Object.values(cameras.value).map((camera) => ({
+    ...camera,
+    deviation: deviations.value[`${camera.conn_id},${camera.camera_id}`] ?? null,
+  }))
+  );
   // active camera feed
   const imageSrc = ref('');
-  // Image Analysis for active camera
-  const analysis = ref(null);
+  // Image Analysis for active camera stores the deviation values
+  const deviations = ref({});
   // Control Configuration
   const controlConfig = ref(null);
   // Active Camera / selected camera
@@ -153,8 +157,6 @@ export function useWebSocket(url) {
     }
   }
 
-
-
   // -------------------------
   //   Heartbeat
   // -------------------------
@@ -218,6 +220,7 @@ export function useWebSocket(url) {
 
     socket.onclose = () => {
       stopHeartbeat();
+      deviations.value = {};
       status.value = 'DISCONNECTED';
     }
   }
@@ -368,6 +371,7 @@ export function useWebSocket(url) {
             [key]: { ...existing, state: 'Disconnected' },
           }
         }
+        delete deviations.value[key];
         // if the disconnected camera is the one selected, clear the feed
         // active camera is js object and uses connId not conn_id
         if (activeCamera.value?.connId === conn_id && activeCamera.value?.cameraId === camera_id) {
@@ -383,6 +387,7 @@ export function useWebSocket(url) {
           const updated = { ...cameras.value };
           delete updated[key];
           cameras.value = updated;
+          delete deviations.value[key];
           if (activeCamera.value?.connId === conn_id && activeCamera.value?.cameraId === camera_id) {
             clearActiveFeed();
           }
@@ -394,8 +399,11 @@ export function useWebSocket(url) {
         controlConfig.value = { ...data, configuration: parseConfigurationPayload(data?.configuration) };
         break;
       // GUI Image Analysis (reading the deviation)
+      // The ImageAnalysis struct sends conn_id: String, camera_id: CameraId and pub deviation: Deviation
+
       case 'ImageAnalysis':
-        analysis.value = data;
+        const { conn_id, camera_id, deviation } = data;
+        deviations.value[`${conn_id},${camera_id}`] = deviation;
         break;
       // Pong message from the server
       case 'Pong':
@@ -427,7 +435,6 @@ export function useWebSocket(url) {
     }
     imageSrc.value = '';
     activeCamera.value = null;
-    analysis.value = null;
   }
 
   // -----------------------------------------
@@ -600,7 +607,7 @@ export function useWebSocket(url) {
     cameras,
     cameraList,
     imageSrc,
-    analysis,
+    deviations,
     controlConfig,
     activeCamera,
     defaultThresholds,

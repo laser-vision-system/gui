@@ -38,8 +38,8 @@ const range = computed(() => {
   let min = Number.isFinite(base.min) ? base.min : 90;
   let max = Number.isFinite(base.max) ? base.max : 110;
   // adds padding to deviation bar if the global min max values are cutting of the thresholds
-  if (props.alertBelow < min) min = props.alertBelow - RANGE_PADDING;
-  if (props.alertAbove > max) max = props.alertAbove + RANGE_PADDING;
+  if (props.alertBelow <= min) min = props.alertBelow - RANGE_PADDING;
+  if (props.alertAbove >= max) max = props.alertAbove + RANGE_PADDING;
   if(max <= min) max = min + 1;
 
   return { min, max };
