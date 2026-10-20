@@ -5,6 +5,8 @@ import { isBlank, checkBlank, isEmpty } from '../utils/helpers'
 // -------------------------
 //   Toggle section
 // -------------------------
+// This section imports the icons and declares the ref values used in the
+// toggle sections feature of the device settings view.
 
 // Toggle Icons
 import arrowUp from '../assets/images/arrow-up.svg'
@@ -27,24 +29,20 @@ const isCameraFeed = ref(true);
 // Components which have been imported for code reuse
 // Camera Feed Component: For displaying the Image feed of the selected camera
 import CameraFeed from '../components/CameraFeed.vue'
-// Hint Popup: to show message descriptions from
+// Hint Popup: to show descriptions of the more complicated sections in the device settings page.
 import Hints from '../components/HintPopup.vue'
-
-// -----------------------------
-//   Global Camera toggle
-// -----------------------------
-import { usePersistentGlobalData } from '../composables/usePersistentGlobalData';
-const { globalCameraFeedBoolean } = usePersistentGlobalData();
 
 // -----------------------------
 //   Config Shortcut
 // -----------------------------
+// This section is for the importing of the short cut feature for devices on the homepage view to the device settings view
 import { useSharedDeviceData } from '../composables/useSharedDeviceData';
 const { sharedMicroComputer, sharedCamera } = useSharedDeviceData();
 
 // -----------------------------
 //   Multi Thumb range slider
 // -----------------------------
+// This section imports the components and composables for the multi thumb range slider
 import MultiThumbSlider from '../components/MultiThumbRangeSlider.vue';
 // persistent data for the deviation threshold range
 import {usePersistentSliderRange} from '../composables/usePersistentSliderRange';
@@ -63,6 +61,7 @@ const newAlertAbove = ref(null);
 // -----------------------------
 //   Confirmation pop up window
 // -----------------------------
+// This section imports and defines the references for the confirmation window / box
 import ConfirmationBox from '../components/ConfirmationBox.vue';
 // Show Booleans
 const showRenameMicroCompConfirm = ref(false);
@@ -78,7 +77,7 @@ const showSetThresholdRange = ref(false);
 // --------------------
 //   WebSocket
 // --------------------
-// Functions and values from the GUI's WebSocket
+// Functions and values imported and defined from the GUI's WebSocket composable
 import { useWebSocket } from '../composables/useWebSocket';
 const {
   // state
@@ -104,14 +103,12 @@ const isLive = computed(() => status.value === 'CONNECTED');
 // --------------------
 //     Sample Data
 // --------------------
-// mirrors the output of listcameras in websocket
+// mirrors the output of list cameras in websocket
 import sampleCameraList from '../assets/data/sampleCameraList.json';
 // mirrors the Configuration or control config value from websocket
 import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.json';
 // list of micro computers
 import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json';
-
-
 
 // -------------------------
 //     Selected values
@@ -125,9 +122,9 @@ const selectedConfig = ref(null); // matches choice from camera list using the c
 //     Rename Values
 // -------------------------
 
-// MicroComputer Configurables Rename
+// MicroComputer config rename
 const newMicroComputerName = ref(null);
-// MicroComputer Configurables Select vision processing
+// MicroComputer config select vision processing
 const newVisionProcessing = ref(null);
 // Camera Configuration Rename
 const newCameraName = ref(null); // needs validation
@@ -137,6 +134,7 @@ const newCameraName = ref(null); // needs validation
 // -------------------------
 // Each control will have its own reactive entry with respect to the selected camera's controls
 // Controls are keyed by their control name
+// All controls are dynamic and use Vue's template v-for to display to the browser screen
 const controls = reactive({});
 // dynamic boolean
 const hasControls = computed(() => Object.keys(controls).length > 0);
@@ -160,8 +158,8 @@ const NICER_LABELS = {
 // e.g. AutoExposer when set to auto blocks ExposureAbsolute
 // This is based on the UVC convention
 const CONTROL_DEPENDENCIES = {
-  ExposureAbsolute: (c) => !c.AutoExposure || c.AutoExposure.value === 1,
-  WhiteBalance: (c) => !c.AutoWhiteBalance || c.AutoWhiteBalance.value === false,
+  ExposureAbsolute: (cam) => !cam.AutoExposure || cam.AutoExposure.value === 1,
+  WhiteBalance: (cam) => !cam.AutoWhiteBalance || cam.AutoWhiteBalance.value === false,
 };
 
 // function to check if the controls should be blocked or not by other control settings
@@ -171,7 +169,6 @@ function isControlEnabled(name) {
 }
 
 // -----ARROW FUNCTIONS-----
-
 // returns the first known index of a value given its name
 // It is used by the byControlOrder sorting list to insure the controls listed in CONTROL_ORDER are shown first.
 const orderOfControl = (name) => {
@@ -204,6 +201,8 @@ function parseControl(name, entry) {
   };
 
   // handler for different control types
+  // this switch statement returns the contents defined above in addition to any control type specific form features
+  // e.g. min max and step for a IntegerRange vs a items for Menu
   switch (controlType) {
     case 'IntegerRange':
       return {
@@ -230,6 +229,8 @@ function parseControl(name, entry) {
 // -------------------------
 //   Feedback Messages
 // -------------------------
+// This is for the feature of the device settings page which provides the confirmation successful submission of data
+// NOTE: This does not indicate that the setting was successfully updated on the server and edge side of the full stack
 const feedback = reactive({
   microComputerName: null,
   visionProcessing: null,
@@ -238,10 +239,13 @@ const feedback = reactive({
   thresholds: null,
   thresholdsRange: null,
 });
-
-const FEEDBACK_DURATION = 4000; // in ms
+// This is the duration for the amount of time the feedback message is displayed to the user
+const FEEDBACK_DURATION = 3000; // in ms
+// Each feedback message has its own timer so there is no confusion when which message is to close
 const feedbackTimers = {};
-
+// shows the feedback message by pushing the message and its timer to their respective arrays
+// Then when the time is up it sets the message to null the garbage collector takes care of the rest
+// This is keyed by the section element defined in the reactive variable
 function showFeedback(section, ok, message) {
   clearTimeout(feedbackTimers[section]);
   feedback[section] = { ok, message };
