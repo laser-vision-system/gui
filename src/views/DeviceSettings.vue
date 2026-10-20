@@ -84,7 +84,7 @@ const {
   status,
   // data
   // some data is renamed so no confusion between sample data and live data.
-  edgeList: wsEdgeList, cameraList: wsCameraList,
+  edgeList: wsEdgeList, settingsCameraList: wsCameraList,
   imageSrc, controlConfig, defaultThresholds, visionProcessingTechniques,
   // connection function
   connect,
@@ -304,7 +304,7 @@ const deviationSliderRangeErrors = ref([]);
 const cameraControlErrors = ref([]);
 const cameraNameErrors = ref([]);
 const microComputerNameErrors = ref([]);
-// global constants
+// component scoped constants
 const THRESHOLD_MIN = 0;
 const THRESHOLD_MAX = 200;
 

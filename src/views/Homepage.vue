@@ -32,7 +32,6 @@ const {
   disconnectedEdgeList: wsDisconnectedEdgeList,
   cameraList: wsCameraList,
   imageSrc,
-  analysis,
   connect,
   // functions
   setpoint,
@@ -50,7 +49,6 @@ const isLive = computed(() => status.value === 'CONNECTED')
 //     Sample Data
 // --------------------
 import sampleCameraList from '../assets/data/sampleCameraList.json'
-import sampleImageAnalysis from '../assets/data/sampleImageAnalysis.json'
 import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json'
 import sampleDisconnectedEdgeList from '../assets/data/sampleDisconnectedEdgeList.json'
 // uncomment for deployment :)
@@ -159,41 +157,25 @@ const loadCameraList = computed(() => {
     const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : sampleCameraList.cameras // WILL CHANGE TO NULL
     return source
 })
-// grab image analysis from websocket or sample data
-const loadImageAnalysis = computed(() => {
-    const source = isLive.value && analysis.value !== null > 0 ? analysis.value : null
-    return source
-})
 // merge camera list with microcomputer, image analysis & selection details
 const mergedCameraData = computed(() => {
-    if (!loadActiveEdgesList.value && !loadCameraList.value) { // catches undefined (empty values)
+    if (!loadActiveEdgesList.value || !loadCameraList.value) { // catches undefined (empty values)
         return []
     }
-    else {
-        const result = []
 
-        for (const camera of loadCameraList.value) {
-            let matchingData = ref(null)
-            if (loadImageAnalysis.value !== null) {
-                if (loadImageAnalysis.value.conn_id === camera.conn_id && loadImageAnalysis.value.camera_id === camera.camera_id) {
-                    matchingData = loadImageAnalysis.value
-                }
-            }
-            const matchingComData = loadActiveEdgesList.value.find(
-                connection => connection.conn_id === camera.conn_id
-            )
-
-            result.push({
-                ...camera,
-                intensity: matchingData ? matchingData.intensity : 0,
-                deviation: matchingData && !isNaN(Number(matchingData.deviation)) ? Number(matchingData.deviation) : '--',
-                microComName: matchingComData ? matchingComData.name : null,
-                microComState: matchingComData ? matchingComData.state : null,
-                isSelected: selectedCameraId.value === `${camera.conn_id}-${camera.camera_id}`
-            })
+    return loadCameraList.value.map(camera => {
+        const matchingEdgeData = loadActiveEdgesList.value.find(
+          connection => connection.conn_id === camera.conn_id)
+        const hasDeviation = camera.deviation !== null
+        && camera.deviation !== undefined && !isNaN(Number(camera.deviation))
+        return {
+        ...camera,
+        deviation: hasDeviation ? Number(camera.deviation) : '--',
+        microComName: matchingEdgeData ? matchingEdgeData.name : null,
+        microComState: matchingEdgeData ? matchingEdgeData.state : null,
+        isSelected: selectedCameraId.value === `${camera.conn_id}-${camera.camera_id}`
         }
-        return result
-    }
+    })
 })
 // group by microcomputer & for active cameras
 const activeMergedData = computed(() => {
@@ -256,8 +238,8 @@ const updateSetpoint = () => {
     if (!selectedCameraId.value || !selectedCameraInfo.value) return
 
     const [conn_id, camera_id] = selectedCameraId.value.split('-')
-    const targetSetpoint = selectedCameraInfo.value.intensity
-    cameraSetpoints.value[selectedCameraId.value] = targetSetpoint
+    // const targetSetpoint = selectedCameraInfo.value.intensity
+  cameraSetpoints.value[selectedCameraId.value] = true;
     setpoint(conn_id, camera_id)
 
     /*try {
@@ -346,6 +328,7 @@ onUnmounted(() => {
 </script>
 <template>
     <div class="container">
+    <!-- ALERTS -->
         <div class="row mt-2 mb-4">
                 <h3 class="cam-title">Alerts:
                     <button class="btn submit-btn" @click="toggleAlerts">
@@ -371,6 +354,7 @@ onUnmounted(() => {
                     </div>
                 </div>
         </div>
+        <!-- Device / Disconnected List -->
         <div class="row mx-0 mt-2 mb-4 align-items-start">
             <ul class="nav nav-tabs custom-tabs border-bottom-0">
                 <li class="nav-item">
@@ -402,7 +386,7 @@ onUnmounted(() => {
                                             <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
                                                 <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
                                                     <h5 class="card-title">{{ cam.name }}</h5>
-                                                        <p v-if="Number(cam.deviation)" class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
+                                                        <p v-if="Number(cam.deviation)" class="card-text">{{ Math.round(cam.deviation * 100) }}%</p>
                                                         <p v-else class="card-text">{{ cam.deviation }}</p>
                                                 </div>
                                             </div>
@@ -424,7 +408,7 @@ onUnmounted(() => {
                                             <p><strong>ID:</strong> {{ selectedCameraInfo.camera_id }}</p>
                                             <p><strong>Name:</strong> {{ selectedCameraInfo.name }}</p>
                                             <!-- <p><strong>Intensity:</strong> {{ selectedCameraInfo.intensity }}</p> -->
-                                            <p v-if="Number(selectedCameraId.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) + '%' }}</p>
+                                            <p v-if="Number(selectedCameraId.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) }}%</p>
                                             <p v-else><strong>Deviation:</strong> --</p>
                                             <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
                                             <table class="table border border-2 hardware-info">
