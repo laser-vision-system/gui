@@ -304,7 +304,7 @@ const deviationSliderRangeErrors = ref([]);
 const cameraControlErrors = ref([]);
 const cameraNameErrors = ref([]);
 const microComputerNameErrors = ref([]);
-// global constants
+// component scoped constants
 const THRESHOLD_MIN = 0;
 const THRESHOLD_MAX = 200;
 
