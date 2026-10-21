@@ -35,7 +35,9 @@ const saveState = ref('');
 // Data from server
 const serverSettingsData = ref(null);
 
-// User input data
+// setting data reactive java object
+// this data contains the value and html input values e.g(min max step) as well as the name and default values
+// for the default server settings
 const serverSettings = reactive({
   websocket_poll_interval: {
     value: null,
@@ -79,7 +81,7 @@ const serverSettings = reactive({
   },
 });
 
-// Validation
+// Validation Errors
 const validationServerDefaultsErrors = ref([]);
 
 // --------------------------
@@ -246,6 +248,7 @@ onMounted(() => {
                 GUI Settings
             </h2>
             <div v-if="isGUI">
+                <!-- THEME -->
                 <h3 class="config-subtitle">Theme</h3>
                 <div class="col-12 text-center py-2">
                     <h5 class="config-label" v-if="theme === 'dark'">Dark Mode</h5>
@@ -255,6 +258,7 @@ onMounted(() => {
                         <span class="slider round"></span>
                     </label>
                 </div>
+                <!-- CAMERA FEED TOGGLE -->
                 <h3 class="config-subtitle pt-4">Camera Feed</h3>
                 <div class="col-12 text-center py-2">
                     <h5 class="config-label" v-if="globalCameraFeedBoolean">Camera Feed: ON</h5>

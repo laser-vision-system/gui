@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, computed, reactive } from 'vue';
 import { isBlank, checkBlank, isEmpty } from '../utils/helpers'
+import {sanitise} from '../utils/sanitiser';
 
 // -------------------------
 //   Toggle section
@@ -169,6 +170,8 @@ function isControlEnabled(name) {
 }
 
 // -----ARROW FUNCTIONS-----
+// arrow functions are a short hand way of writing functions in Java Script
+
 // returns the first known index of a value given its name
 // It is used by the byControlOrder sorting list to insure the controls listed in CONTROL_ORDER are shown first.
 const orderOfControl = (name) => {
@@ -302,24 +305,22 @@ const activeCameras = computed(() => {
 const deviationErrors = ref([]);
 const deviationSliderRangeErrors = ref([]);
 const cameraControlErrors = ref([]);
-const cameraNameErrors = ref([]);
-const microComputerNameErrors = ref([]);
-// component scoped constants
+// component scoped constants for the absolute range of the deviation sliders
 const THRESHOLD_MIN = 0;
 const THRESHOLD_MAX = 200;
 
-// Camera Controls
+// Validation for Camera Controls
 function validateCameraControl(name, control) {
   // validation for control type IntegerRange
   if (control.controlType === 'IntegerRange') {
     // a blank value falls back to the current value on save
     if (isBlank(control.value)) return true;
-
+    // Checks if the control value is a whole number
     if (!Number.isInteger(control.value)) {
       cameraControlErrors.value.push(`Warning: ${control.label} must be a whole number`);
       return false;
     }
-
+    // Checks if the controls value is in the bounds of the controls range
     if (control.value < control.min) {
       cameraControlErrors.value.push(`Warning: ${control.label} at ${control.value}, is under the minimum value of ${control.min}`);
       return false;
@@ -330,13 +331,13 @@ function validateCameraControl(name, control) {
     }
   }
 
-  // validate control type Menu
+  // validates control type Menu checks if the selected menu option is valid
   if (control.controlType === 'Menu' && !control.items.some((item) => item.id === control.value)) {
     cameraControlErrors.value.push(`Warning: Invalid option has been selected ${control.label}.`);
     return false;
   }
 
-  // validate control type Boolean
+  // validates control type Boolean, to check that a boolean has been sent
   if (control.controlType === 'Boolean' && typeof control.value !== 'boolean') {
     cameraControlErrors.value.push(`Warning: ${control.label} must be true or false`);
     return false;
@@ -348,6 +349,7 @@ function validateCameraControl(name, control) {
 
 // loops through all camera controls and validates them
 function validateAllCameraControls() {
+  // clears the previous errors before a new validation cycle
   cameraControlErrors.value = [];
   if (!selectedConfig.value) return false;
 
@@ -361,10 +363,10 @@ function validateAllCameraControls() {
 
 // Validate deviation Thresholds:
 function validateDeviation() {
-  // reset variables both global and local
+  // reset variables both global and local before a new validation cycle
   let result = true;
   deviationErrors.value = [];
-
+// checks that deviation is a JS Number
   if (!Number.isFinite(newAlertBelow.value) || !Number) {
     deviationErrors.value.push(`Warning: Alert Below must be a percentage and not ${newAlertBelow.value}`);
     result = false;
@@ -381,7 +383,7 @@ function validateDeviation() {
     deviationErrors.value.push(`Warning: Alert Above must be a percentage and not ${newAlertAbove.value}`);
     result = false;
   }
-
+// Checks for the deviations being in the correct range
   if (newAlertBelow.value < THRESHOLD_MIN) { // Alert Below Validation
     deviationErrors.value.push(`Warning: Alert Below threshold of ${newAlertBelow.value}% is under the allowed limit of ${THRESHOLD_MIN}%`);
     result = false;
@@ -440,20 +442,25 @@ function validateThresholdRange() {
   return result;
 }
 
-// Validate MicroComputer name
-function validateMicroComputerName() {
+// sanities against html and java script injection attacks
 
+// Validate MicroComputer name
+function validateAndRenameMicroComputerName() {
+  newMicroComputerName.value = sanitise(newMicroComputerName.value);
+  renameMicroComputer();
 }
 
 // Validate Camera name
-function validateCameraName() {
-
+function validateAndRenameCameraName() {
+  newCameraName.value = sanitise(newCameraName.value);
+  renameCamera();
 }
 
 // ---------------------------
 //    Validated Save Methods
 // ---------------------------
 // request functions for the validation before save / sending.
+// As a result the confirmation message is not loaded when an error occurs which saves some compute and time
 function requestSetSliderRange() {
   if (validateThresholdRange()) showSetThresholdRange.value = true;
 }
@@ -476,7 +483,6 @@ function saveConfirmThresholdRange() {
   }
 }
 
-
 // ---------------------------
 //    Selected Device Methods
 // ---------------------------
@@ -484,6 +490,7 @@ function saveConfirmThresholdRange() {
 // such as submitting and helper functions
 
 // returns the name of the micro computer a camera belongs to
+// this is used to show the name of the edge the camera is connected to event when the edge is not selected
 function getEdgeName(connId) {
   return activeMicroComputers.value.find((com) => com.conn_id === connId)?.name ?? connId;
 }
@@ -686,7 +693,9 @@ function resetAllThresholds() {
 
 // save thresholds
 async function saveThresholds() {
+  // if value is null or empty
   if (!selectedCamera.value) return;
+  // set the threshold values to decimal
   const alertBelow = newAlertBelow.value / 100;
   const warningBelow = newWarnBelow.value / 100;
   const warningAbove = newWarnAbove.value / 100;
@@ -714,8 +723,9 @@ async function saveThresholds() {
 
 // set global default threshold on server
 async function setServerDefaultThreshold() {
+  // if value is null or empty
   if (!selectedCamera.value) return
-
+  // set the threshold values to decimal
   const alertBelow = newAlertBelow.value / 100;
   const warningBelow = newWarnBelow.value / 100;
   const warningAbove = newWarnAbove.value / 100;
@@ -734,6 +744,8 @@ async function setServerDefaultThreshold() {
 // --------------------
 //    Shared Config
 // --------------------
+// This section has the functions and values for the shared edge devices for the auto load feature
+// when the configure button is clicked on the homepage
 // state
 let sharedDataApplied = false;
 
@@ -761,15 +773,17 @@ function applySharedData() {
 // --------------------
 //        Watchers
 // --------------------
+// watcher is a vue method which watches a data property with the same name
+// watchers are only run once the value of the data property changes
 
 // watch the selected camera to load it's values when it changes
+// so when a new camera is selected its values are loaded in
 watch(selectedCamera, (cam, oldCam) => {
-
+  // reset / clear  errors and the config values
   selectedConfig.value = null;
   cameraControlErrors.value = [];
   deviationErrors.value = [];
-  cameraNameErrors.value = [];
-  microComputerNameErrors.value = [];
+  // if there is no camera selected
   if (!cam) {
     if (isLive.value && oldCam) {
       stopViewingCamera(oldCam.conn_id, oldCam.camera_id)
@@ -777,7 +791,8 @@ watch(selectedCamera, (cam, oldCam) => {
     loadCameraValues()
     return
   }
-  // load camera list values
+
+  // load camera name and thresholds values
   newCameraName.value = cam.name
   newAlertBelow.value = cam.alert_below_threshold * 100;
   newWarnBelow.value = cam.warn_below_threshold * 100;
@@ -785,9 +800,11 @@ watch(selectedCamera, (cam, oldCam) => {
   newAlertAbove.value = cam.alert_above_threshold * 100;
 
   if (isLive.value) {
+    // request to view the camera feed
     viewCamera(cam.conn_id, cam.camera_id)
+    // request to view the camera control values
     viewCameraConfig(cam.conn_id, cam.camera_id)
-    // selectedConfig gets filled in by the controlConfig watcher below once the server replies
+    // the selectedConfig gets filled in by the controlConfig watcher below once the server replies
   } else  {
     selectedConfig.value = findConfig(cam.conn_id, cam.camera_id)
     loadCameraValues()
@@ -806,17 +823,19 @@ watch(controlConfig, (config) => {
 
 // watch the camera list to keep track of the connected and disconnected cameras to keep the camera feed fresh
 watch(wsCameraList, () => {
-  if (!isLive.value || !selectedCamera.value) return
+  if (!isLive.value || !selectedCamera.value) return;
 
   const freshCam = wsCameraList.value.find(
     (cam) => cam.conn_id === selectedCamera.value.conn_id
       && cam.camera_id === selectedCamera.value.camera_id
   )
+  // set the value of a new camera to blank if there is an error or it is not in an active state
   if (!freshCam || freshCam.state !== 'Active') {
-    selectedCamera.value = ''
-    return
+    selectedCamera.value = '';
+    return;
   }
-  Object.assign(selectedCamera.value, freshCam)
+
+  Object.assign(selectedCamera.value, freshCam);
 })
 
 
@@ -827,7 +846,7 @@ watch(wsEdgeList, () => {
   const current = selectedMicroComputer.value;
   if (!current || current === 'all') return;
   const fresh = wsEdgeList.value.find((com) => com.conn_id === current.conn_id);
-  selectedMicroComputer.value = fresh ?? ''
+  selectedMicroComputer.value = fresh ?? '';
 })
 
 watch(selectedMicroComputer, () => {
@@ -849,8 +868,6 @@ watch([isLive, wsEdgeList, wsCameraList], () => {
   applySharedData();
   newMicroComputerName.value = selectedMicroComputer.value.name;
 }, { immediate: true });
-
-
 
 // -------------------------------
 //        onMount
@@ -889,6 +906,7 @@ onMounted(() => {
                                     @click="isRenameMicroComputerSection = !isRenameMicroComputerSection">
                                     Select µ-Computer
                                 </label>
+                                <!-- SELECT micro-CAMERA -->
                                 <div class="form-element">
                                     <select class="menu-input" id="microCompSelect" v-model="selectedMicroComputer">
                                         <option value="" disabled selected>Please select a µ-computer</option>
@@ -898,7 +916,7 @@ onMounted(() => {
                                         </option>
                                     </select>
                                 </div>
-
+                                <!-- RENAME MICRO COMPUTER -->
                                 <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all' && isRenameMicroComputerSection">
                                     <label for="rename" class="config-label">Rename µ-Computer</label>
                                     <div class="form-element">
@@ -907,12 +925,14 @@ onMounted(() => {
                                         <ConfirmationBox
                                             v-model="showRenameMicroCompConfirm"
                                             :message="'Rename the selected micro-computer to ' + newMicroComputerName + '?'"
-                                            :onConfirmFunction="renameMicroComputer"/>
+                                            :onConfirmFunction="validateAndRenameMicroComputerName"/>
                                     </div>
                                 </div>
                                 <p v-if="feedback.microComputerName"
                                    :class="feedback.microComputerName.ok ? 'success' : 'error'"
                                    role="status"> {{ feedback.microComputerName.message }}</p>
+
+                                <!-- SELECT VISION PROCESSING -->
                                 <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all' && isRenameMicroComputerSection">
                                     <label for="vision-process" class="config-label">Select Vision Processing Method</label>
                                     <div class="form-element">
@@ -968,7 +988,7 @@ onMounted(() => {
                                     <ConfirmationBox
                                     v-model="showRenameCameraConfirm"
                                     :message="'Rename the selected camera to ' + newCameraName + '?'"
-                                    :onConfirmFunction="renameCamera"/>
+                                    :onConfirmFunction="validateAndRenameCameraName"/>
                                 </div>
                             </div>
                             <p v-if="feedback.camera"
