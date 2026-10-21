@@ -467,42 +467,62 @@ onUnmounted(() => {
                     </div>
                 </div>
                 <div v-if="activeTab === 'disconns'" class="tab-pane active">
-                    <div class="col-lg-4 col-12 mt-lg-5 pe-0 text-center">
-                        <table class="table border border-2 hardware-info">
-                            <tbody>
-                                <tr>
-                                    <th scope="col" class="table-dark">Disconnected microComputers</th>
-                                </tr>
-                                <tr v-for="com in disconnectedMicroComs" :key="com.conn_id">
-                                    <td>{{ com.name }}
-                                        <div class="button-group">
-                                            <button class="btn submit-btn" @click="forgetEdgeBtn(com.conn_id)">Forget</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th scope="col" class="table-dark">Disconnected Cameras</th>
-                                </tr>
-                                <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
-                                    <td v-if="cam.state === 'Disconnected'">{{ cam.name }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <table class="table border border-2 hardware-info">
-                            <tbody>
-                                <tr>
-                                    <th scope="col" class="table-dark">Broken Cameras</th>
-                                </tr>
-                                <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
-                                    <td v-if="cam.state === 'Broken'">{{ cam.name }}
-                                        <div class="button-group">
-                                            <button class="btn submit-btn" @click="forceRetryCameraBtn(cam.conn_id, cam.camera_id)">Force Retry</button>
-                                            <button class="btn submit-btn" @click="forgetCameraBtn(cam.conn_id, cam.camera_id)">Forget</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="container mt-4 text-center">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <table class="table border border-2 hardware-info">
+                                    <tbody>
+                                        <tr>
+                                            <th scope="col" class="table-dark">Disconnected µ-Computers</th>
+                                        </tr>
+                                        <tr v-for="com in disconnectedMicroComs" :key="com.conn_id">
+                                            <td>{{ com.name }}
+                                                <div class="button-group">
+                                                    <button class="btn submit-btn" @click="forgetEdgeBtn(com.conn_id)">Forget</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-4">
+                                <table class="table border border-2 hardware-info">
+                                    <tbody>
+                                        <tr>
+                                            <th scope="col" class="table-dark">Disconnected Cameras</th>
+                                        </tr>
+                                        <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
+                                            <td v-if="cam.state === 'Disconnected'">{{ cam.name }}
+                                                <div class="button-group">
+                                                    <button class="btn submit-btn" @click="forgetCameraBtn(cam.conn_id, cam.camera_id)">Forget</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-4">
+                                <table class="table border border-2 hardware-info">
+                                    <tbody>
+                                        <tr>
+                                            <th scope="col" class="table-dark">Broken Cameras</th>
+                                        </tr>
+                                        <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
+                                            <td v-if="cam.state === 'Broken'">{{ cam.name }}
+                                                <div class="row mb-1 button-group">
+                                                    <div class="col-auto">
+                                                        <button class="btn submit-btn" @click="forceRetryCameraBtn(cam.conn_id, cam.camera_id)">Force Retry</button>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <button class="btn submit-btn" @click="forgetCameraBtn(cam.conn_id, cam.camera_id)">Forget</button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
