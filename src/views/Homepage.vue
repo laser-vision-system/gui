@@ -411,30 +411,28 @@ onUnmounted(() => {
                                             <p v-if="Number(selectedCameraId.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) }}%</p>
                                             <p v-else><strong>Deviation:</strong> --</p>
                                             <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
-                                            <table class="table border border-2 hardware-info">
-                                                <tbody>
-                                                    <tr>
-                                                        <th class="bg-danger text-white">Alert below:</th>
-                                                        <td>{{ Math.round(selectedCameraInfo.alert_below_threshold * 100) + '%' }}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th class="bg-warning text-dark">Warn below:</th>
-                                                        <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100) + '%' }}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th class="bg-success text-white">No alert:</th>
-                                                        <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100)}}-{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th class="bg-warning text-dark">Warn above:</th>
-                                                        <td>{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th class="bg-danger text-white">Alert above:</th>
-                                                        <td>{{ Math.round(selectedCameraInfo.alert_above_threshold * 100) + '%' }}</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered border-2 text-center hardware-info table-squash">
+                                                    <thead>
+                                                        <tr>
+                                                            <th><span class="badge bg-danger">Alert below:</span></th>
+                                                            <th><span class="badge bg-warning text-dark">Warn below:</span></th>
+                                                            <th><span class="badge bg-success">No alert:</span></th>
+                                                            <th><span class="badge bg-warning text-dark">Warn above:</span></th>
+                                                            <th><span class="badge bg-danger">Alert above:</span></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>{{ Math.round(selectedCameraInfo.alert_below_threshold * 100) }}%</td>
+                                                            <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100) }}%</td>
+                                                            <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100)}}-{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) }}%</td>
+                                                            <td>{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) }}%</td>
+                                                            <td>{{ Math.round(selectedCameraInfo.alert_above_threshold * 100) }}%</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                             <div class="col-12 deviation-wrapper text-center">
                                                 <h4>Deviation Scale</h4>
                                                 <!-- Deviation Bar -->
@@ -541,9 +539,11 @@ onUnmounted(() => {
     font-size: calc(1.3rem + .6vw);
     font-weight: 500;
 }
+
 .custom-tabs .nav-link:hover {
     color: var(--button-hover);
 }
+
 .custom-tabs .nav-link.active {
     color: var(--nav-title);
     background-color: var(--bs-body-bg);
@@ -552,6 +552,7 @@ onUnmounted(() => {
     position: relative;
     z-index: 2;
 }
+
 .camera-tab {
     min-height: 80px;
     overflow-y: auto;
@@ -572,7 +573,6 @@ onUnmounted(() => {
     color: var(--camera-tab-text);
 }
 
-
 .cam-info {
     border: 0.5rem solid var(--nav-bg);
     border-radius: 1rem;
@@ -581,8 +581,14 @@ onUnmounted(() => {
     color: var(--nav-title);
 }
 
-.highlight-row {
-    box-shadow: inset 0 0 0 2px #ffeeba;
+/* target mobile screens */
+@media (max-width: 768px) {
+  .table-squash th,
+  .table-squash td {
+    padding: 0.2rem 0.3rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
 }
 
 .hardware-info {
@@ -610,7 +616,7 @@ onUnmounted(() => {
     color: var(--nav-title);
 }
 
-.deviation-wrapper{
+.deviation-wrapper {
     padding: 1rem;
 }
 

@@ -26,6 +26,7 @@
 :root .table {
     --bs-table-color: black;
     --bs-table-border-color: #333333;
+    --bs-table-bg: #e0e7f1;
 }
 
 
@@ -57,6 +58,7 @@
 :root.dark .table {
     --bs-table-color: white;
     --bs-table-border-color: #718096;
+    --bs-table-bg: #8D99AE;
 }
 
 .navTitle {
