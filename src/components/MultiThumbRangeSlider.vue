@@ -1,3 +1,10 @@
+<!-- The multi thumb range slider aims to provide the user with an easy to understand and use it includes:
+      - Hint popups for the threshold values
+      - coloured coded dynamic track red for alert, amber for warning and green for safe
+      - Dynamic scale based off the desired range (min - max)
+      - custom validation for the number inputs
+      - hard coded watchers to create boundaries
+-->
 <script setup>
 import { ref, computed, watch } from "vue";
 // Hint Popup: to show message descriptions from

@@ -1,4 +1,4 @@
-// this util purposed are
+// This util purposes are
 //
 //  1. Validate and clean the input on the way in
 //  2. Encode the out put

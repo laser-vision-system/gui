@@ -1,3 +1,5 @@
+// this composable is for the configuration short cut function of the web app
+// it allows for the transfer of device IDs
 import { ref } from 'vue';
 
 // shared singleton at the module level

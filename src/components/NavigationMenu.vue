@@ -1,3 +1,4 @@
+<!-- Implements the vue router, which allows us to change between views  -->
 <script setup>
 import cameraActive from '../assets/images/camera-active.svg'
 import cameraInactive from '../assets/images/camera-inactive.svg'

@@ -1,3 +1,6 @@
+<!-- This is the camera feed component which provides an easy way to implement the camera feed
+    through out the entire application, and provides basic code reuse
+-->
 <script setup>
 // import the global variable for camera feed toggle from local storage
 import { usePersistentGlobalData } from '../composables/usePersistentGlobalData';

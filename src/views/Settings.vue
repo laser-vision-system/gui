@@ -1,4 +1,9 @@
 <script setup>
+// This view is for the global settings of the gui such as the theme and global camera toggle
+// This view is connected to the server via the RESTful method
+// Key features include:
+//  - Confirmation pop up and feedback for default server settings
+//  - Default server settings validation
 import { ref, reactive, onMounted } from 'vue';
 // composables
 import { useTheme } from '../composables/useTheme';
@@ -38,6 +43,7 @@ const serverSettingsData = ref(null);
 // setting data reactive java object
 // this data contains the value and html input values e.g(min max step) as well as the name and default values
 // for the default server settings
+// All time is in ms
 const serverSettings = reactive({
   websocket_poll_interval: {
     value: null,

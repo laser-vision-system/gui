@@ -1,3 +1,4 @@
+// This composable is for the persistent storage and configuration of the range (min - max) for the deviation range slider
 import { ref } from 'vue';
 
 const DEFAULTS = { min: 80, max: 120 };

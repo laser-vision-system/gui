@@ -1,3 +1,4 @@
+/*This file is for the theme values and global css used across the whole application*/
 :root {
     /* Bootstrap Overrides */
     --bs-body-bg: white;

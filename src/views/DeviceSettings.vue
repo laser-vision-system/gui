@@ -1,4 +1,15 @@
 <script setup>
+// This view is for the display of the device settings for the connected cameras and microComputers
+// this view is connected to the server via a websocket
+// Key features include:
+//  - Dynamically loaded camera controls
+//  - Sections of the view can be toggled
+//  - All inputs are validated
+//  - The text inputs are sanitized
+//  - Confirmation popup and feedback messages
+//  - Hints component for the more complex parts of the settings
+//  - Camera Feed for an instant change in the feed for camera controls
+
 import { ref, onMounted, onUnmounted, watch, computed, reactive } from 'vue';
 import { isBlank, checkBlank, isEmpty } from '../utils/helpers'
 import {sanitise} from '../utils/sanitiser';

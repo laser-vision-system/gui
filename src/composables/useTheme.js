@@ -1,3 +1,5 @@
+// This composable is for toggling and setting the theme of the whole vue app
+
 import { ref, watch, onMounted } from 'vue'
 // By declaring the state at the module level outside of the component
 // Meaning that it is created once and shared across all components
