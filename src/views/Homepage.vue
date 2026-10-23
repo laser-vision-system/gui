@@ -52,7 +52,7 @@ import sampleCameraList from '../assets/data/sampleCameraList.json'
 import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json'
 import sampleDisconnectedEdgeList from '../assets/data/sampleDisconnectedEdgeList.json'
 // uncomment for deployment :)
-// sampleDisconnectedEdgeList.microComputers = null;
+sampleDisconnectedEdgeList.microComputers = null;
 // --------------------
 //      ref Values
 // --------------------
@@ -408,29 +408,23 @@ onUnmounted(() => {
                                             <p><strong>ID:</strong> {{ selectedCameraInfo.camera_id }}</p>
                                             <p><strong>Name:</strong> {{ selectedCameraInfo.name }}</p>
                                             <!-- <p><strong>Intensity:</strong> {{ selectedCameraInfo.intensity }}</p> -->
-                                            <p v-if="Number(selectedCameraId.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) }}%</p>
+                                            <p v-if="Number(selectedCameraInfo.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) }}%</p>
                                             <p v-else><strong>Deviation:</strong> --</p>
-                                            <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
-                                            <table class="table border border-2 hardware-info">
+                                             <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
+                                            <table class="table table-bordered  border border-2 hardware-info text-center">
+                                                <thead>
+                                                    <th class="bg-danger text-white">Alert below:</th>
+                                                    <th class="bg-warning text-dark">Warn below:</th>
+                                                    <th class="bg-success text-white">No alert:</th>
+                                                    <th class="bg-warning text-dark">Warn above:</th>
+                                                    <th class="bg-danger text-white">Alert above:</th>
+                                                </thead>
                                                 <tbody>
-                                                    <tr>
-                                                        <th class="bg-danger text-white">Alert below:</th>
+                                                    <tr class="border border-2 text-center ">
                                                         <td>{{ Math.round(selectedCameraInfo.alert_below_threshold * 100) + '%' }}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th class="bg-warning text-dark">Warn below:</th>
                                                         <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100) + '%' }}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th class="bg-success text-white">No alert:</th>
                                                         <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100)}}-{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th class="bg-warning text-dark">Warn above:</th>
                                                         <td>{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th class="bg-danger text-white">Alert above:</th>
                                                         <td>{{ Math.round(selectedCameraInfo.alert_above_threshold * 100) + '%' }}</td>
                                                     </tr>
                                                 </tbody>
