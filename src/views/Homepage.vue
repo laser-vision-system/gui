@@ -224,7 +224,7 @@ const activeMergedData = computed(() => {
 const selectedCameraInfo = computed(() => {
     if (!selectedCameraId.value) return null
     const [conn_id, camera_id] = selectedCameraId.value.split('-')
-    return activeMergedData.value[conn_id]?.activeCameras.find(c => c.camera_id === camera_id) || null
+    return activeMergedData.value[conn_id]?.activeCameras.find(c => c.camera_id == camera_id) || null
 })
 // checks if a specific camera has a setpoint set
 const isSetpointActive = computed(() => {
@@ -278,7 +278,6 @@ const liveFeedBtn = (connId, cameraId) => {
 // updates ConfirmationBox values for force retry button
 function forceRetryCameraBtn(cameraId, cameraName) {
     selectedCameraId.value = cameraId
-    console.log(cameraId)
     confirmationMessage.value = `Force retry the broken camera: ${cameraName}?`
     showForgetCameraConfirm.value = true
 }
@@ -295,7 +294,6 @@ function handleForceRetryCamera() {
 // updates ConfirmationBox values for forget camera buttons
 function forgetCameraBtn(cameraId, cameraName, camState) {
     selectedCameraId.value = cameraId
-    console.log(cameraId)
 
     if (camState === 'Disconnected') {
         confirmationMessage.value = `Forget the disconnected camera: ${cameraName}?`
@@ -320,7 +318,6 @@ function handleForgetCamera() {
 // updates ConfirmationBox values for forget edge button
 function forgetEdgeBtn(connId, edgeName) {
     selectedEdgeId.value = connId
-    console.log(connId)
     showForgetEdgeConfirm.value = true
     confirmationMessage.value = `Forget the disconnected µ-computer: ${edgeName}?`
 }
