@@ -569,10 +569,19 @@ onUnmounted(() => {
                                 <table class="table border border-2 hardware-info">
                                     <tbody>
                                         <tr>
-                                            <th scope="col" class="table-dark">Broken Cameras</th>
+                                            <th scope="col" class="table-dark">Faulty Cameras</th>
                                         </tr>
                                         <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
+                                            <td v-if="cam.state === 'Limbo'">
+                                                {{ cam.name }}
+                                                <span class="badge bg-secondary ms-1">
+                                                    {{ cam.state }}
+                                                </span>
+                                            </td>
                                             <td v-if="cam.state === 'Broken'">{{ cam.name }}
+                                                <span class="badge bg-secondary ms-1 mb-2">
+                                                    {{ cam.state }}
+                                                </span>
                                                 <div class="row mb-1 button-group">
                                                     <div class="col-auto">
                                                         <button class="btn submit-btn" @click="forceRetryCameraBtn(`${cam.conn_id}-${cam.camera_id}`, cam.name)">Force Retry</button>
