@@ -27,6 +27,7 @@ import ConfirmationBox from '../components/ConfirmationBox.vue'
 // Show Booleans
 const showForgetCameraConfirm = ref(false)
 const showForgetEdgeConfirm = ref(false)
+const showForceRetryCameraConfirm = ref(false)
 const confirmationMessage = ref('')
 
 // --------------------
@@ -274,9 +275,22 @@ const liveFeedBtn = (connId, cameraId) => {
         stopViewingCamera(connId, cameraId)
     }
 }
-// button to send force retry camera command to server
-const forceRetryCameraBtn = (connId, cameraId) => {
-    forceRetryCamera(connId, cameraId)
+// updates ConfirmationBox values for force retry button
+function forceRetryCameraBtn(cameraId, cameraName) {
+    selectedCameraId.value = cameraId
+    console.log(cameraId)
+    confirmationMessage.value = `Force retry the broken camera: ${cameraName}?`
+    showForgetCameraConfirm.value = true
+}
+// sends force retry camera command to server (broken cameras only)
+function handleForceRetryCamera() {
+    if (selectedCameraId.value) {
+        const [conn_id, camera_id] = selectedCameraId.value.split('-')
+        forceRetryCamera(conn_id, camera_id)
+    }
+    // resets states
+    showForceRetryCameraConfirm.value = false
+    selectedCameraId.value = null
 }
 // updates ConfirmationBox values for forget camera buttons
 function forgetCameraBtn(cameraId, cameraName, camState) {
@@ -561,7 +575,11 @@ onUnmounted(() => {
                                             <td v-if="cam.state === 'Broken'">{{ cam.name }}
                                                 <div class="row mb-1 button-group">
                                                     <div class="col-auto">
-                                                        <button class="btn submit-btn" @click="forceRetryCameraBtn(cam.conn_id, cam.camera_id)">Force Retry</button>
+                                                        <button class="btn submit-btn" @click="forceRetryCameraBtn(`${cam.conn_id}-${cam.camera_id}`, cam.name)">Force Retry</button>
+                                                        <ConfirmationBox
+                                                        v-model="showForceRetryCameraConfirm"
+                                                        :message="confirmationMessage"
+                                                        :onConfirmFunction="handleForceRetryCamera"/>
                                                     </div>
                                                     <div class="col-auto">
                                                         <button class="btn submit-btn" @click="forgetCameraBtn(`${cam.conn_id}-${cam.camera_id}`, cam.name, cam.state)">Forget</button>
