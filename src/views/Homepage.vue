@@ -19,6 +19,15 @@ import DeviationBar from '../components/DeviationBar.vue'
 import { usePersistentGlobalData } from '../composables/usePersistentGlobalData'
 const { globalCameraFeedBoolean } = usePersistentGlobalData()
 
+// -----------------------------
+//   Confirmation pop up window
+// -----------------------------
+// This section imports and defines the references for the confirmation window / box
+import ConfirmationBox from '../components/ConfirmationBox.vue'
+// Show Booleans
+const showForgetCameraConfirm = ref(false)
+const confirmationMessage = ref('')
+
 // --------------------
 //   WebSocket
 // --------------------
@@ -127,7 +136,7 @@ const disconnectedCameras = computed(() => {
         let alertMsg = ''
         let alertType = 'info'
 
-        if (disconnection.state == 'Disconnected') {
+        if (disconnection.state === 'Disconnected') {
             alertMsg = `[DISCONNECTION] ${disconnection.name} has disconnected.`
         }
         return {
@@ -212,7 +221,7 @@ const activeMergedData = computed(() => {
 const selectedCameraInfo = computed(() => {
     if (!selectedCameraId.value) return null
     const [conn_id, camera_id] = selectedCameraId.value.split('-')
-    return activeMergedData.value[conn_id]?.activeCameras.find(c => c.camera_id == camera_id) || null
+    return activeMergedData.value[conn_id]?.activeCameras.find(c => c.camera_id === camera_id) || null
 })
 // checks if a specific camera has a setpoint set
 const isSetpointActive = computed(() => {
@@ -268,8 +277,27 @@ const forceRetryCameraBtn = (connId, cameraId) => {
     forceRetryCamera(connId, cameraId)
 }
 // button to send forget camera command to server
-const forgetCameraBtn = (connId, cameraId) => {
-    forgetCameraRequest(connId, cameraId)
+function forgetCameraBtn(cameraId, cameraName, camState) {
+    selectedCameraId.value = cameraId
+    console.log(cameraId)
+
+    if (camState === 'Disconnected') {
+        confirmationMessage.value = `Forget the disconnected camera: ${cameraName}?`
+    } else if (camState === 'Broken') {
+        confirmationMessage.value = `Forget the broken camera: ${cameraName}?`
+    } else {
+        confirmationMessage.value = `Forget the selected camera: ${cameraName}?`
+    }
+
+    showForgetCameraConfirm.value = true
+}
+function handleForgetCamera() {
+    if (selectedCameraId.value) {
+        const [conn_id, camera_id] = selectedCameraId.value.split('-')
+        forgetCameraRequest(conn_id, camera_id)
+    }
+    showForgetCameraConfirm.value = true
+    selectedCameraId.value = null
 }
 // button to send forget edge command to server
 const forgetEdgeBtn = (connId) => {
@@ -492,7 +520,11 @@ onUnmounted(() => {
                                         <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
                                             <td v-if="cam.state === 'Disconnected'">{{ cam.name }}
                                                 <div class="button-group">
-                                                    <button class="btn submit-btn" @click="forgetCameraBtn(cam.conn_id, cam.camera_id)">Forget</button>
+                                                    <button class="btn submit-btn" @click="forgetCameraBtn(`${cam.conn_id}-${cam.camera_id}`, cam.name, cam.state)">Forget</button>
+                                                    <ConfirmationBox
+                                                    v-model="showForgetCameraConfirm"
+                                                    :message="confirmationMessage"
+                                                    :onConfirmFunction="handleForgetCamera"/>
                                                 </div>
                                             </td>
                                         </tr>
@@ -512,7 +544,11 @@ onUnmounted(() => {
                                                         <button class="btn submit-btn" @click="forceRetryCameraBtn(cam.conn_id, cam.camera_id)">Force Retry</button>
                                                     </div>
                                                     <div class="col-auto">
-                                                        <button class="btn submit-btn" @click="forgetCameraBtn(cam.conn_id, cam.camera_id)">Forget</button>
+                                                        <button class="btn submit-btn" @click="forgetCameraBtn(`${cam.conn_id}-${cam.camera_id}`, cam.name, cam.state)">Forget</button>
+                                                        <ConfirmationBox
+                                                        v-model="showForgetCameraConfirm"
+                                                        :message="confirmationMessage"
+                                                        :onConfirmFunction="handleForgetCamera"/>
                                                     </div>
                                                 </div>
                                             </td>
