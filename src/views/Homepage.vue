@@ -26,6 +26,7 @@ const { globalCameraFeedBoolean } = usePersistentGlobalData()
 import ConfirmationBox from '../components/ConfirmationBox.vue'
 // Show Booleans
 const showForgetCameraConfirm = ref(false)
+const showForgetEdgeConfirm = ref(false)
 const confirmationMessage = ref('')
 
 // --------------------
@@ -67,6 +68,7 @@ import sampleDisconnectedEdgeList from '../assets/data/sampleDisconnectedEdgeLis
 // --------------------
 //const setpointState = ref(false)
 const activeTab = ref('conns') // tracks active tab state (defaults to connections tab)
+const selectedEdgeId = ref(null)
 const selectedCameraId = ref(null)
 const cameraSetpoints = ref({})
 const alertsExpanded = ref(true) // alert system variable
@@ -276,7 +278,7 @@ const liveFeedBtn = (connId, cameraId) => {
 const forceRetryCameraBtn = (connId, cameraId) => {
     forceRetryCamera(connId, cameraId)
 }
-// button to send forget camera command to server
+// updates ConfirmationBox values for forget camera buttons
 function forgetCameraBtn(cameraId, cameraName, camState) {
     selectedCameraId.value = cameraId
     console.log(cameraId)
@@ -291,17 +293,31 @@ function forgetCameraBtn(cameraId, cameraName, camState) {
 
     showForgetCameraConfirm.value = true
 }
+// sends forget camera command to server
 function handleForgetCamera() {
     if (selectedCameraId.value) {
         const [conn_id, camera_id] = selectedCameraId.value.split('-')
         forgetCameraRequest(conn_id, camera_id)
     }
-    showForgetCameraConfirm.value = true
+    // resets states
+    showForgetCameraConfirm.value = false
     selectedCameraId.value = null
 }
-// button to send forget edge command to server
-const forgetEdgeBtn = (connId) => {
-    forgetEdge(connId)
+// updates ConfirmationBox values for forget edge button
+function forgetEdgeBtn(connId, edgeName) {
+    selectedEdgeId.value = connId
+    console.log(connId)
+    showForgetEdgeConfirm.value = true
+    confirmationMessage.value = `Forget the disconnected µ-computer: ${edgeName}?`
+}
+// sends forget edge command to server
+function handleForgetEdge() {
+    if (selectedEdgeId.value) {
+        forgetEdge(selectedEdgeId)
+    }
+    // resets states
+    showForgetCameraConfirm.value = false
+    selectedEdgeId.value = null
 }
 // camera card traffic light system
 function getCardColour(cam) {
@@ -504,7 +520,11 @@ onUnmounted(() => {
                                         <tr v-for="com in disconnectedMicroComs" :key="com.conn_id">
                                             <td>{{ com.name }}
                                                 <div class="button-group">
-                                                    <button class="btn submit-btn" @click="forgetEdgeBtn(com.conn_id)">Forget</button>
+                                                    <button class="btn submit-btn" @click="forgetEdgeBtn(com.conn_id, com.name)">Forget</button>
+                                                    <ConfirmationBox
+                                                    v-model="showForgetEdgeConfirm"
+                                                    :message="confirmationMessage"
+                                                    :onConfirmFunction="handleForgetEdge"/>
                                                 </div>
                                             </td>
                                         </tr>
