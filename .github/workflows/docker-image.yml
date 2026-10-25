@@ -52,6 +52,13 @@ jobs:
       - name: configure docker builder
         run: docker buildx create --name container-builder --driver docker-container --bootstrap --use
 
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
@@ -62,5 +69,4 @@ jobs:
           platforms: linux/${{ matrix.arch }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          github-token: ${{secrets.GITHUB_TOKEN}}
           
