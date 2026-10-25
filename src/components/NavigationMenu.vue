@@ -1,3 +1,4 @@
+<!-- Implements the vue router, which allows us to change between views  -->
 <script setup>
 import cameraActive from '../assets/images/camera-active.svg'
 import cameraInactive from '../assets/images/camera-inactive.svg'
@@ -20,7 +21,7 @@ function isRoute(navElement) {
             <div class="col-4 d-flex flex-column align-items-center justify-content-center">
                 <router-link to="/">
                     <img :src="isRoute('/') ? cameraActive : cameraInactive"
-                        alt="Camera Feed Icon" width="64px" height="64px">
+                        alt="Camera Feed Icon" width="64px" height="64px" aria-label="Homepage">
                 </router-link>
                 <span class="navTitle px-3 pt-1" v-if="activeNavElement === 'Camera Feed'">
                     {{ activeNavElement }}
@@ -31,16 +32,16 @@ function isRoute(navElement) {
             <div class="col-4 d-flex flex-column align-items-center justify-content-center">
                 <router-link to="/device-settings">
                     <img :src="isRoute('/device-settings') ? cameraConfigActive : cameraConfigInactive"
-                        alt="Camera Configuration Icon" width="64px" height="64px">
+                        alt="Device setting Icon" width="64px" height="64px" aria-label="Device Settings">
                 </router-link>
                 <span class="navTitle px-3 pt-1" v-if="activeNavElement === 'Camera Config'">
                     {{ activeNavElement }}
                 </span>
             </div>
             <div class="col-4 d-flex flex-column align-items-center justify-content-center">
-                <router-link to="/settings">
-                    <img :src="isRoute('/settings') ? settingsActive : settingsInactive" alt="Settings Icon"
-                        width="64px" height="64px">
+                <router-link to="/global-settings">
+                    <img :src="isRoute('/global-settings') ? settingsActive : settingsInactive" alt="Global Settings Icon"
+                        width="64px" height="64px" aria-label="Global Setting">
                 </router-link>
                 <span class="navTitle px-3" v-if="activeNavElement === 'Settings'">
                     {{ activeNavElement }}

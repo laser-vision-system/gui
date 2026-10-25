@@ -1,6 +1,14 @@
+<!-- The multi thumb range slider aims to provide the user with an easy to understand and use it includes:
+      - Hint popups for the threshold values
+      - coloured coded dynamic track red for alert, amber for warning and green for safe
+      - Dynamic scale based off the desired range (min - max)
+      - custom validation for the number inputs
+      - hard coded watchers to create boundaries
+-->
 <script setup>
 import { ref, computed, watch } from "vue";
-
+// Hint Popup: to show message descriptions from
+import Hints from '../components/HintPopup.vue'
 // --------------------
 //   Props
 // --------------------
@@ -26,7 +34,7 @@ const alertAbove = defineModel("alertAbove", { type: Number, default: 120 });
 //   V-model Data
 // --------------------
 
-// ref verable to track the active thumb being moved
+// ref variable to track the active thumb being moved
 const activeThumb = ref(null);
 
 // --------------------
@@ -39,7 +47,7 @@ function toPercentage(value) {
 };
 
 
-// used by the thumb handeler function to block overlap between thumbs.
+// used by the thumb handler function to block overlap between thumbs.
 function clampRange(value, low, high) {
   return Math.min(Math.max(value, low), high)
 };
@@ -63,22 +71,22 @@ function thumbManager(modelReference, rangeReference) {
 
 // range for the red alert below slider section
 const alertBelowRange = computed(() => ({
-  min: props.min, max: warnBelow.value
+  min: props.min, max: warnBelow.value - props.step
 }));
 
 // range for the yellow warn below slider section
 const warnBelowRange = computed(() => ({
-  min: alertBelow.value, max: warnAbove.value
+  min: alertBelow.value + props.step, max: warnAbove.value - props.step
 }));
 
 // range for yellow warn above slider section
 const warnAboveRange = computed(() => ({
-  min: warnBelow.value, max: alertAbove.value
+  min: warnBelow.value + props.step , max: alertAbove.value - props.step
 }));
 
 // range for the red alert above slider section
 const alertAboveRange = computed(() => ({
-  min: warnAbove.value, max: props.max
+  min: warnAbove.value + props.step, max: props.max
 }));
 
 // calculated percentages
@@ -98,29 +106,23 @@ const trackCSS = computed(() => ({
   var(--range-alert) ${alertAbovePercentage.value}%, var(--range-alert) 100%)`,
 }));
 
-// array size for the salced notches
+// array size for the scaled notches
 const NUMBER_OF_INTERVALS = 10;
 
 const scaledNotches = computed(() => {
-  const notches = [];
-  const increament = ((props.max - props.min) / NUMBER_OF_INTERVALS);
-  let counter = props.min;
-  notches.push({
-    value: Math.round(props.min * 100) / 100,
-    percent: toPercentage(props.min),
+  const increment = ((props.max - props.min) / NUMBER_OF_INTERVALS);
+
+  return Array.from({ length: NUMBER_OF_INTERVALS + 1 }, (_, i) => {
+    const value = props.min + i * increment;
+    return {
+      value: Math.round(value * 100) / 100,
+      percent: toPercentage(value),
+    };
   });
-  for (let i = 0; i <= (NUMBER_OF_INTERVALS - 1); i++) {
-    counter += increament;
-    notches.push({
-      value: Math.round(counter * 100) / 100,
-      percent: toPercentage(counter),
-    });
-  }
-  return notches;
 })
 
 // ---------------------------
-//   Thumb Input event vlaues
+//   Thumb Input event values
 // ---------------------------
 const onAlertBelowInput = thumbManager(alertBelow, alertBelowRange);
 const onWarnBelowInput = thumbManager(warnBelow, warnBelowRange);
@@ -142,6 +144,9 @@ watch(warnAbove, (newValue) => {
     warnAbove.value = 100.01;
   }
 })
+
+
+
 </script>
 <template>
     <div class="multi-thumb-slider">
@@ -206,7 +211,7 @@ watch(warnAbove, (newValue) => {
                 aria-label="Alert Above"
             />
         </div>
-        <!-- Sacle Notches -->
+        <!-- Scaled Notches -->
         <div class="scale-labels">
             <span
                 v-for="notch in scaledNotches"
@@ -222,49 +227,63 @@ watch(warnAbove, (newValue) => {
 
             <!-- Alert Below number input -->
             <label class="threshold-number-input alert-number">
-                <span>Alert Below</span>
+                <span class="">Alert Below
+                    <Hints :size="12"
+                    :message="'Alert below signifies the lowest alert threshold for the deviation measured by the system, once a laser’s measured deviation passes this value, the laser being monitored is in need of readjustment and a red notification will display the homepage to alert the user.'"/>
+                </span>
                 <input
                     type="number"
                     :min="alertBelowRange.min"
                     :max="alertBelowRange.max"
                     :step="step"
-                    :value="alertBelow"
+                    :value="alertBelow.toFixed(2)"
                     @change="onAlertBelowInput"
                 />
+
             </label>
             <!-- Warn Below number input -->
             <label class="threshold-number-input warn-number">
-                <span>Warn Below</span>
+                <span>Warn Below
+                    <Hints :size="12"
+                    :message="'Warn below signifies the lowest warning threshold for the deviation measured by the system, once a laser’s measured deviation falls below this value it is considered at risk and an yellow notification will display on the homepage. If the deviation value stays above this point it is considered by the system to in a safe range and no notifications will be shown in the homepage.'"/>
+                </span>
                 <input
                     type="number"
                     :min="warnBelowRange.min"
                     :max="warnBelowRange.max"
                     :step="step"
-                    :value="warnBelow"
+                    :value="warnBelow.toFixed(2)"
                     @change="onWarnBelowInput"
                 />
+
             </label>
             <!-- Warn Above number input -->
             <label class="threshold-number-input warn-number">
-                <span>Warn Above</span>
+                <span>Warn Above
+                    <Hints :size="12"
+                    :message="'Warn above signifies the highest warning threshold for the deviation measured by the system, once a laser’s measured deviation goes passed this value it is considered at risk and a yellow notification will display on the homepage. If the deviation value stays bellow this point it is considered by the system to be in a safe range and no notifications will be shown in the homepage.'"/>
+                </span>
                 <input
                 type="number"
                 :min="warnAboveRange.min"
                 :max="warnAboveRange.max"
                 :step="step"
-                :value="warnAbove"
+                :value="warnAbove.toFixed(2)"
                 @change="onWarnAboveInput"
                 />
             </label>
             <!-- Alert Above number input -->
             <label class="threshold-number-input alert-number">
-                <span>Alert Above</span>
+                <span>Alert Above
+                    <Hints :size="12" align="right"
+                    :message="'Alert above signifies the highest alert threshold for the deviation measured by the system, once a laser’s measured deviation has passed this value, the laser being monitored is in need of readjustment and a red notification will display on the homepage to alert the user.'"/>
+                </span>
                 <input
                     type="number"
                     :min="alertAboveRange.min"
                     :max="alertAboveRange.max"
                     :step="step"
-                    :value="alertAbove"
+                    :value="alertAbove.toFixed(2)"
                     @change="onAlertAboveInput"
                 />
             </label>
@@ -289,7 +308,7 @@ watch(warnAbove, (newValue) => {
         align-items: center;
     }
 
-    /* Shares on visable track and makes the other ones Invisible */
+    /* Shares on visible track and makes the other ones Invisible */
     .track {
         position: absolute;
         left: var(--track-inset);
@@ -298,7 +317,7 @@ watch(warnAbove, (newValue) => {
         border-radius: 999px;
     }
 
-    /*  one visable track that is shared by 4 thumb inputs */
+    /*  one visible track that is shared by 4 thumb inputs */
     .thumb {
         position: absolute;
         left: 0;
@@ -325,7 +344,7 @@ watch(warnAbove, (newValue) => {
       z-index: 5;
     }
 
-    /* Make the thumb tracks invisable so only the main track is showing */
+    /* Make the thumb tracks invisible so only the main track is showing */
     /* Chrome and Safari */
     .thumb::-webkit-slider-runnable-track {
       appearance: none;
@@ -393,7 +412,7 @@ watch(warnAbove, (newValue) => {
         flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
-        gap: 1rem;
+        gap: 0.25rem;
         margin-top: 1rem;
         margin-left: 2rem;
         margin-right: 2rem;
@@ -410,7 +429,7 @@ watch(warnAbove, (newValue) => {
     }
 
     .threshold-number-input input {
-        width: 4.5rem;
+        width: 4.8rem;
         padding: 0.25rem;
         border-radius: 0.5rem;
         background-color: var(--bs-body-bg);

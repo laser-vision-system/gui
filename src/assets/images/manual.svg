@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="24"
+   height="24"
+   viewBox="0 0 24 24"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="manual.svg"
+   inkscape:version="1.4.4 (dcaf3e7d9e, 2026-05-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="35.958333"
+     inkscape:cx="13.793743"
+     inkscape:cy="11.86095"
+     inkscape:window-width="1829"
+     inkscape:window-height="1114"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <g
+     id="g2"
+     transform="translate(-0.25)"
+     sodipodi:insensitive="true">
+    <rect
+       style="fill:#000000"
+       id="rect1"
+       width="10.734647"
+       height="13.265353"
+       x="7.1193509"
+       y="4.4495945" />
+    <path
+       fill="currentColor"
+       d="m 4,4.5 v 15 A 2.5,2.5 0 0 0 6.5,22 h 13.25 a 0.75,0.75 0 0 0 0,-1.5 H 6.5 a 1,1 0 0 1 -1,-1 H 19.75 A 0.75,0.75 0 0 0 20.5,18.75 V 4.5 A 2.5,2.5 0 0 0 18,2 H 6.5 A 2.5,2.5 0 0 0 4,4.5 m 7,3.518 A 0.75,0.75 0 0 1 10.25,8.75 C 9.5,8.75 9.5,7.999 9.5,7.999 V 7.99 A 1,1 0 0 1 9.508,7.856 2.2,2.2 0 0 1 9.928,6.789 c 0.454,-0.613 1.27,-1.062 2.585,-1.039 0.95,0.017 1.793,0.415 2.321,1.07 0.537,0.667 0.718,1.57 0.362,2.459 -0.362,0.905 -1.181,1.265 -1.652,1.471 l -0.05,0.023 c -0.28,0.123 -0.413,0.187 -0.493,0.251 L 13,11.025 v 0.724 A 0.75000017,0.75000017 0 0 1 11.5,11.75 V 11 c 0,-0.523 0.252,-0.897 0.563,-1.147 0.25,-0.2 0.565,-0.338 0.786,-0.436 L 12.887,9.4 c 0.542,-0.239 0.8,-0.387 0.917,-0.679 A 0.92,0.92 0 0 0 13.666,7.761 C 13.444,7.486 13.037,7.259 12.487,7.25 11.552,7.234 11.242,7.535 11.134,7.682 A 0.7,0.7 0 0 0 11,8.012 Z m 2.25,6.482 a 1,1 0 1 1 -2,0 1,1 0 0 1 2,0"
+       id="path1" />
+  </g>
+  <!--
+  This icon was a modification on the orginal icon which can be found here.
+Icon name: bookQuestionMark24Filled (IOS)  ic_fluent_book_question_mark_24_filled (Android)
+Link: https://github.com/microsoft/fluentui-system-icons/blob/main/icons_filled.md
+Source: Microsoft Fluent UI System Icons
+License: MIT (Copyright (c) Microsoft Corporation)
+-->
+  <path
+     id="text3"
+     style="font-weight:600;font-size:9.96848px;font-family:'Fira Sans';-inkscape-font-specification:'Fira Sans, Semi-Bold';fill:#ffffff;stroke-width:0.830707"
+     d="M 5.8242188 6.5292969 L 5.2890625 13.470703 L 6.7050781 13.470703 L 6.8535156 10.681641 C 6.879933 10.226911 6.8925781 9.7291627 6.8925781 9.1875 C 6.8925781 8.6792733 6.879933 8.2204192 6.8535156 7.8125 L 8.0917969 12.728516 L 9.46875 12.728516 L 10.626953 7.8242188 C 10.620353 7.9646501 10.617187 8.1915614 10.617188 8.5058594 C 10.617188 9.0943327 10.641267 9.8097567 10.6875 10.652344 L 10.835938 13.470703 L 12.261719 13.470703 L 11.738281 6.5292969 L 9.8652344 6.5292969 L 8.8046875 11.314453 L 7.6757812 6.5292969 L 5.8242188 6.5292969 z M 13.382812 6.5292969 L 13.382812 13.470703 L 15.34375 13.470703 C 16.327802 13.470703 17.132351 13.209101 17.759766 12.6875 C 18.393786 12.159211 18.710938 11.254644 18.710938 9.9707031 C 18.710937 8.6600131 18.387462 7.7596494 17.740234 7.2714844 C 17.09961 6.776632 16.245689 6.5292969 15.175781 6.5292969 L 13.382812 6.5292969 z M 14.837891 7.6132812 L 15.402344 7.6132812 C 15.772188 7.6132812 16.086179 7.6756776 16.34375 7.8027344 C 16.601321 7.9231038 16.807084 8.1581251 16.958984 8.5058594 C 17.117489 8.8535934 17.195312 9.3421071 17.195312 9.9707031 C 17.195312 10.880162 17.040874 11.510813 16.730469 11.865234 C 16.426667 12.212969 15.994965 12.386719 15.433594 12.386719 L 14.837891 12.386719 L 14.837891 7.6132812 z " />
+</svg>

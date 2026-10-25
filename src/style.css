@@ -1,3 +1,4 @@
+/*This file is for the theme values and global css used across the whole application*/
 :root {
     /* Bootstrap Overrides */
     --bs-body-bg: white;
@@ -26,12 +27,13 @@
 :root .table {
     --bs-table-color: black;
     --bs-table-border-color: #333333;
+    --bs-table-bg: #e0e7f1;
 }
 
 
 :root.dark {
     /* Bootstrap Overrides */
-    --bs-body-bg: #778899;
+    --bs-body-bg: #8D99AE;
     --bs-body-color: white;
     /*--bs-success-rgb: 106, 90, 205;*/
     --bs-border-color: silver;
@@ -57,6 +59,7 @@
 :root.dark .table {
     --bs-table-color: white;
     --bs-table-border-color: #718096;
+    --bs-table-bg: #8D99AE;
 }
 
 .navTitle {
@@ -171,6 +174,7 @@
     border-radius: 2em;
     margin-left: 4.5rem;
 }
+
 .slider-input:hover{
     accent-color: var(--button-hover);
 }
@@ -182,6 +186,7 @@
     gap: 1em;
     padding: 0.20em;
 }
+
 .error {
     background: var(--range-alert);
     border-radius: 1rem;
@@ -191,6 +196,7 @@
     margin-bottom: 0.75rem;
     text-align: center;
 }
+
 .success {
     background: var(--range-safe);
     border-radius: 1rem;
@@ -199,4 +205,17 @@
     margin-top: 0.75rem;
     margin-bottom: 0.75rem;
     text-align: center;
+}
+
+.hint-image {
+    display: block;
+    filter: var(--filter-background);
+}
+
+.hint-button {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
 }

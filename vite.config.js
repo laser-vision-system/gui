@@ -6,13 +6,13 @@ export default defineConfig({
   base: "",
   plugins: [
     vue(),
-    // uncoment below for single file build
+    // uncomment below for single file build
     //viteSingleFile()
   ],
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8080', // changes this to the address of the server for the live demo
+        target: 'http://0.0.0.0:8080', // changes this to the address of the server for the live demo
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       }

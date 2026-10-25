@@ -1,3 +1,5 @@
+// This JS composable is for creating a WebSocket socket for the gui views
+
 import { ref, computed, onUnmounted } from 'vue'
 
 export function useWebSocket(url) {
@@ -17,27 +19,36 @@ export function useWebSocket(url) {
   // CameraDetails: { name, state, warnBelowThreshold, alertBelowThreshold }
   // state: 'Active' | 'Disconnected' | 'Broken' | 'Limbo' | 'Invalid'
   const cameras = ref({});
-  // camera list java array
-  // Array: { connId, cameraId, name, state }
-  const cameraList = computed(() => Object.values(cameras.value));
+  // camera list java array for Homepage
+  // Array: { connId, cameraId, name, state, (alert and warn, above and below) thresholds,  deviation}
+  const cameraList = computed(() => Object.values(cameras.value).map((camera) => ({
+    ...camera,
+    deviation: deviations.value[`${camera.conn_id},${camera.camera_id}`] ?? null,
+  }))
+  );
+
+  // separate camera list for device settings as the one for the homepage constantly updates
+  // which messes with the watchers of the device settings view causing the settings to constantly reset
+  const settingsCameraList = computed(() => Object.values(cameras.value));
+
   // active camera feed
   const imageSrc = ref('');
-  // Image Analysis for active camera
-  const analysis = ref(null);
+  // Image Analysis for active camera stores the deviation values
+  const deviations = ref({});
   // Control Configuration
   const controlConfig = ref(null);
   // Active Camera / selected camera
   const activeCamera = ref(null);
-  // default Threasholds
+  // default thresholds
   const defaultThresholds = ref(null);
   // Vision Processing Techniques
   const visionProcessingTechniques = ref([]);
   // server Alert
   const serverAlert = ref(null);
 
-  // Array of Known ID feilds  just add any more ids that are needed to this array of the time comes
+  // Array of Known ID fields  just add any more ids that are needed to this array of the time comes
   const ID_KEYS = ['conn_id', 'camera_id', 'edge_id' , 'conn'];
-  // Creates regex alturation string out of the array of ids
+  // Creates regex or conditions out of the array of ids
   const ID_KEYS_REGEX_OPTIONS = ID_KEYS.join('|');
   //
 
@@ -56,7 +67,7 @@ export function useWebSocket(url) {
     return jsonString.replace(new RegExp(`"(${ID_KEYS_REGEX_OPTIONS})":(-?\\d+)`, 'g'), '"$1":"$2"');
   }
 
-  // unquoter for the outgoing id feilds
+  // unquoter for the outgoing id fields
   function unquoteIds(jsonString) {
     // replaces the string with a number on the out
     return jsonString.replace(new RegExp(`"(${ID_KEYS_REGEX_OPTIONS})":"(-?\\d+)"`, 'g'), '"$1":$2');
@@ -80,12 +91,12 @@ export function useWebSocket(url) {
       console.error('Failed to parse server message', e, text);
       return { type: null, data: null };
     }
-    // if the message doesnt have a payload
+    // if the message doesn't have a payload
     if (typeof parsed === 'string') {
       return { type: parsed, data: null };
     }
 
-    // if the mesasge is has a type and payload (e.g. configuration or camera maps) most messages
+    // if the message is has a type and payload (e.g. configuration or camera maps) most messages
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       const keys = Object.keys(parsed);
       if (keys.length === 1) {
@@ -93,7 +104,7 @@ export function useWebSocket(url) {
         return { type, data: parsed[type] ?? null };
       }
     }
-    // MESSAGE COULD NOT BE HANDLEDED
+    // MESSAGE COULD NOT BE HANDLED
     console.error('Unexpected server message shape', parsed);
     return { type: null, data: null };
   }
@@ -115,7 +126,7 @@ export function useWebSocket(url) {
     }
   }
   // ---------------------------
-  //   Comfrim sent message
+  //   Confirm sent message
   // ---------------------------
   // Time in ms
   const FLUSH_CHECK = 100;
@@ -140,7 +151,7 @@ export function useWebSocket(url) {
   }
 
   async function sendConfirmed(type, data) {
-    // save the web socket incase of reconnect.
+    // save the web socket in case of reconnect.
     const wSocket = socket;
     if (!send(type, data)) {
       return { ok: false, error: 'Socket is not open' };
@@ -152,8 +163,6 @@ export function useWebSocket(url) {
       return { ok: false, error: e.message };
     }
   }
-
-
 
   // -------------------------
   //   Heartbeat
@@ -218,6 +227,7 @@ export function useWebSocket(url) {
 
     socket.onclose = () => {
       stopHeartbeat();
+      deviations.value = {};
       status.value = 'DISCONNECTED';
     }
   }
@@ -357,7 +367,7 @@ export function useWebSocket(url) {
         }
         break;
       }
-      // Camera Disconnect (not used in GUI as it does not care about disconnecting that is handeled on the edge side.)
+      // Camera Disconnect (not used in GUI as it does not care about disconnecting that is handled on the edge side.)
       case 'CameraDisconnected': {
         const { conn_id, camera_id } = data;
         const key = `${conn_id},${camera_id}`;
@@ -368,6 +378,7 @@ export function useWebSocket(url) {
             [key]: { ...existing, state: 'Disconnected' },
           }
         }
+        delete deviations.value[key];
         // if the disconnected camera is the one selected, clear the feed
         // active camera is js object and uses connId not conn_id
         if (activeCamera.value?.connId === conn_id && activeCamera.value?.cameraId === camera_id) {
@@ -383,6 +394,7 @@ export function useWebSocket(url) {
           const updated = { ...cameras.value };
           delete updated[key];
           cameras.value = updated;
+          delete deviations.value[key];
           if (activeCamera.value?.connId === conn_id && activeCamera.value?.cameraId === camera_id) {
             clearActiveFeed();
           }
@@ -394,8 +406,11 @@ export function useWebSocket(url) {
         controlConfig.value = { ...data, configuration: parseConfigurationPayload(data?.configuration) };
         break;
       // GUI Image Analysis (reading the deviation)
+      // The ImageAnalysis struct sends conn_id: String, camera_id: CameraId and pub deviation: Deviation
+
       case 'ImageAnalysis':
-        analysis.value = data;
+        const { conn_id, camera_id, deviation } = data;
+        deviations.value[`${conn_id},${camera_id}`] = deviation;
         break;
       // Pong message from the server
       case 'Pong':
@@ -427,7 +442,6 @@ export function useWebSocket(url) {
     }
     imageSrc.value = '';
     activeCamera.value = null;
-    analysis.value = null;
   }
 
   // -----------------------------------------
@@ -524,7 +538,7 @@ export function useWebSocket(url) {
     });
   }
 
-  // Set Defualt vlaue of the servers camera thresholds
+  // Set Default value of the servers camera thresholds
   function setDefaultThreshold(alertBelow, warnBelow, warnAbove, alertAbove) {
     return sendConfirmed('SetDefaultThreshold', {
       warn_below_threshold: warnBelow,
@@ -534,7 +548,7 @@ export function useWebSocket(url) {
     });
   }
 
-  // get defualt thresholds
+  // get default thresholds
   function getDefaultThresholds() {
     send('GetDefaultThresholds');
   }
@@ -599,8 +613,9 @@ export function useWebSocket(url) {
     disconnectedEdgeList,
     cameras,
     cameraList,
+    settingsCameraList,
     imageSrc,
-    analysis,
+    deviations,
     controlConfig,
     activeCamera,
     defaultThresholds,

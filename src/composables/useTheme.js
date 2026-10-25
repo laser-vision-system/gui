@@ -1,8 +1,10 @@
+// This composable is for toggling and setting the theme of the whole vue app
+
 import { ref, watch, onMounted } from 'vue'
 // By declaring the state at the module level outside of the component
 // Meaning that it is created once and shared across all components
 
-// savedTheme ?? osTheme returns the right hand varable only if the left hand is null or undefined
+// savedTheme ?? osTheme returns the right hand variable only if the left hand is null or undefined
 const getInitialTheme = () => {
   const savedTheme = localStorage.getItem('theme')
   const osTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'

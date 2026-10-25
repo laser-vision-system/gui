@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
+import { isEmpty } from '../utils/helpers'
 
 // --------------------
 //   Config Shortcut
@@ -7,13 +8,31 @@ import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 // import router and useSharedDeviceData.js for shortcuts
 import { useRouter } from 'vue-router'
 import { useSharedDeviceData } from '../composables/useSharedDeviceData'
-const router = useRouter();
-const { setSharedMicroComputer, setSharedCamera, clearSharedDeviceData } = useSharedDeviceData();
+const router = useRouter()
+const { setSharedMicroComputer, setSharedCamera, clearAllSharedDeviceData } = useSharedDeviceData()
+
+// --------------------
+//   Component Imports
+// --------------------
+import CameraFeed from '../components/CameraFeed.vue'
+import DeviationBar from '../components/DeviationBar.vue'
+import { usePersistentGlobalData } from '../composables/usePersistentGlobalData'
+const { globalCameraFeedBoolean } = usePersistentGlobalData()
+
+// -----------------------------
+//   Confirmation pop up window
+// -----------------------------
+// This section imports and defines the references for the confirmation window / box
+import ConfirmationBox from '../components/ConfirmationBox.vue'
+// Show Booleans
+const showForgetCameraConfirm = ref(false)
+const showForgetEdgeConfirm = ref(false)
+const showForceRetryCameraConfirm = ref(false)
+const confirmationMessage = ref('')
 
 // --------------------
 //   WebSocket
 // --------------------
-//import cameraFeed from '../components/CameraFeed.vue'
 import { useWebSocket } from '../composables/useWebSocket'
 // Point this at your server's websocket endpoint
 const {
@@ -24,12 +43,8 @@ const {
   disconnectedEdgeList: wsDisconnectedEdgeList,
   cameraList: wsCameraList,
   imageSrc,
-  analysis,
   connect,
-  disconnect,
   // functions
-  listEdges,
-  listCameras,
   setpoint,
   viewCamera,
   stopViewingCamera,
@@ -42,41 +57,24 @@ const {
 const isLive = computed(() => status.value === 'CONNECTED')
 
 // --------------------
-//        Data
+//     Sample Data
 // --------------------
 import sampleCameraList from '../assets/data/sampleCameraList.json'
-import sampleImageAnalysis from '../assets/data/sampleImageAnalysis.json'
-import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.json'
 import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json'
 import sampleDisconnectedEdgeList from '../assets/data/sampleDisconnectedEdgeList.json'
-const sampleCameras = ref(sampleCameraList.cameras)
-const sampleAnalysis = ref(sampleImageAnalysis.GUIImageAnalysis)
-const sampleCameraConfigData = ref(sampleCameraConfiguration.configurations)
-const sampleMicroComputers = ref(sampleMicroComputerList.microComputers)
-//const WebSocketURL = ref('') // API URL for camera stream Data
-//const cameraConfigApiURL = ref('/api/configuration') // API URL for camera config Data
-//const cameraFeedApiURL = ref('/api/image') // API URL for camera feed Data
-//const cameraInfoApiURL = ref('/api/camera_info') // API URL for camera info
-//const guiUpdateApiURL = ref('/api/gui_update') // API URL for gui update setpoint and config
-/*const cameraFeedsData = ref([{
-    id: '00',
-    name: 'cam00',
-    description: 'Primary Camera',
-    fps: null,
-    brightness: null,
-    hue: null,
-    saturation: null,
-    intensity: null,
-    deviation: null,
-    isConnected: false,
-    isSelected: false
-}]) // is replaced by the camera data when read.*/
+// uncomment for deployment :)
+sampleDisconnectedEdgeList.microComputers = null;
+// --------------------
+//      ref Values
+// --------------------
 //const setpointState = ref(false)
-const liveFeedSrc = ref(null) // dynamic image source
-//let pollInterval = null
+const activeTab = ref('conns') // tracks active tab state (defaults to connections tab)
+const selectedEdgeId = ref(null)
 const selectedCameraId = ref(null)
 const cameraSetpoints = ref({})
 const alertsExpanded = ref(true) // alert system variable
+const activeFeeds = ref({})
+
 // --------------------
 //        Computed
 // --------------------
@@ -123,8 +121,9 @@ const sortedDeviationAlerts = computed(() => {
         })
 })
 const disconnectedMicroComs = computed(() => {
-    const disconnectedEdgeList = loadDisconnectedEdgesList.value
-    return disconnectedEdgeList
+    if (!loadDisconnectedEdgesList.value) return []
+
+    return loadDisconnectedEdgesList.value
     .map(disconnection => ({
         ...disconnection,
         alertMsg: `[DISCONNECTION] ${disconnection.name} has disconnected.`,
@@ -132,13 +131,15 @@ const disconnectedMicroComs = computed(() => {
     }))
 })
 const disconnectedCameras = computed(() => {
+    if (!mergedCameraData.value) return []
+
     return mergedCameraData.value
     .filter(connection => connection.state === 'Disconnected')
     .map(disconnection => {
         let alertMsg = ''
         let alertType = 'info'
 
-        if (disconnection.state == 'Disconnected') {
+        if (disconnection.state === 'Disconnected') {
             alertMsg = `[DISCONNECTION] ${disconnection.name} has disconnected.`
         }
         return {
@@ -149,82 +150,75 @@ const disconnectedCameras = computed(() => {
     })
 })
 const disconnectionAlerts = computed(() => {
+    if (!disconnectedMicroComs.value && !disconnectedCameras.value) return []
+
     return [...disconnectedMicroComs.value, ...disconnectedCameras.value]
 })
 // grab active microCom list from websocket or sample data
 const loadActiveEdgesList = computed(() => {
-    const source = isLive.value && wsEdgeList.value.length > 0 ? wsEdgeList.value : sampleMicroComputerList.microComputers
+    const source = isLive.value && wsEdgeList.value.length > 0 ? wsEdgeList.value : sampleMicroComputerList.microComputers // WILL CHANGE TO NULL
     return source
 })
 // grab disconnected microCom list from websocket or sample data
 const loadDisconnectedEdgesList = computed(() => {
-    const source = isLive.value && wsDisconnectedEdgeList.value.length > 0 ? wsDisconnectedEdgeList.value : sampleDisconnectedEdgeList.microComputers
+    const source = isLive.value && wsDisconnectedEdgeList.value.length > 0 ? wsDisconnectedEdgeList.value : sampleDisconnectedEdgeList.microComputers // WILL CHANGE TO NULL
     return source
 })
 // grab camera list from websocket or sample data
 const loadCameraList = computed(() => {
-    const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : sampleCameraList.cameras
-    return source
-})
-// grab image analysis from websocket or sample data
-const loadImageAnalysis = computed(() => {
-    const source = isLive.value && analysis.value !== null > 0 ? analysis.value : null
+    const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : sampleCameraList.cameras // WILL CHANGE TO NULL
     return source
 })
 // merge camera list with microcomputer, image analysis & selection details
 const mergedCameraData = computed(() => {
-    const camDataList = loadCameraList.value
-    const imageAnalysisData = loadImageAnalysis.value
-    const edgeDataList = loadActiveEdgesList.value
-    const result = []
-
-    for (const camera of camDataList) {
-		let matchingData = ref(null)
-		if (imageAnalysisData !== null) {
-            if (imageAnalysisData.conn_id === camera.conn_id && imageAnalysisData.camera_id === camera.camera_id) {
-				matchingData = imageAnalysisData
-			} 
-		}
-        const matchingComData = edgeDataList.find(
-            connection => connection.conn_id === camera.conn_id
-        )
-
-        result.push({
-            ...camera,
-            intensity: matchingData ? matchingData.intensity : 0,
-            deviation: matchingData && !isNaN(Number(matchingData.deviation)) ? Number(matchingData.deviation) : '--',
-            microComName: matchingComData ? matchingComData.name : null,
-            microComState: matchingComData ? matchingComData.state : null,
-            isSelected: selectedCameraId.value === `${camera.conn_id}-${camera.camera_id}`
-        })
+    if (!loadActiveEdgesList.value || !loadCameraList.value) { // catches undefined (empty values)
+        return []
     }
-    return result
+
+    return loadCameraList.value.map(camera => {
+        const matchingEdgeData = loadActiveEdgesList.value.find(
+          connection => connection.conn_id === camera.conn_id)
+        const hasDeviation = camera.deviation !== null
+        && camera.deviation !== undefined && !isNaN(Number(camera.deviation))
+        return {
+        ...camera,
+        deviation: hasDeviation ? Number(camera.deviation) : '--',
+        microComName: matchingEdgeData ? matchingEdgeData.name : null,
+        microComState: matchingEdgeData ? matchingEdgeData.state : null,
+        isSelected: selectedCameraId.value === `${camera.conn_id}-${camera.camera_id}`
+        }
+    })
 })
 // group by microcomputer & for active cameras
 const activeMergedData = computed(() => {
-    const sections = {}
+    if (!mergedCameraData.value) {
+        return []
+    }
+    else {
+        const sections = {}
 
-    mergedCameraData.value.forEach(camera => {
-        const id = camera.conn_id
+        mergedCameraData.value.forEach(camera => {
+            const id = camera.conn_id
 
-        // initialise sections if they don't exist yet
-        if (!sections[id]) {
-            sections[id] = {
-                conn_id: id,
-                microComName: camera.microComName,
-                microComState: camera.microComState,
-                activeCameras: [],
+            // initialise sections if they don't exist yet
+            if (!sections[id]) {
+                sections[id] = {
+                    conn_id: id,
+                    microComName: camera.microComName,
+                    microComState: camera.microComState,
+                    activeCameras: [],
+                }
             }
-        }
 
-        // evaluate for active cameras only if Pi is active
-        if (sections[id].microComState === 'Active') {
-            if (camera.state === 'Active') {
-                sections[id].activeCameras.push(camera)
+            // evaluate for active cameras only if Pi is active
+            if (sections[id].microComState === 'Active') {
+                if (camera.state === 'Active') {
+                    sections[id].activeCameras.push(camera)
+                }
             }
-        }
-    })
-    return sections
+        })
+        return sections
+    }
 })
 // returns camera info based on selected camera
 const selectedCameraInfo = computed(() => {
@@ -236,124 +230,28 @@ const selectedCameraInfo = computed(() => {
 const isSetpointActive = computed(() => {
     return selectedCameraId.value && selectedCameraId.value in cameraSetpoints.value
 })
-/*const hasSelectedCamera = computed(() => {
-    return cameraFeedsData.value.some(feed => feed.isSelected)
-})
-const hasConnectedCamera = computed(() => {
-    return cameraFeedsData.value.some(feed => feed.isConnected)
-})
-const selectedCamera = computed(() =>
-    cameraFeedsData.value.find(feed => feed.isSelected) ?? null
-)*/
 // alert system
 const toggleAlerts = computed(() => {
     alertsExpanded.value = !alertsExpanded.value
 })
+
 // --------------------
 //        Methods
 // --------------------
-// Select a camera by ID
-function selectCamera(feedId) {
-    mergedCameraData.value.forEach(feed => {
-        if (feed.camera_id === feedId) {
-            feed.isSelected = !feed.isSelected  // toggle the clicked camera
-        } else {
-            feed.isSelected = false  // deselect all others
-        }
-    })
-}
 // select one camera at a time by ID
 const toggleCameraSelection = (cameraId) => {
-    const [conn_id, camera_id] = cameraId.split('-')
     if (selectedCameraId.value === cameraId) {
         selectedCameraId.value = null
-        stopViewingCamera(conn_id, camera_id)
     } else {
         selectedCameraId.value = cameraId
-        viewCamera(conn_id, camera_id)
-    }
-}
-// fetch method for Read camera config API call
-async function fetchCameraConfig() {
-    try {
-        const response = await fetch(cameraConfigApiURL.value)
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`)
-        }
-
-        const data = await response.json()
-
-        sampleCameras.value.forEach(feed => {
-            feed.fps = data.framerate
-            feed.brightness = data.brightness
-            feed.hue = data.hue
-            feed.saturation = data.saturation
-            feed.isConnected = true
-        })
-    } catch (error) {
-        console.error('Failed to fetch camera configuration:', error)
-
-        cameraFeedsData.value.forEach(feed => {
-            feed.isConnected = false
-        })
-    }
-}
-// fetch method for camera info
-async function fetchCameraInfo() {
-    try {
-        const response = await fetch(cameraInfoApiURL.value)
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`)
-        }
-
-        const data = await response.json()
-
-        sampleCameras.value.forEach(feed => {
-            feed.intensity = data.intensity
-            feed.deviation = data.deviation
-        })
-    } catch (error) {
-        console.error('Failed to fetch camera configuration:', error)
-
-        sampleCameraData.value.forEach(feed => {
-            feed.isConnected = false
-        })
-    }
-}
-// post gui_update Set setpoint bool to true
-async function postSetpointTrue() {
-    const requestOptions = {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            setpoint: true,
-            config: false
-        })
-    };
-    try {
-        const response = await fetch(guiUpdateApiURL.value, requestOptions)
-        if (!response.ok) {
-            throw new Error(`HTTP error: ${response.status}`)
-        }
-        const data = await response.text()
-        setpointState.value = true
-        setTimeout(() => {
-            setpointState.value = false;
-        }, 5000);
-    } catch (error) {
-        console.error('Error fetching camera data:', error)
     }
 }
 const updateSetpoint = () => {
     if (!selectedCameraId.value || !selectedCameraInfo.value) return
 
     const [conn_id, camera_id] = selectedCameraId.value.split('-')
-    const targetSetpoint = selectedCameraInfo.value.intensity
-    cameraSetpoints.value[selectedCameraId.value] = targetSetpoint
+    // const targetSetpoint = selectedCameraInfo.value.intensity
+  cameraSetpoints.value[selectedCameraId.value] = true;
     setpoint(conn_id, camera_id)
 
     /*try {
@@ -364,19 +262,75 @@ const updateSetpoint = () => {
         console.error("The setpoint() function threw an error:", error)
     }*/
 }
-// button to send force retry camera command to server
-const forceRetryCameraBtn = (connId, cameraId) => {
-    forceRetryCamera(connId, cameraId)
+const isFeedActive = (cameraId) => {
+    // returns bool for active feed (true) or no active feed (false)
+    return !!activeFeeds.value[cameraId]
 }
-// button to send forget camera command to server
-const forgetCameraBtn = (connId, cameraId) => {
-    forgetCameraRequest(connId, cameraId)
+const liveFeedBtn = (connId, cameraId) => {
+    activeFeeds.value[`${connId}-${cameraId}`] = !activeFeeds.value[`${connId}-${cameraId}`]
+
+    if (activeFeeds.value[`${connId}-${cameraId}`]) {
+        viewCamera(connId, cameraId)
+    } else {
+        stopViewingCamera(connId, cameraId)
+    }
 }
-// button to send forget edge command to server
-const forgetEdgeBtn = (connId) => {
-    forgetEdge(connId)
+// updates ConfirmationBox values for force retry button
+function forceRetryCameraBtn(cameraId, cameraName) {
+    selectedCameraId.value = cameraId
+    confirmationMessage.value = `Force retry the broken camera: ${cameraName}?`
+    showForgetCameraConfirm.value = true
 }
-// camera card traffic light system (using sample JSON data)
+// sends force retry camera command to server (broken cameras only)
+function handleForceRetryCamera() {
+    if (selectedCameraId.value) {
+        const [conn_id, camera_id] = selectedCameraId.value.split('-')
+        forceRetryCamera(conn_id, camera_id)
+    }
+    // resets states
+    showForceRetryCameraConfirm.value = false
+    selectedCameraId.value = null
+}
+// updates ConfirmationBox values for forget camera buttons
+function forgetCameraBtn(cameraId, cameraName, camState) {
+    selectedCameraId.value = cameraId
+
+    if (camState === 'Disconnected') {
+        confirmationMessage.value = `Forget the disconnected camera: ${cameraName}?`
+    } else if (camState === 'Broken') {
+        confirmationMessage.value = `Forget the broken camera: ${cameraName}?`
+    } else {
+        confirmationMessage.value = `Forget the selected camera: ${cameraName}?`
+    }
+
+    showForgetCameraConfirm.value = true
+}
+// sends forget camera command to server
+function handleForgetCamera() {
+    if (selectedCameraId.value) {
+        const [conn_id, camera_id] = selectedCameraId.value.split('-')
+        forgetCameraRequest(conn_id, camera_id)
+    }
+    // resets states
+    showForgetCameraConfirm.value = false
+    selectedCameraId.value = null
+}
+// updates ConfirmationBox values for forget edge button
+function forgetEdgeBtn(connId, edgeName) {
+    selectedEdgeId.value = connId
+    showForgetEdgeConfirm.value = true
+    confirmationMessage.value = `Forget the disconnected µ-computer: ${edgeName}?`
+}
+// sends forget edge command to server
+function handleForgetEdge() {
+    if (selectedEdgeId.value) {
+        forgetEdge(selectedEdgeId)
+    }
+    // resets states
+    showForgetCameraConfirm.value = false
+    selectedEdgeId.value = null
+}
+// camera card traffic light system
 function getCardColour(cam) {
     if (!cam) return 'bg-dark'
 
@@ -397,31 +351,6 @@ function getCardColour(cam) {
         return 'bg-dark'
     }
 }
-// requests camera feed
-async function fetchCameraFeed() {
-    if (!hasSelectedCamera.value) return
-    // Append timestamp to bust browser image cache on each poll
-    liveFeedSrc.value = `${cameraFeedApiURL.value}?t=${Date.now()}`
-}
-
-function startPolling() {
-    stopPolling() // clear any existing interval first
-    fetchCameraFeed() // fetch immediately, then start interval
-    pollInterval = setInterval(() => {
-        fetchCameraFeed()
-        fetchCameraInfo()
-    }, 1000 / (cameraFeedsData.value.find(f => f.isSelected)?.fps ?? 2))
-}
-
-function stopPolling() {
-    if (pollInterval) {
-        clearInterval(pollInterval)
-        pollInterval = null
-    }
-
-    liveFeedSrc.value = null
-}
-
 
 // --------------------
 //    Config Shortcut
@@ -439,36 +368,22 @@ function configureMicroComputer(connID) {
 // --------------------
 //        Watchers
 // --------------------
-// Start/stop polling whenever the selected camera changes
-/*watch(
-    () => cameraFeedsData.value.map(f => f.isSelected),
-    () => {
-        if (hasSelectedCamera.value) {
-            startPolling()
-        } else {
-            stopPolling()
-        }
-    }
-)*/
+
 // -------------------------------
 //        onMount and unMount
 // -------------------------------
 onMounted(async () => {
   connect();
-  clearSharedDeviceData();
-
-    // await fetchCameraConfig()
-    // await fetchCameraInfo()
-    // if (hasSelectedCamera.value) startPolling()
+  clearAllSharedDeviceData();
 })
 
 onUnmounted(() => {
     // Clean up on unmount
-    // stopPolling()
 })
 </script>
 <template>
     <div class="container">
+    <!-- ALERTS -->
         <div class="row mt-2 mb-4">
                 <h3 class="cam-title">Alerts:
                     <button class="btn submit-btn" @click="toggleAlerts">
@@ -494,128 +409,196 @@ onUnmounted(() => {
                     </div>
                 </div>
         </div>
-        <div class="row mx-0 mt-2 mb-2 align-items-start">
-            <div class="col-lg-8 col-12 ps-0">
-                <h3 class="cam-title">Connections:</h3>
-                    <div v-for="(section, conn_id) in activeMergedData" :key="conn_id">
-                        <div v-if="section.microComState === 'Active'">
-                            <h4 class="microCom-title d-flex flex-row gap-2">{{ section.microComName }}
-                                <span class="badge bg-secondary">
-                                    {{ section.microComState }}
-                                </span>
-                                <button type="button" class="badge submit-btn border-0"
-                                        @click="configureMicroComputer(section.conn_id)">Configure</button>
-                            </h4>
-                            <div class="row d-flex justify-content-start p-2 g-2">
-                                <div class="col-3 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
-                                    <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
-                                        <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
-                                            <h5 class="card-title">{{ cam.name }}</h5>
-                                                <p v-if="Number(cam.deviation)" class="card-text">{{ Math.round(cam.deviation * 100) + '%' }}</p>
-                                                <p v-else class="card-text">{{ cam.deviation }}</p>
+        <!-- Device / Disconnected List -->
+        <div class="row mx-0 mt-2 mb-4 align-items-start">
+            <ul class="nav nav-tabs custom-tabs border-bottom-0">
+                <li class="nav-item">
+                    <button class="nav-link" :class="{ active: activeTab === 'conns' }" @click="activeTab = 'conns'">
+                        Connections
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" :class="{ active: activeTab === 'disconns' }" @click="activeTab = 'disconns'">
+                        Disconnections
+                    </button>
+                </li>
+            </ul>
+            <div class="tab-content p-3 border rounded-top-0 rounded-bottom-3 rounded-end-3">
+                <div v-if="activeTab === 'conns'" class="tab-pane active">
+                    <div class="col-lg-8 col-12 ps-0">
+                        <div v-if="activeMergedData">
+                            <div v-for="(section, conn_id) in activeMergedData" :key="conn_id">
+                                <div v-if="section.microComState === 'Active'">
+                                    <h4 class="microCom-title d-flex flex-row gap-2">{{ section.microComName }}
+                                        <span class="badge bg-secondary">
+                                            {{ section.microComState }}
+                                        </span>
+                                        <button type="button" class="badge submit-btn border-0"
+                                                @click="configureMicroComputer(section.conn_id)">Configure</button>
+                                    </h4>
+                                    <div class="row d-flex justify-content-start p-2 g-2">
+                                        <div class="col-6 col-sm-4 col-md-3" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
+                                            <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
+                                                <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
+                                                    <h5 class="card-title">{{ cam.name }}</h5>
+                                                        <p v-if="Number(cam.deviation)" class="card-text fs-3">{{ Math.round(cam.deviation * 100) }}%</p>
+                                                        <p v-else class="card-text fs-3">{{ cam.deviation }}</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        <div v-else>
+                            &nbsp
+                        </div>
                     </div>
-            </div>
-            <div class="col-lg-4 col-12 mt-lg-5 pe-0 text-center">
-                <table class="table border border-2 hardware-info">
-                    <tbody>
-                        <tr>
-                            <th scope="col" class="table-dark">Disconnected microComputers</th>
-                        </tr>
-                        <tr v-for="com in disconnectedMicroComs" :key="com.conn_id">
-                            <td>{{ com.name }}
-                                <div class="button-group">
-                                    <button class="btn submit-btn" @click="forgetEdgeBtn(com.conn_id)">Forget</button>
+                    <div v-if="selectedCameraId" class="row mx-0 align-items-stretch mb-4 mt-4">
+                        <div class="cam-info p-3 mt-2">
+                            <div class="row h-100 mx-0 align-content-between">
+                                <div class="col-12 px-0">
+                                    <h3 class="mb-2">Camera Info</h3>
+                                        <div v-if="selectedCameraInfo">
+                                            <p><strong>ID:</strong> {{ selectedCameraInfo.camera_id }}</p>
+                                            <p><strong>Name:</strong> {{ selectedCameraInfo.name }}</p>
+                                            <!-- <p><strong>Intensity:</strong> {{ selectedCameraInfo.intensity }}</p> -->
+                                            <p v-if="Number(selectedCameraInfo.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) }}%</p>
+                                            <p v-else><strong>Deviation:</strong> --</p>
+                                            <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered border-2 text-center hardware-info table-squash">
+                                                    <thead>
+                                                        <tr>
+                                                            <th><span class="badge bg-danger">Alert below:</span></th>
+                                                            <th><span class="badge bg-warning text-dark">Warn below:</span></th>
+                                                            <th><span class="badge bg-success">No alert:</span></th>
+                                                            <th><span class="badge bg-warning text-dark">Warn above:</span></th>
+                                                            <th><span class="badge bg-danger">Alert above:</span></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>{{ Math.round(selectedCameraInfo.alert_below_threshold * 100) }}%</td>
+                                                            <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100) }}%</td>
+                                                            <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100)}}-{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) }}%</td>
+                                                            <td>{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) }}%</td>
+                                                            <td>{{ Math.round(selectedCameraInfo.alert_above_threshold * 100) }}%</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div class="col-12 deviation-wrapper text-center">
+                                                <h4>Deviation Scale</h4>
+                                                <!-- Deviation Bar -->
+                                                 <DeviationBar
+                                                :alertBelow="selectedCameraInfo.alert_below_threshold * 100"
+                                                :warnBelow="selectedCameraInfo.warn_below_threshold * 100"
+                                                :warnAbove="selectedCameraInfo.warn_above_threshold * 100"
+                                                :alertAbove="selectedCameraInfo.alert_above_threshold * 100"
+                                                :deviation="selectedCameraInfo.deviation * 100"
+                                                />
+                                            </div>
+                                            <div class="button-group">
+                                                <button class="btn submit-btn" :disabled="!selectedCameraId" @click="updateSetpoint">
+                                                    {{ isSetpointActive ? 'Recalibrate' : 'Calibrate' }}
+                                                </button>
+                                                <button class="btn submit-btn" @click="configureCamera(selectedCameraInfo.conn_id,selectedCameraInfo.camera_id)">
+                                                    Configure
+                                                </button>
+                                                <button v-if="globalCameraFeedBoolean" class="btn submit-btn" :class="isFeedActive(`${selectedCameraInfo.conn_id}-${selectedCameraInfo.camera_id}`)" @click="liveFeedBtn(selectedCameraInfo.conn_id, selectedCameraInfo.camera_id)">
+                                                    {{ isFeedActive(`${selectedCameraInfo.conn_id}-${selectedCameraInfo.camera_id}`) ? 'Hide Live Feed' : 'View Live Feed' }}
+                                                </button>
+                                            </div>
+                                        </div>
                                 </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="col" class="table-dark">Disconnected Cameras</th>
-                        </tr>
-                        <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
-                            <td v-if="cam.state === 'Disconnected'">{{ cam.name }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <table class="table border border-2 hardware-info">
-                    <tbody>
-                        <tr>
-                            <th scope="col" class="table-dark">Broken Cameras</th>
-                        </tr>
-                        <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
-                            <td v-if="cam.state === 'Broken'">{{ cam.name }}
-                                <div class="button-group">
-                                    <button class="btn submit-btn" @click="forceRetryCameraBtn(cam.conn_id, camera_id)">Force Retry</button>
-                                    <button class="btn submit-btn" @click="forgetCameraBtn(cam.conn_id, camera_id)">Forget</button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div v-if="selectedCameraId" class="row mx-0 align-items-stretch mb-5 mt-4">
-            <div class="col-lg-8 col-12 d-flex ps-0 mt-2">
-                <div class="feed-wrapper w-100 h-100">
-                    <div v-if="isLive && imageSrc" class="w-100 h-100">
-                        <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
-                    </div>
-                    <div v-else-if="hasSelectedCamera" class="w-100 h-100">
-                        <img :src="liveFeedSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
-                    </div>
-                    <div v-else-if="hasConnectedCamera" class="w-100 h-100">
-                        <img src="../assets/images/no-camera-selected.png" alt="No camera selected"
-                            class="feedbox w-100 h-100">
-                    </div>
-                    <div v-else class="w-100 h-100">
-                        <img src="../assets/images/no-camera-connected.png" alt="No Cameras Connected"
-                            class="feedbox w-100 h-100 ">
+                            </div>
+                        </div>
+                        <div v-if="isFeedActive(`${selectedCameraInfo.conn_id}-${selectedCameraInfo.camera_id}`)">
+                            <CameraFeed :imageSrc="imageSrc" :isLive="isLive" :isSelected="!isEmpty(selectedCameraInfo)"/>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-lg-4 col-12 cam-info d-flex flex-column p-3 pe-0 mt-2">
-                <div class="row h-100 mx-0 align-content-between">
-                    <div class="col-12 px-0">
-                        <h3 class="mb-2">Camera Info</h3>
-                        <div class="col-lg-7 col-9">
-                            <div v-if="selectedCameraInfo">
-                                <p><strong>ID:</strong> {{ selectedCameraInfo.camera_id }}</p>
-                                <p><strong>Name:</strong> {{ selectedCameraInfo.name }}</p>
-                                <!-- <p><strong>Intensity:</strong> {{ selectedCameraInfo.intensity }}</p> -->
-                                <p><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) + '%' }}</p>
-                                <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
+                <div v-if="activeTab === 'disconns'" class="tab-pane active">
+                    <div class="container mt-4 text-center">
+                        <div class="row">
+                            <div class="col-md-4">
                                 <table class="table border border-2 hardware-info">
                                     <tbody>
                                         <tr>
-                                            <th class="bg-danger text-white">Alert below:</th>
-                                            <td>{{ Math.round(selectedCameraInfo.alert_below_threshold * 100) + '%' }}</td>
+                                            <th scope="col" class="table-dark">Disconnected µ-Computers</th>
                                         </tr>
-                                        <tr>
-                                            <th class="bg-warning text-dark">Warn below:</th>
-                                            <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100) + '%' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th class="bg-success text-white">No alert:</th>
-                                            <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100)}}-{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th class="bg-warning text-dark">Warn above:</th>
-                                            <td>{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th class="bg-danger text-white">Alert above:</th>
-                                            <td>{{ Math.round(selectedCameraInfo.alert_above_threshold * 100) + '%' }}</td>
+                                        <tr v-for="com in disconnectedMicroComs" :key="com.conn_id">
+                                            <td>{{ com.name }}
+                                                <div class="button-group">
+                                                    <button class="btn submit-btn" @click="forgetEdgeBtn(com.conn_id, com.name)">Forget</button>
+                                                    <ConfirmationBox
+                                                    v-model="showForgetEdgeConfirm"
+                                                    :message="confirmationMessage"
+                                                    :onConfirmFunction="handleForgetEdge"/>
+                                                </div>
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
-                                <div class="button-group">
-                                    <button class="btn submit-btn" :disabled="!selectedCameraId" @click="updateSetpoint">{{ isSetpointActive ? 'Recalibrate' : 'Calibrate' }}</button>
-                                    <button class="btn submit-btn" @click="configureCamera(selectedCameraInfo.conn_id,selectedCameraInfo.camera_id)">Configure</button>
-                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <table class="table border border-2 hardware-info">
+                                    <tbody>
+                                        <tr>
+                                            <th scope="col" class="table-dark">Disconnected Cameras</th>
+                                        </tr>
+                                        <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
+                                            <td v-if="cam.state === 'Disconnected'">{{ cam.name }}
+                                                <div class="button-group">
+                                                    <button class="btn submit-btn" @click="forgetCameraBtn(`${cam.conn_id}-${cam.camera_id}`, cam.name, cam.state)">Forget</button>
+                                                    <ConfirmationBox
+                                                    v-model="showForgetCameraConfirm"
+                                                    :message="confirmationMessage"
+                                                    :onConfirmFunction="handleForgetCamera"/>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-4">
+                                <table class="table border border-2 hardware-info">
+                                    <tbody>
+                                        <tr>
+                                            <th scope="col" class="table-dark">Faulty Cameras</th>
+                                        </tr>
+                                        <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
+                                            <td v-if="cam.state === 'Limbo'">
+                                                {{ cam.name }}
+                                                <span class="badge bg-secondary ms-1">
+                                                    {{ cam.state }}
+                                                </span>
+                                            </td>
+                                            <td v-if="cam.state === 'Broken'">{{ cam.name }}
+                                                <span class="badge bg-secondary ms-1 mb-2">
+                                                    {{ cam.state }}
+                                                </span>
+                                                <div class="row mb-1 button-group">
+                                                    <div class="col-auto">
+                                                        <button class="btn submit-btn" @click="forceRetryCameraBtn(`${cam.conn_id}-${cam.camera_id}`, cam.name)">Force Retry</button>
+                                                        <ConfirmationBox
+                                                        v-model="showForceRetryCameraConfirm"
+                                                        :message="confirmationMessage"
+                                                        :onConfirmFunction="handleForceRetryCamera"/>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <button class="btn submit-btn" @click="forgetCameraBtn(`${cam.conn_id}-${cam.camera_id}`, cam.name, cam.state)">Forget</button>
+                                                        <ConfirmationBox
+                                                        v-model="showForgetCameraConfirm"
+                                                        :message="confirmationMessage"
+                                                        :onConfirmFunction="handleForgetCamera"/>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -625,6 +608,31 @@ onUnmounted(() => {
     </div>
 </template>
 <style scoped>
+.custom-tabs .nav-link {
+    color: var(--nav-title);
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    /* this matches Bootstrap 5's responsive h3 size */
+    font-size: calc(1.3rem + .6vw);
+    font-weight: 500;
+}
+
+.custom-tabs .nav-link:hover {
+    color: var(--button-hover);
+}
+
+.custom-tabs .nav-link.active {
+    color: var(--nav-title);
+    background-color: var(--bs-body-bg);
+    border-color: var(--bs-border-color) var(--bs-border-color) transparent;
+    margin-bottom: -1px;
+    position: relative;
+    z-index: 2;
+}
+
 .camera-tab {
     min-height: 80px;
     overflow-y: auto;
@@ -645,31 +653,22 @@ onUnmounted(() => {
     color: var(--camera-tab-text);
 }
 
-.feedbox {
-    border: 0.5rem solid slateblue;
-    border-radius: 1rem;
-    box-shadow: 0 0 0.45rem mediumslateblue;
-    background-color: var(--cam-bg);
-    object-fit: contain;
-    max-height: 480px;
-}
-
-.feed-wrapper {
-    max-width: 640px;
-    max-height: 480px;
-    margin: 0 auto;
-}
-
 .cam-info {
-    border: 0.5rem solid slateblue;
+    border: 0.5rem solid var(--nav-bg);
     border-radius: 1rem;
-    box-shadow: 0 0 0.45rem mediumslateblue;
+    box-shadow: 0 0 0.45rem var(--button-hover);
     background-color: var(--cam-bg);
     color: var(--nav-title);
 }
 
-.highlight-row {
-    box-shadow: inset 0 0 0 2px #ffeeba;
+/* target mobile screens */
+@media (max-width: 768px) {
+  .table-squash th,
+  .table-squash td {
+    padding: 0.2rem 0.3rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
 }
 
 .hardware-info {
@@ -696,4 +695,9 @@ onUnmounted(() => {
     margin-top: 1.5rem;
     color: var(--nav-title);
 }
+
+.deviation-wrapper {
+    padding: 1rem;
+}
+
 </style>

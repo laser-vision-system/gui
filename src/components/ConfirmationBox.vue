@@ -1,3 +1,7 @@
+<!-- This component is for the confirmation pop up window
+    which acts as a stop gap for any miss inputs the user may have
+    it should be used as a precaution for inputs that may have a critical impact on the system
+-->
 <script setup>
 // --------------------
 //   Props
@@ -6,9 +10,9 @@
 const props = defineProps({
   // Bool to show the confirm window
   modelValue: { type: Boolean, default: false },
-  // Custom conformation message
+  // Custom confirmation message
   message: { type: String, required: true },
-  // Custom conform button message (if needed)
+  // Custom confirm button message (if needed)
   confirmButtonText: { type: String, default: 'Confirm' },
   // Custom cancel button (if needed)
   cancelButtonText: { type: String, default: 'Cancel' },
@@ -24,7 +28,7 @@ const emit = defineEmits(['update:modelValue', 'confirm', 'cancel'])
 // --------------------
 //        Methods
 // --------------------
-// Function to handle confrimation event
+// Function to handle confirmation event
 function onConfirm() {
   // execute function
   if (typeof props.onConfirmFunction === 'function') {
@@ -32,20 +36,20 @@ function onConfirm() {
   }
   // emits
   emit('confirm')
-  // reset visiabilySate on event
+  // reset visibilityState on event
   emit('update:modelValue', false)
 }
-// Function that handles cancelation event
+// Function that handles cancel event
 function onCancel() {
   // emits
   emit('cancel')
-  // reset visiabilySate on event
+  // reset visibilityState on event
   emit('update:modelValue', false)
 }
 
 </script>
 <template>
-    <Teleport to="body">
+    <teleport to="body">
         <div v-if="modelValue" class="confirmation-window" @click.self="onCancel">
             <div class="confirm-box" role="dialog" aria-modal="true">
                 <p class="confirm-message">{{message}}</p>
@@ -59,7 +63,7 @@ function onCancel() {
                 </div>
             </div>
         </div>
-    </Teleport>
+    </teleport>
 </template>
 <style scoped>
 .confirmation-window {
