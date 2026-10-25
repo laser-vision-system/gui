@@ -1,3 +1,5 @@
+// This JS composable is for creating a WebSocket socket for the gui views
+
 import { ref, computed, onUnmounted } from 'vue'
 
 export function useWebSocket(url) {

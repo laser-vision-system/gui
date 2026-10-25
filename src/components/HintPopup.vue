@@ -1,3 +1,10 @@
+<!-- This component provides a icon when clicked shows a text box relative to the icons location on the dom
+    This is used for explaining more complex parts of the interface, providing useful information on
+    what parts of the system the given input dictates, e.g. what the each vision processing label does.
+
+    They can be closed by clicking outside a pop up or by clicking the escape button
+
+-->
 <script>
 let hintCount = 0;
 </script>

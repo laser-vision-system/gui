@@ -1,3 +1,4 @@
+// This composable is for the persistent toggling of the global camera feed toggle
 import { ref, watch } from 'vue';
 // Global Camera feed toggle
 const GLOBAL_CAMERA_FEED_TOGGLE_KEY = 'global-camera-feed-boolean';

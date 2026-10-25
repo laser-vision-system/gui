@@ -1,3 +1,7 @@
+<!-- This component is for the confirmation pop up window
+    which acts as a stop gap for any miss inputs the user may have
+    it should be used as a precaution for inputs that may have a critical impact on the system
+-->
 <script setup>
 // --------------------
 //   Props

@@ -63,7 +63,7 @@ import sampleCameraList from '../assets/data/sampleCameraList.json'
 import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json'
 import sampleDisconnectedEdgeList from '../assets/data/sampleDisconnectedEdgeList.json'
 // uncomment for deployment :)
-// sampleDisconnectedEdgeList.microComputers = null;
+sampleDisconnectedEdgeList.microComputers = null;
 // --------------------
 //      ref Values
 // --------------------

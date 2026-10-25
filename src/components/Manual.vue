@@ -1,3 +1,4 @@
+<!--  The purpose of this component is to provide a footer with a link to the user manual through out the whole app -->
 <script setup>
   import hintIcon from '../assets/images/manual.svg'
 </script>

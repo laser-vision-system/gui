@@ -1,3 +1,7 @@
+<!-- This component  is to provide graphical feed back for the deviation on the homepage view,
+    It is based off the multi thumb range slider but acts a read only component
+    it lacks the number and range inputs and only takes props instead of 2 way bound v-model variables
+-->
 <script setup>
 // This is a deviation bar for the homepage, its aim is to clearly show the deviation of selected camera in more detail.
 // IMPORTS
