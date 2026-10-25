@@ -382,12 +382,12 @@ onUnmounted(() => {
                                                 @click="configureMicroComputer(section.conn_id)">Configure</button>
                                     </h4>
                                     <div class="row d-flex justify-content-start p-2 g-2">
-                                        <div class="col-3 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
+                                        <div class="col-6 col-sm-4 col-md-3" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
                                             <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
                                                 <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
                                                     <h5 class="card-title">{{ cam.name }}</h5>
-                                                        <p v-if="Number(cam.deviation)" class="card-text">{{ Math.round(cam.deviation * 100) }}%</p>
-                                                        <p v-else class="card-text">{{ cam.deviation }}</p>
+                                                        <p v-if="Number(cam.deviation)" class="card-text fs-3">{{ Math.round(cam.deviation * 100) }}%</p>
+                                                        <p v-else class="card-text fs-3">{{ cam.deviation }}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -408,7 +408,7 @@ onUnmounted(() => {
                                             <p><strong>ID:</strong> {{ selectedCameraInfo.camera_id }}</p>
                                             <p><strong>Name:</strong> {{ selectedCameraInfo.name }}</p>
                                             <!-- <p><strong>Intensity:</strong> {{ selectedCameraInfo.intensity }}</p> -->
-                                            <p v-if="Number(selectedCameraId.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) }}%</p>
+                                            <p v-if="Number(selectedCameraInfo.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) }}%</p>
                                             <p v-else><strong>Deviation:</strong> --</p>
                                             <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
                                             <div class="table-responsive">
