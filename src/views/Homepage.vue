@@ -19,6 +19,17 @@ import DeviationBar from '../components/DeviationBar.vue'
 import { usePersistentGlobalData } from '../composables/usePersistentGlobalData'
 const { globalCameraFeedBoolean } = usePersistentGlobalData()
 
+// -----------------------------
+//   Confirmation pop up window
+// -----------------------------
+// This section imports and defines the references for the confirmation window / box
+import ConfirmationBox from '../components/ConfirmationBox.vue'
+// Show Booleans
+const showForgetCameraConfirm = ref(false)
+const showForgetEdgeConfirm = ref(false)
+const showForceRetryCameraConfirm = ref(false)
+const confirmationMessage = ref('')
+
 // --------------------
 //   WebSocket
 // --------------------
@@ -58,6 +69,7 @@ sampleDisconnectedEdgeList.microComputers = null;
 // --------------------
 //const setpointState = ref(false)
 const activeTab = ref('conns') // tracks active tab state (defaults to connections tab)
+const selectedEdgeId = ref(null)
 const selectedCameraId = ref(null)
 const cameraSetpoints = ref({})
 const alertsExpanded = ref(true) // alert system variable
@@ -127,7 +139,7 @@ const disconnectedCameras = computed(() => {
         let alertMsg = ''
         let alertType = 'info'
 
-        if (disconnection.state == 'Disconnected') {
+        if (disconnection.state === 'Disconnected') {
             alertMsg = `[DISCONNECTION] ${disconnection.name} has disconnected.`
         }
         return {
@@ -263,17 +275,60 @@ const liveFeedBtn = (connId, cameraId) => {
         stopViewingCamera(connId, cameraId)
     }
 }
-// button to send force retry camera command to server
-const forceRetryCameraBtn = (connId, cameraId) => {
-    forceRetryCamera(connId, cameraId)
+// updates ConfirmationBox values for force retry button
+function forceRetryCameraBtn(cameraId, cameraName) {
+    selectedCameraId.value = cameraId
+    confirmationMessage.value = `Force retry the broken camera: ${cameraName}?`
+    showForgetCameraConfirm.value = true
 }
-// button to send forget camera command to server
-const forgetCameraBtn = (connId, cameraId) => {
-    forgetCameraRequest(connId, cameraId)
+// sends force retry camera command to server (broken cameras only)
+function handleForceRetryCamera() {
+    if (selectedCameraId.value) {
+        const [conn_id, camera_id] = selectedCameraId.value.split('-')
+        forceRetryCamera(conn_id, camera_id)
+    }
+    // resets states
+    showForceRetryCameraConfirm.value = false
+    selectedCameraId.value = null
 }
-// button to send forget edge command to server
-const forgetEdgeBtn = (connId) => {
-    forgetEdge(connId)
+// updates ConfirmationBox values for forget camera buttons
+function forgetCameraBtn(cameraId, cameraName, camState) {
+    selectedCameraId.value = cameraId
+
+    if (camState === 'Disconnected') {
+        confirmationMessage.value = `Forget the disconnected camera: ${cameraName}?`
+    } else if (camState === 'Broken') {
+        confirmationMessage.value = `Forget the broken camera: ${cameraName}?`
+    } else {
+        confirmationMessage.value = `Forget the selected camera: ${cameraName}?`
+    }
+
+    showForgetCameraConfirm.value = true
+}
+// sends forget camera command to server
+function handleForgetCamera() {
+    if (selectedCameraId.value) {
+        const [conn_id, camera_id] = selectedCameraId.value.split('-')
+        forgetCameraRequest(conn_id, camera_id)
+    }
+    // resets states
+    showForgetCameraConfirm.value = false
+    selectedCameraId.value = null
+}
+// updates ConfirmationBox values for forget edge button
+function forgetEdgeBtn(connId, edgeName) {
+    selectedEdgeId.value = connId
+    showForgetEdgeConfirm.value = true
+    confirmationMessage.value = `Forget the disconnected µ-computer: ${edgeName}?`
+}
+// sends forget edge command to server
+function handleForgetEdge() {
+    if (selectedEdgeId.value) {
+        forgetEdge(selectedEdgeId)
+    }
+    // resets states
+    showForgetCameraConfirm.value = false
+    selectedEdgeId.value = null
 }
 // camera card traffic light system
 function getCardColour(cam) {
@@ -382,12 +437,12 @@ onUnmounted(() => {
                                                 @click="configureMicroComputer(section.conn_id)">Configure</button>
                                     </h4>
                                     <div class="row d-flex justify-content-start p-2 g-2">
-                                        <div class="col-3 col-sm-3 col-md-2" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
+                                        <div class="col-6 col-sm-4 col-md-3" v-for="cam in section.activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`">
                                             <div :class="['card', 'camera-tab', getCardColour(cam), { 'selected-camera': selectedCameraId === `${cam.conn_id}-${cam.camera_id}` }]">
                                                 <div class="card-body" @click="toggleCameraSelection(`${cam.conn_id}-${cam.camera_id}`)">
                                                     <h5 class="card-title">{{ cam.name }}</h5>
-                                                        <p v-if="Number(cam.deviation)" class="card-text">{{ Math.round(cam.deviation * 100) }}%</p>
-                                                        <p v-else class="card-text">{{ cam.deviation }}</p>
+                                                        <p v-if="Number(cam.deviation)" class="card-text fs-3">{{ Math.round(cam.deviation * 100) }}%</p>
+                                                        <p v-else class="card-text fs-3">{{ cam.deviation }}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -410,25 +465,29 @@ onUnmounted(() => {
                                             <!-- <p><strong>Intensity:</strong> {{ selectedCameraInfo.intensity }}</p> -->
                                             <p v-if="Number(selectedCameraInfo.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) }}%</p>
                                             <p v-else><strong>Deviation:</strong> --</p>
-                                             <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
-                                            <table class="table table-bordered  border border-2 hardware-info text-center">
-                                                <thead>
-                                                    <th class="bg-danger text-white">Alert below:</th>
-                                                    <th class="bg-warning text-dark">Warn below:</th>
-                                                    <th class="bg-success text-white">No alert:</th>
-                                                    <th class="bg-warning text-dark">Warn above:</th>
-                                                    <th class="bg-danger text-white">Alert above:</th>
-                                                </thead>
-                                                <tbody>
-                                                    <tr class="border border-2 text-center ">
-                                                        <td>{{ Math.round(selectedCameraInfo.alert_below_threshold * 100) + '%' }}</td>
-                                                        <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100) + '%' }}</td>
-                                                        <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100)}}-{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
-                                                        <td>{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) + '%' }}</td>
-                                                        <td>{{ Math.round(selectedCameraInfo.alert_above_threshold * 100) + '%' }}</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
+                                            <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered border-2 text-center hardware-info table-squash">
+                                                    <thead>
+                                                        <tr>
+                                                            <th><span class="badge bg-danger">Alert below:</span></th>
+                                                            <th><span class="badge bg-warning text-dark">Warn below:</span></th>
+                                                            <th><span class="badge bg-success">No alert:</span></th>
+                                                            <th><span class="badge bg-warning text-dark">Warn above:</span></th>
+                                                            <th><span class="badge bg-danger">Alert above:</span></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>{{ Math.round(selectedCameraInfo.alert_below_threshold * 100) }}%</td>
+                                                            <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100) }}%</td>
+                                                            <td>{{ Math.round(selectedCameraInfo.warn_below_threshold * 100)}}-{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) }}%</td>
+                                                            <td>{{ Math.round(selectedCameraInfo.warn_above_threshold * 100) }}%</td>
+                                                            <td>{{ Math.round(selectedCameraInfo.alert_above_threshold * 100) }}%</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                             <div class="col-12 deviation-wrapper text-center">
                                                 <h4>Deviation Scale</h4>
                                                 <!-- Deviation Bar -->
@@ -461,42 +520,87 @@ onUnmounted(() => {
                     </div>
                 </div>
                 <div v-if="activeTab === 'disconns'" class="tab-pane active">
-                    <div class="col-lg-4 col-12 mt-lg-5 pe-0 text-center">
-                        <table class="table border border-2 hardware-info">
-                            <tbody>
-                                <tr>
-                                    <th scope="col" class="table-dark">Disconnected microComputers</th>
-                                </tr>
-                                <tr v-for="com in disconnectedMicroComs" :key="com.conn_id">
-                                    <td>{{ com.name }}
-                                        <div class="button-group">
-                                            <button class="btn submit-btn" @click="forgetEdgeBtn(com.conn_id)">Forget</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th scope="col" class="table-dark">Disconnected Cameras</th>
-                                </tr>
-                                <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
-                                    <td v-if="cam.state === 'Disconnected'">{{ cam.name }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <table class="table border border-2 hardware-info">
-                            <tbody>
-                                <tr>
-                                    <th scope="col" class="table-dark">Broken Cameras</th>
-                                </tr>
-                                <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
-                                    <td v-if="cam.state === 'Broken'">{{ cam.name }}
-                                        <div class="button-group">
-                                            <button class="btn submit-btn" @click="forceRetryCameraBtn(cam.conn_id, cam.camera_id)">Force Retry</button>
-                                            <button class="btn submit-btn" @click="forgetCameraBtn(cam.conn_id, cam.camera_id)">Forget</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="container mt-4 text-center">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <table class="table border border-2 hardware-info">
+                                    <tbody>
+                                        <tr>
+                                            <th scope="col" class="table-dark">Disconnected µ-Computers</th>
+                                        </tr>
+                                        <tr v-for="com in disconnectedMicroComs" :key="com.conn_id">
+                                            <td>{{ com.name }}
+                                                <div class="button-group">
+                                                    <button class="btn submit-btn" @click="forgetEdgeBtn(com.conn_id, com.name)">Forget</button>
+                                                    <ConfirmationBox
+                                                    v-model="showForgetEdgeConfirm"
+                                                    :message="confirmationMessage"
+                                                    :onConfirmFunction="handleForgetEdge"/>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-4">
+                                <table class="table border border-2 hardware-info">
+                                    <tbody>
+                                        <tr>
+                                            <th scope="col" class="table-dark">Disconnected Cameras</th>
+                                        </tr>
+                                        <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
+                                            <td v-if="cam.state === 'Disconnected'">{{ cam.name }}
+                                                <div class="button-group">
+                                                    <button class="btn submit-btn" @click="forgetCameraBtn(`${cam.conn_id}-${cam.camera_id}`, cam.name, cam.state)">Forget</button>
+                                                    <ConfirmationBox
+                                                    v-model="showForgetCameraConfirm"
+                                                    :message="confirmationMessage"
+                                                    :onConfirmFunction="handleForgetCamera"/>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-4">
+                                <table class="table border border-2 hardware-info">
+                                    <tbody>
+                                        <tr>
+                                            <th scope="col" class="table-dark">Faulty Cameras</th>
+                                        </tr>
+                                        <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
+                                            <td v-if="cam.state === 'Limbo'">
+                                                {{ cam.name }}
+                                                <span class="badge bg-secondary ms-1">
+                                                    {{ cam.state }}
+                                                </span>
+                                            </td>
+                                            <td v-if="cam.state === 'Broken'">{{ cam.name }}
+                                                <span class="badge bg-secondary ms-1 mb-2">
+                                                    {{ cam.state }}
+                                                </span>
+                                                <div class="row mb-1 button-group">
+                                                    <div class="col-auto">
+                                                        <button class="btn submit-btn" @click="forceRetryCameraBtn(`${cam.conn_id}-${cam.camera_id}`, cam.name)">Force Retry</button>
+                                                        <ConfirmationBox
+                                                        v-model="showForceRetryCameraConfirm"
+                                                        :message="confirmationMessage"
+                                                        :onConfirmFunction="handleForceRetryCamera"/>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <button class="btn submit-btn" @click="forgetCameraBtn(`${cam.conn_id}-${cam.camera_id}`, cam.name, cam.state)">Forget</button>
+                                                        <ConfirmationBox
+                                                        v-model="showForgetCameraConfirm"
+                                                        :message="confirmationMessage"
+                                                        :onConfirmFunction="handleForgetCamera"/>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -515,9 +619,11 @@ onUnmounted(() => {
     font-size: calc(1.3rem + .6vw);
     font-weight: 500;
 }
+
 .custom-tabs .nav-link:hover {
     color: var(--button-hover);
 }
+
 .custom-tabs .nav-link.active {
     color: var(--nav-title);
     background-color: var(--bs-body-bg);
@@ -526,6 +632,7 @@ onUnmounted(() => {
     position: relative;
     z-index: 2;
 }
+
 .camera-tab {
     min-height: 80px;
     overflow-y: auto;
@@ -546,7 +653,6 @@ onUnmounted(() => {
     color: var(--camera-tab-text);
 }
 
-
 .cam-info {
     border: 0.5rem solid var(--nav-bg);
     border-radius: 1rem;
@@ -555,8 +661,14 @@ onUnmounted(() => {
     color: var(--nav-title);
 }
 
-.highlight-row {
-    box-shadow: inset 0 0 0 2px #ffeeba;
+/* target mobile screens */
+@media (max-width: 768px) {
+  .table-squash th,
+  .table-squash td {
+    padding: 0.2rem 0.3rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
 }
 
 .hardware-info {
@@ -584,7 +696,7 @@ onUnmounted(() => {
     color: var(--nav-title);
 }
 
-.deviation-wrapper{
+.deviation-wrapper {
     padding: 1rem;
 }
 

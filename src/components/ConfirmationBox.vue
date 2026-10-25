@@ -10,9 +10,9 @@
 const props = defineProps({
   // Bool to show the confirm window
   modelValue: { type: Boolean, default: false },
-  // Custom conformation message
+  // Custom confirmation message
   message: { type: String, required: true },
-  // Custom conform button message (if needed)
+  // Custom confirm button message (if needed)
   confirmButtonText: { type: String, default: 'Confirm' },
   // Custom cancel button (if needed)
   cancelButtonText: { type: String, default: 'Cancel' },
@@ -36,14 +36,14 @@ function onConfirm() {
   }
   // emits
   emit('confirm')
-  // reset visiabilySate on event
+  // reset visibilityState on event
   emit('update:modelValue', false)
 }
 // Function that handles cancel event
 function onCancel() {
   // emits
   emit('cancel')
-  // reset visiabilySate on event
+  // reset visibilityState on event
   emit('update:modelValue', false)
 }
 
