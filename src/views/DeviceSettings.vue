@@ -893,15 +893,9 @@ onMounted(() => {
     <div class="container">
         <div class="row">
             <div class="col">
-            <!-- for testing remove in final product -->
-                <div class="text-center mb-2 p-1">
-                    <span v-if="isLive" class="badge bg-success">Live: Connected to server</span>
-                    <span v-else class="badge bg-secondary">Offline: Showing sample data for local testing</span>
-                </div>
-            <!-- for testing remove in final product -->
                 <form @submit.prevent="">
                     <div class="form">
-                        <div class="pb-3">
+                        <div class="py-3">
                             <h2 class="config-title">
                                 <img
                                 :src="isMicroComputerSection ? arrowDown : arrowUp"
