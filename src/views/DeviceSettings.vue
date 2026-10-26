@@ -867,7 +867,7 @@ watch(selectedMicroComputer, () => {
     // add auto select current vision processing when value is available
     if (isLive.value) {
       // add vision processing when api has a path for its value
-      //newVisionProcessing.value =
+      newVisionProcessing.value = -1;
     } else {
       newVisionProcessing.value = selectedMicroComputer.value.Menu.value.ConValueMenu
     }
@@ -942,7 +942,7 @@ onMounted(() => {
                                     <label for="vision-process" class="config-label">Select Vision Processing Method</label>
                                     <div class="form-element">
                                         <select class="submenu-input " id="vision-process" v-model.number="newVisionProcessing">
-                                            <option value="" disabled>Please select a Vision Processing Method</option>
+                                            <option value="-1" disabled>Please select a Vision Processing Method</option>
                                             <option v-for="(technique,index) in visionProcessingTechniques" :key="technique" :value="technique">
                                                 [{{index + 1}}] : {{technique}}
                                             </option>
