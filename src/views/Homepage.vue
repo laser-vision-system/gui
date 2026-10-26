@@ -262,14 +262,14 @@ function dismissAlert(id) {
     dismissedAlertIds.value.push(id)
 }
 // select one camera at a time by ID
-const toggleCameraSelection = (cameraId) => {
+function toggleCameraSelection(cameraId) {
     if (selectedCameraId.value === cameraId) {
         selectedCameraId.value = null
     } else {
         selectedCameraId.value = cameraId
     }
 }
-const updateSetpoint = () => {
+function updateSetpoint() {
     if (!selectedCameraId.value || !selectedCameraInfo.value) return
 
     const [conn_id, camera_id] = selectedCameraId.value.split('-')
@@ -285,11 +285,11 @@ const updateSetpoint = () => {
         console.error("The setpoint() function threw an error:", error)
     }*/
 }
-const isFeedActive = (cameraId) => {
+function isFeedActive(cameraId) {
     // returns bool for active feed (true) or no active feed (false)
     return !!activeFeeds.value[cameraId]
 }
-const liveFeedBtn = (connId, cameraId) => {
+function liveFeedBtn(connId, cameraId) {
     activeFeeds.value[`${connId}-${cameraId}`] = !activeFeeds.value[`${connId}-${cameraId}`]
 
     if (activeFeeds.value[`${connId}-${cameraId}`]) {
