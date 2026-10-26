@@ -43,6 +43,7 @@ const {
   disconnectedEdgeList: wsDisconnectedEdgeList,
   cameraList: wsCameraList,
   imageSrc,
+  serverAlert,
   connect,
   // functions
   setpoint,
@@ -73,6 +74,9 @@ const selectedEdgeId = ref(null)
 const selectedCameraId = ref(null)
 const cameraSetpoints = ref({})
 const alertsExpanded = ref(true) // alert system variable
+const dismissedAlertIds = ref([])
+const showServerAlert = ref(false)
+let alertTimeout = null
 const activeFeeds = ref({})
 
 // --------------------
@@ -90,14 +94,14 @@ const deviationAlerts = computed(() => {
 
                 // green threshold
                 if (analysis.deviation >= analysis.warn_below_threshold && analysis.deviation <= analysis.warn_above_threshold) {
-                    alertMsg = `[LOW] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
+                    alertMsg = `${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                     alertType = 'success'
                 } else if ((analysis.deviation < analysis.warn_below_threshold && analysis.deviation >= analysis.alert_below_threshold) ||
                             (analysis.deviation > analysis.warn_above_threshold && analysis.deviation <= analysis.alert_above_threshold)) {
-                                alertMsg = `[MODERATE] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
+                                alertMsg = `${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                                 alertType = 'warning'
                 } else if ((analysis.deviation < analysis.alert_below_threshold) || (analysis.deviation > analysis.alert_above_threshold)) {
-                    alertMsg = `[HIGH] ${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
+                    alertMsg = `${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
                     alertType = 'danger'
                 }
                 return {
@@ -126,7 +130,7 @@ const disconnectedMicroComs = computed(() => {
     return loadDisconnectedEdgesList.value
     .map(disconnection => ({
         ...disconnection,
-        alertMsg: `[DISCONNECTION] ${disconnection.name} has disconnected.`,
+        alertMsg: `${disconnection.name} has disconnected.`,
         alertType: 'info'
     }))
 })
@@ -140,7 +144,7 @@ const disconnectedCameras = computed(() => {
         let alertType = 'info'
 
         if (disconnection.state === 'Disconnected') {
-            alertMsg = `[DISCONNECTION] ${disconnection.name} has disconnected.`
+            alertMsg = `${disconnection.name} has disconnected.`
         }
         return {
             ...disconnection,
@@ -152,7 +156,23 @@ const disconnectedCameras = computed(() => {
 const disconnectionAlerts = computed(() => {
     if (!disconnectedMicroComs.value && !disconnectedCameras.value) return []
 
-    return [...disconnectedMicroComs.value, ...disconnectedCameras.value]
+    return [
+        ...disconnectedMicroComs.value.filter(alert => !dismissedAlertIds.value.includes(`${alert.conn_id}-${alert.camera_id}`)),
+        ...disconnectedCameras.value.filter(alert => !dismissedAlertIds.value.includes(`${alert.conn_id}-${alert.camera_id}`))
+    ]
+})
+const activeAlertsCount = computed(() => {
+    return sortedDeviationAlerts.value.length + disconnectionAlerts.value.length
+})
+const handleServerAlerts = computed(() => {
+    if (!serverAlert.value) {
+        showServerAlert.value = false
+    } else {
+        showServerAlert.value = true
+        alertTimeout = setTimeout(() => {
+            showServerAlert.value = false
+        }, 5000)
+    }
 })
 // grab active microCom list from websocket or sample data
 const loadActiveEdgesList = computed(() => {
@@ -238,6 +258,9 @@ const toggleAlerts = computed(() => {
 // --------------------
 //        Methods
 // --------------------
+function dismissAlert(id) {
+    dismissedAlertIds.value.push(id)
+}
 // select one camera at a time by ID
 const toggleCameraSelection = (cameraId) => {
     if (selectedCameraId.value === cameraId) {
@@ -387,23 +410,31 @@ onUnmounted(() => {
         <div class="row mt-2 mb-4">
                 <h3 class="cam-title">Alerts:
                     <button class="btn submit-btn" @click="toggleAlerts">
-                        {{ alertsExpanded ? 'Collapse All' : 'Show All (' + (sortedDeviationAlerts.length + disconnectionAlerts.length) + ')' }}
+                        {{ alertsExpanded ? 'Collapse All' : 'Show All (' + activeAlertsCount + ')' }}
                     </button>
                 </h3>
                 <div class="container mt-2">
+                    <transition name="fade">
+                        <div v-if="handleServerAlerts" class="alert alert-secondary fade show text-center" role="alert">
+                            <strong>[SERVER] </strong>{{ serverAlert }} Placeholder
+                        </div>
+                    </transition>
                     <div v-if="sortedDeviationAlerts.length > 0" class="text-center mt-2">
                         <div v-show="alertsExpanded">
                             <div v-for="alert in sortedDeviationAlerts" :key="alert.camera_id"
                                 :class="['alert mb-1', `alert-${alert.alertType}`]" role="alert">
-                                {{ alert.alertMsg }}
+                                <span v-if="alert.alertType == 'warning'"><strong>[MODERATE] </strong>{{ alert.alertMsg }}</span>
+                                <span v-else-if="alert.alertType == 'danger'"><strong>[HIGH] </strong>{{ alert.alertMsg }}</span>
+                                <span v-else>{{ alert.alertMsg }}</span>
                             </div>
                         </div>
                     </div>
                     <div v-if="disconnectionAlerts.length > 0" class="text-center mt-0">
                         <div v-show="alertsExpanded">
                             <div v-for="alert in disconnectionAlerts" :key="`${alert.conn_id}-${alert.camera_id}`"
-                                :class="['alert mb-1', `alert-${alert.alertType}`]" role="alert">
-                                {{ alert.alertMsg }}
+                                :class="['alert alert-dismissible mb-1', `alert-${alert.alertType}`]" role="alert">
+                                <strong>[DISCONNECTION] </strong>{{ alert.alertMsg }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" @click="dismissAlert(`${alert.conn_id}-${alert.camera_id}`)"></button>
                             </div>
                         </div>
                     </div>
