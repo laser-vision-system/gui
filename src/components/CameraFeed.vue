@@ -23,7 +23,7 @@ const props = defineProps({
             <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
         </div>
         <div v-else-if="isLive" class="w-100">
-            <img src="../assets/images/camera-feed-loading.gif" alt="Loading Camera Feed" class="feedbox w-100 h-100">
+            <img src="../assets/images/camera-feed-loading.gif" alt="Loading Camera Feed" class="feedbox" width="640" height="480">
         </div>
         <div v-else class="w-100">
             <img src="../assets/images/fake-feed.png" alt="Sample Camera Feed" class="feedbox w-100 h-100">
