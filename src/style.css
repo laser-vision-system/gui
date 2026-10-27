@@ -56,7 +56,7 @@
     /*Filter SVG settings*/
     --filter-background: invert(99%) sepia(3%) saturate(5%) hue-rotate(9deg) brightness(102%) contrast(101%);
     /*Deviation Bar*/
-    --deviation-bar-bg: #1C1C1C;
+    --deviation-bar-bg: #8D99AE;
 }
 
 /* Dark Mode Table Overrides */
