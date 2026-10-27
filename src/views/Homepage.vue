@@ -512,7 +512,7 @@ onUnmounted(() => {
                             &nbsp
                         </div>
                     </div>
-                    <div v-if="selectedCameraId" class="row mx-0 align-items-stretch mb-4 mt-4">
+                    <div v-if="selectedCameraInfo" class="row mx-0 align-items-stretch mb-4 mt-4">
                         <div class="cam-info p-3 mt-2">
                             <div class="row h-100 mx-0 align-content-between">
                                 <div class="col-12 px-0">
@@ -572,7 +572,7 @@ onUnmounted(() => {
                                 </div>
                             </div>
                         </div>
-                        <div v-if="isFeedActive(`${selectedCameraInfo.conn_id}-${selectedCameraInfo.camera_id}`)">
+                        <div v-if="isSelectedFeed">
                             <CameraFeed :imageSrc="imageSrc" :isLive="isLive" :isSelected="isSelectedFeed"/>
                         </div>
                     </div>
