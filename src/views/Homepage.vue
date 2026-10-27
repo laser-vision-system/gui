@@ -324,7 +324,7 @@ function forgetEdgeBtn(connId, edgeName) {
 // sends forget edge command to server
 function handleForgetEdge() {
     if (selectedEdgeId.value) {
-        forgetEdge(selectedEdgeId)
+        forgetEdge(selectedEdgeId.value)
     }
     // resets states
     showForgetCameraConfirm.value = false
