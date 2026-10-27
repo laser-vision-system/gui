@@ -147,7 +147,7 @@ function toPercentage(value) {
     --marker-height: 2rem;
     width: 100%;
     padding: 4rem 2rem 1rem;
-    background-color: #1C1C1C;
+    background-color: var(--deviation-bar-bg);
     box-sizing: border-box;
     border:solid 0.5rem;
     border-color: var(--nav-bg);
