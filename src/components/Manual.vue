@@ -6,8 +6,9 @@
 <teleport to="body">
     <footer class="footer text-center d-flex  align-items-center justify-content-center">
         <p class="m-0 d-flex align-items-center gap-2">
-            For extra information on the system you can access the user manual by clicking this icon
-            <a href="https://laser-vision-system.github.io/" target="_blank" class="d-flex">
+            View the user manual
+            <a href="https://laser-vision-system.github.io/" target="_blank" class="d-flex gap-2 justify-content-center align-items-center">
+                here
                 <img :src="hintIcon" alt="" width="30px" height="30px" class="hint-image">
             </a>
         </p>
@@ -16,6 +17,14 @@
 
 </template>
 <style scoped>
+
+a {
+  color: var(--bs-body-color);
+  background-color: transparent;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
 .footer{
     color: var(--camera-tab-text);
     background-color: var(--nav-bg);

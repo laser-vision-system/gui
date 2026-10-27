@@ -149,8 +149,6 @@ function toPercentage(value) {
     padding: 4rem 2rem 1rem;
     background-color: var(--deviation-bar-bg);
     box-sizing: border-box;
-    border:solid 0.5rem;
-    border-color: var(--nav-bg);
     border-radius: 0.75rem;
 }
 
