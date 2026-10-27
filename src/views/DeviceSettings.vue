@@ -32,7 +32,7 @@ const isRenameCameraSection = ref(true);
 const isControlsSection = ref(true);
 const isDeviationSection = ref(true);
 const isDeviationMinMaxConfigure = ref(false);
-const isCameraFeed = ref(true);
+const isCameraFeed = ref(false);
 
 
 // -----------------------------
