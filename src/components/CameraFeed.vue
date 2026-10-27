@@ -2,12 +2,6 @@
     through out the entire application, and provides basic code reuse
 -->
 <script setup>
-// import the global variable for camera feed toggle from local storage
-import { usePersistentGlobalData } from '../composables/usePersistentGlobalData';
-import { ref } from 'vue';
-const { globalCameraFeedBoolean } = usePersistentGlobalData();
-
-const showCameraFeed = ref(false);
 // --------------------
 //   Props
 // --------------------
@@ -17,29 +11,19 @@ const props = defineProps({
   isLive: { type: Boolean, default: true },
   isSelected: { type: Boolean, default: true }
 });
-// --------------------
-//   Image Toggle
-// --------------------
+
+
 </script>
 <template>
 <!-- Local Toggle Icon -->
 <div>
-    <img src="" alt="">
     <!-- Global and Local Toggle -->
-    <div v-if="globalCameraFeedBoolean || props.isSelected">
-        <div class="feed-wrapper w-100 h-100 d-flex ps-0" v-if="isSelected">
-            <div v-if="isLive && imageSrc" class="w-100 h-100">
-                <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
-            </div>
-            <div v-else-if="isSelected" class="w-100">
-                <img src="../assets/images/fake-feed.png" alt="Sample Camera Feed" class="feedbox w-100 h-100">
-            </div>
-            <div v-else-if="!isSelected" class="w-100">
-                <img src="../assets/images/no-camera-selected.png" alt="No camera selected" class="feedbox w-100 h-100">
-            </div>
-            <div v-else class="w-100">
-                <img src="../assets/images/no-camera-connected.png" alt="No Cameras Connected" class="feedbox w-100 h-100 ">
-            </div>
+    <div v-if="isSelected" class="feed-wrapper w-100 h-100 d-flex ps-0">
+        <div v-if="imageSrc && isLive" class="w-100 h-100">
+            <img :src="imageSrc" alt="Live Camera Feed" class="feedbox w-100 h-100">
+        </div>
+        <div v-else class="w-100">
+            <img src="../assets/images/fake-feed.png" alt="Sample Camera Feed" class="feedbox w-100 h-100">
         </div>
     </div>
 </div>
@@ -58,5 +42,6 @@ const props = defineProps({
     max-width: 640px;
     max-height: 480px;
     margin: 0 auto;
+    padding-top: 1rem;
 }
 </style>

@@ -18,7 +18,6 @@ import CameraFeed from '../components/CameraFeed.vue'
 import DeviationBar from '../components/DeviationBar.vue'
 import { usePersistentGlobalData } from '../composables/usePersistentGlobalData'
 const { globalCameraFeedBoolean } = usePersistentGlobalData()
-
 // -----------------------------
 //   Confirmation pop up window
 // -----------------------------
@@ -285,18 +284,30 @@ function updateSetpoint() {
         console.error("The setpoint() function threw an error:", error)
     }*/
 }
-function isFeedActive(cameraId) {
-    // returns bool for active feed (true) or no active feed (false)
-    return !!activeFeeds.value[cameraId]
+//
+function isFeedActive(key) {
+  // returns bool for active feed (true) or no active feed (false)
+  // it respects the global camera feed toggle
+  // so if no active feed but global is set true then it will still show
+  return activeFeeds.value[key] ?? globalCameraFeedBoolean.value;
 }
-function liveFeedBtn(connId, cameraId) {
-    activeFeeds.value[`${connId}-${cameraId}`] = !activeFeeds.value[`${connId}-${cameraId}`]
 
-    if (activeFeeds.value[`${connId}-${cameraId}`]) {
-        viewCamera(connId, cameraId)
-    } else {
-        stopViewingCamera(connId, cameraId)
-    }
+// Used by the camera feed component for its isSelected prop
+const isSelectedFeed = computed(() => {
+  const cam = selectedCameraInfo.value
+  return cam ? isFeedActive(`${cam.conn_id}-${cam.camera_id}`) : false
+})
+
+function liveFeedBtn(connId, cameraId) {
+  const key = `${connId}-${cameraId}`;
+  const newValue = !isFeedActive(key);
+  activeFeeds.value[key] = newValue;
+
+  if (newValue) {
+      viewCamera(connId, cameraId)
+  } else {
+      stopViewingCamera(connId, cameraId)
+  }
 }
 // updates ConfirmationBox values for force retry button
 function forceRetryCameraBtn(cameraId, cameraName) {
@@ -392,6 +403,17 @@ function configureMicroComputer(connID) {
 //        Watchers
 // --------------------
 
+// watch the selected camera to see if it has changed
+// This does not watch any broken or disconnected cameras just the ones that can be selected for viewing
+watch(selectedCameraId, (newId) => {
+
+  // start streaming the new one if it should be visible
+  if (newId && selectedCameraInfo.value && isFeedActive(newId)) {
+      const [connId, cameraId] = newId.split('-')
+      viewCamera(connId, cameraId)
+  }
+})
+
 // -------------------------------
 //        onMount and unMount
 // -------------------------------
@@ -402,6 +424,11 @@ onMounted(async () => {
 
 onUnmounted(() => {
     // Clean up on unmount
+    // if the camera is selected and the feed is on, stop viewing the feed when the view is changed, or refreshed
+    if (selectedCameraId.value && isFeedActive(selectedCameraId.value)) {
+        const [connId, cameraId] = selectedCameraId.value.split('-')
+        stopViewingCamera(connId, cameraId)
+    }
 })
 </script>
 <template>
@@ -537,8 +564,8 @@ onUnmounted(() => {
                                                 <button class="btn submit-btn" @click="configureCamera(selectedCameraInfo.conn_id,selectedCameraInfo.camera_id)">
                                                     Configure
                                                 </button>
-                                                <button v-if="globalCameraFeedBoolean" class="btn submit-btn" :class="isFeedActive(`${selectedCameraInfo.conn_id}-${selectedCameraInfo.camera_id}`)" @click="liveFeedBtn(selectedCameraInfo.conn_id, selectedCameraInfo.camera_id)">
-                                                    {{ isFeedActive(`${selectedCameraInfo.conn_id}-${selectedCameraInfo.camera_id}`) ? 'Hide Live Feed' : 'View Live Feed' }}
+                                                <button class="btn submit-btn" :class="isFeedActive(`${selectedCameraInfo.conn_id}-${selectedCameraInfo.camera_id}`)" @click="liveFeedBtn(selectedCameraInfo.conn_id, selectedCameraInfo.camera_id)">
+                                                    {{ isSelectedFeed ? 'Hide Live Feed' : 'View Live Feed' }}
                                                 </button>
                                             </div>
                                         </div>
@@ -546,7 +573,7 @@ onUnmounted(() => {
                             </div>
                         </div>
                         <div v-if="isFeedActive(`${selectedCameraInfo.conn_id}-${selectedCameraInfo.camera_id}`)">
-                            <CameraFeed :imageSrc="imageSrc" :isLive="isLive" :isSelected="!isEmpty(selectedCameraInfo)"/>
+                            <CameraFeed :imageSrc="imageSrc" :isLive="isLive" :isSelected="isSelectedFeed"/>
                         </div>
                     </div>
                 </div>
