@@ -488,7 +488,7 @@ onUnmounted(() => {
                                                     </tbody>
                                                 </table>
                                             </div>
-                                            <div class="col-12 deviation-wrapper text-center">
+                                            <div class="col-12 deviation-wrapper">
                                                 <h4>Deviation Scale</h4>
                                                 <!-- Deviation Bar -->
                                                  <DeviationBar
@@ -697,7 +697,9 @@ onUnmounted(() => {
 }
 
 .deviation-wrapper {
-    padding: 1rem;
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+    width: 100%;
 }
 
 </style>
