@@ -72,7 +72,6 @@ sampleDisconnectedEdgeList.microComputers = null;
 const activeTab = ref('conns') // tracks active tab state (defaults to connections tab)
 const selectedEdgeId = ref(null)
 const selectedCameraId = ref(null)
-const cameraSetpoints = ref({})
 const alertsExpanded = ref(true) // alert system variable
 const dismissedAlertIds = ref([])
 const showServerAlert = ref(false)
@@ -246,9 +245,9 @@ const selectedCameraInfo = computed(() => {
     const [conn_id, camera_id] = selectedCameraId.value.split('-')
     return activeMergedData.value[conn_id]?.activeCameras.find(c => c.camera_id == camera_id) || null
 })
-// checks if a specific camera has a setpoint set
+// checks if a specific camera has a setpoint set/is calibrated
 const isSetpointActive = computed(() => {
-    return selectedCameraId.value && selectedCameraId.value in cameraSetpoints.value
+    return selectedCameraInfo.value.calibration
 })
 // alert system
 const toggleAlerts = computed(() => {
@@ -273,17 +272,7 @@ function updateSetpoint() {
     if (!selectedCameraId.value || !selectedCameraInfo.value) return
 
     const [conn_id, camera_id] = selectedCameraId.value.split('-')
-    // const targetSetpoint = selectedCameraInfo.value.intensity
-  cameraSetpoints.value[selectedCameraId.value] = true;
     setpoint(conn_id, camera_id)
-
-    /*try {
-        setpoint(conn_id, camera_id)
-        wsSetpointState.value = true
-        console.log("Setpoint call executed successfully.")
-    } catch (error) {
-        console.error("The setpoint() function threw an error:", error)
-    }*/
 }
 function isFeedActive(cameraId) {
     // returns bool for active feed (true) or no active feed (false)
@@ -493,10 +482,9 @@ onUnmounted(() => {
                                         <div v-if="selectedCameraInfo">
                                             <p><strong>ID:</strong> {{ selectedCameraInfo.camera_id }}</p>
                                             <p><strong>Name:</strong> {{ selectedCameraInfo.name }}</p>
-                                            <!-- <p><strong>Intensity:</strong> {{ selectedCameraInfo.intensity }}</p> -->
                                             <p v-if="Number(selectedCameraInfo.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) }}%</p>
                                             <p v-else><strong>Deviation:</strong> --</p>
-                                            <!-- <p><strong>Active setpoint:</strong> {{ cameraSetpoints[selectedCameraId] ?? 'Not set yet.' }}</p> -->
+                                            <p><strong>Calibrated:</strong> {{ selectedCameraInfo.calibration }}</p>
                                             <div class="table-responsive">
                                                 <table class="table table-bordered border-2 text-center hardware-info table-squash">
                                                     <thead>
