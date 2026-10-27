@@ -48,23 +48,23 @@ const serverSettings = reactive({
   websocket_poll_interval: {
     value: null,
     min: 1,
-    max: 1000,
+    max: 200,
     step: 1,
     name: 'Web-Socket Poll Interval',
     default: 10,
   },
   update_delay: {
     value: null,
-    min: 10,
-    max: 10000,
-    step: 10,
+    min: 1,
+    max: 1000,
+    step: 1,
     name: 'Update Delay',
     default: 1000,
   },
   camera_err_decrement: {
     value: null,
     min: 1,
-    max: 64,
+    max: 16,
     step: 1,
     name: 'Camera Error Decrement',
     default: 1,
@@ -72,7 +72,7 @@ const serverSettings = reactive({
   camera_err_increment: {
     value: null,
     min: 1,
-    max: 64,
+    max: 16,
     step: 1,
     name: 'Camera Error Increment',
     default: 2,
@@ -80,7 +80,7 @@ const serverSettings = reactive({
   camera_err_threshold: {
     value: null,
     min: 1,
-    max: 256,
+    max: 32,
     step: 1,
     name: 'Camera Error Threshold',
     default: 5,
@@ -187,6 +187,7 @@ function resetServerDefault(key) {
 }
 // Rest all default values
 function resetAllServerDefaults() {
+  validationServerDefaultsErrors.value = [];
   serverSettings.websocket_poll_interval.value = serverSettings.websocket_poll_interval.default;
   serverSettings.update_delay.value = serverSettings.update_delay.default;
   serverSettings.camera_err_decrement.value = serverSettings.camera_err_decrement.default;
@@ -215,6 +216,21 @@ function validateServerSetting(name, min, max, value) {
     validationServerDefaultsErrors.value.push(`Warning: ${name} at ${value}, is over the maximum value of ${max}`);
     return false;
   }
+  // check that the error decrement is smaller then the error increment if not add an error to the list
+  if (name === 'Camera Error Decrement') {
+    if (value > serverSettings.camera_err_increment.value) {
+      validationServerDefaultsErrors.value.push(`Warning: ${name} at ${value}, should not be larger than the ${serverSettings.camera_err_increment.name} at ${serverSettings.camera_err_increment.value}`);
+      return false;
+    }
+  }
+// check that the error increment is larger then the error decrement
+  if (name === 'Camera Error Increment') {
+    if (value < serverSettings.camera_err_decrement.value) {
+      validationServerDefaultsErrors.value.push(`Warning: ${name} at ${value}, should not be larger than the ${serverSettings.camera_err_decrement.name} at ${serverSettings.camera_err_decrement.value}`);
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -331,8 +347,8 @@ onMounted(() => {
                         :onConfirmFunction="resetAllServerDefaults"
                     />
                     <!-- Submission Confirmation -->
-                    <p v-if="saveState === 'success'" class="success">The default settings have been successfuly updated.</p>
-                    <p v-if="saveState === 'error'" class="error">An error has occured when updating the default settings.</p>
+                    <p v-if="saveState === 'success'" class="success">The server settings have been successfully updated.</p>
+                    <p v-if="saveState === 'error'" class="error">An error has occurred when updating the default settings.</p>
 
                 </div>
             </div>
