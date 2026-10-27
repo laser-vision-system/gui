@@ -13,7 +13,8 @@
 import { ref, onMounted, onUnmounted, watch, computed, reactive } from 'vue';
 import { isBlank, checkBlank, isEmpty } from '../utils/helpers'
 import {sanitise} from '../utils/sanitiser';
-
+import { usePersistentGlobalData } from '../composables/usePersistentGlobalData'
+const { globalCameraFeedBoolean } = usePersistentGlobalData()
 // -------------------------
 //   Toggle section
 // -------------------------
@@ -32,7 +33,7 @@ const isRenameCameraSection = ref(true);
 const isControlsSection = ref(true);
 const isDeviationSection = ref(true);
 const isDeviationMinMaxConfigure = ref(false);
-const isCameraFeed = ref(false);
+const isCameraFeed = ref(globalCameraFeedBoolean.value);
 
 
 // -----------------------------
