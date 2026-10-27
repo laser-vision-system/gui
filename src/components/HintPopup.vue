@@ -103,9 +103,13 @@ onBeforeUnmount(removeListeners);
     position: absolute;
     top: calc(100% + 8px);
     z-index: 100;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
     width: max-content;
     max-width: min(260px, 80vw);
-    padding: 10px 14px;
+    max-height: 144px;
+    padding: 10px 6px 10px 14px;
     border-radius: 8px;
     background: var(--bs-body-bg);
     color: var(--bs-body-color);
@@ -119,7 +123,11 @@ onBeforeUnmount(removeListeners);
 
 .hint-message{
     margin: 0;
-    font-size: 8pt;
+    max-height: 118px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 8px;
+    font-size: 10.5pt;
     line-height: 1.2;
 }
 

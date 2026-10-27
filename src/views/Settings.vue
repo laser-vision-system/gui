@@ -5,18 +5,26 @@
 //  - Confirmation pop up and feedback for default server settings
 //  - Default server settings validation
 import { ref, reactive, onMounted } from 'vue';
+
 // composables
 import { useTheme } from '../composables/useTheme';
 const { theme, toggleTheme } = useTheme();
 import { usePersistentGlobalData } from '../composables/usePersistentGlobalData';
 const { toggleGlobalCameraFeed, globalCameraFeedBoolean } = usePersistentGlobalData();
+
 // icons
 import arrowUp from '../assets/images/arrow-up.svg';
 import arrowDown from '../assets/images/arrow-down.svg';
+
 // Components
 import ConfirmationBox from '../components/ConfirmationBox.vue';
+// Hint Popup: to show message descriptions from
+import Hints from '../components/HintPopup.vue'
+
 // helper functions
-import {checkBlank, isBlank} from '../utils/helpers'
+import { checkBlank, isBlank } from '../utils/helpers'
+import HintPopup from '../components/HintPopup.vue';
+
 // --------------------------
 //        V-model values
 // --------------------------
@@ -281,7 +289,7 @@ onMounted(() => {
                     </label>
                 </div>
                 <!-- CAMERA FEED TOGGLE -->
-                <h3 class="config-subtitle pt-4">Camera Feed</h3>
+                <h3 class="config-subtitle pt-4">Automatic Camera Feed <HintPopup message="This is a global toggle for the camera feed when turned off it ensures the camera feed is not initially visible helping reduce network traffic from the server to the gui, saving bandwidth and it helps declutter the user interface." size="30"/></h3>
                 <div class="col-12 text-center py-2">
                     <h5 class="config-label" v-if="globalCameraFeedBoolean">Camera Feed: ON</h5>
                     <h5 class="config-label" v-else>Camera Feed: OFF</h5>
@@ -291,7 +299,6 @@ onMounted(() => {
                     </label>
                 </div>
             </div>
-
             <hr class="line-break mt-2">
             <!-- SERVER SETTINGS -->
             <div class="col-12 py-2">
