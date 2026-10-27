@@ -891,7 +891,7 @@ onMounted(() => {
 </script>
 <template>
     <div class="container">
-        <div class="row">
+        <div class="row mt-2">
             <div class="col">
                 <form @submit.prevent="">
                     <div class="form">
