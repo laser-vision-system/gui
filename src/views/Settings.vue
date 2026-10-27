@@ -244,7 +244,7 @@ onMounted(() => {
 </script>
 <template>
     <div class="container">
-        <div class="row p-3">
+        <div class="row mt-3 p-3">
             <!-- GUI Settings -->
             <h2 class="config-title">
                 <img
@@ -276,7 +276,7 @@ onMounted(() => {
                 </div>
             </div>
 
-            <hr class="line-break">
+            <hr class="line-break mt-2">
             <!-- SERVER SETTINGS -->
             <div class="col-12 py-2">
                 <h2 class="config-title">

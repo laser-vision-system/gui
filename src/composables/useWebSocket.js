@@ -608,13 +608,13 @@ export function useWebSocket(url) {
     error,
     // Data
     edges,
-    edgeList,
+    edgeList, // JS Object
     disconnectedEdges,
-    disconnectedEdgeList,
+    disconnectedEdgeList, // JS Object
     cameras,
-    cameraList,
-    settingsCameraList,
-    imageSrc,
+    cameraList, // vue composable object with added deviation values for each camera
+    settingsCameraList, // Camera list without the deviation
+    imageSrc, // live camera feed for  requested camera
     deviations,
     controlConfig,
     activeCamera,

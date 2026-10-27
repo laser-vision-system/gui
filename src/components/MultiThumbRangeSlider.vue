@@ -236,7 +236,7 @@ watch(warnAbove, (newValue) => {
                     :min="alertBelowRange.min"
                     :max="alertBelowRange.max"
                     :step="step"
-                    :value="alertBelow.toFixed(2)"
+                    :value="Math.round(alertBelow * 100) / 100"
                     @change="onAlertBelowInput"
                 />
 
@@ -252,7 +252,7 @@ watch(warnAbove, (newValue) => {
                     :min="warnBelowRange.min"
                     :max="warnBelowRange.max"
                     :step="step"
-                    :value="warnBelow.toFixed(2)"
+                    :value="Math.round(warnBelow * 100) / 100"
                     @change="onWarnBelowInput"
                 />
 
@@ -268,7 +268,7 @@ watch(warnAbove, (newValue) => {
                 :min="warnAboveRange.min"
                 :max="warnAboveRange.max"
                 :step="step"
-                :value="warnAbove.toFixed(2)"
+                :value="Math.round(warnAbove * 100) / 100"
                 @change="onWarnAboveInput"
                 />
             </label>
@@ -283,7 +283,7 @@ watch(warnAbove, (newValue) => {
                     :min="alertAboveRange.min"
                     :max="alertAboveRange.max"
                     :step="step"
-                    :value="alertAbove.toFixed(2)"
+                    :value="Math.round(alertAbove * 100) / 100"
                     @change="onAlertAboveInput"
                 />
             </label>

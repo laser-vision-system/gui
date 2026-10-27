@@ -146,8 +146,12 @@ function toPercentage(value) {
     --marker-width: 0.25rem;
     --marker-height: 2rem;
     width: 100%;
-    padding: 4rem 0.65rem 1rem;
+    padding: 4rem 2rem 1rem;
+    background-color: var(--deviation-bar-bg);
     box-sizing: border-box;
+    border:solid 0.5rem;
+    border-color: var(--nav-bg);
+    border-radius: 0.75rem;
 }
 
 .track-section {
@@ -185,7 +189,7 @@ function toPercentage(value) {
   width: var(--marker-width);
   height: var(--marker-height);
   border-radius: 0.2rem;
-  background: var(--marker-color);
+  background: var(--nav-bg);
   box-shadow: 0 0 0 2px var(--bs-body-color);
   z-index: 2;
 }
@@ -197,8 +201,9 @@ function toPercentage(value) {
   transform: translateX(-50%);
   padding: 0.1rem 0.25rem;
   border-radius: 0.5rem;
-  border: 3px solid var(--marker-color);
-  background: var(--bs-body-bg);
+  border: 3px solid;
+  border-color: var(--marker-color);
+  background: var(--marker-color);
   color: var(--bs-body-color);
   font-size: 16pt;
   font-weight: 600;

@@ -10,7 +10,7 @@
     --nav-title: black;
     --camera-tab-text: white;
     --config-title: black;
-    --cam-bg: aliceblue;
+    --cam-bg: #FFFFFF;
     --button-hover: mediumslateblue;
     --line-break-color: lightslategray;
     /*Multi Thumb Slider colour values*/
@@ -21,6 +21,8 @@
     --thumb-bg-warn: #F6C90E;
     /*Filter SVG settings*/
     --filter-background: invert(0%) sepia(0%) saturate(0%) hue-rotate(349deg) brightness(96%) contrast(102%);
+    /*Deviation Bar*/
+    --deviation-bar-bg:#e0e7f1;
 }
 
 /* Light Mode Table Overrides */
@@ -53,6 +55,8 @@
     --thumb-bg-warn: #FFCC00;
     /*Filter SVG settings*/
     --filter-background: invert(99%) sepia(3%) saturate(5%) hue-rotate(9deg) brightness(102%) contrast(101%);
+    /*Deviation Bar*/
+    --deviation-bar-bg: #1C1C1C;
 }
 
 /* Dark Mode Table Overrides */
