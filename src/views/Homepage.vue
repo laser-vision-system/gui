@@ -42,7 +42,8 @@ const {
   disconnectedEdgeList: wsDisconnectedEdgeList,
   cameraList: wsCameraList,
   imageSrc,
-  serverAlert,
+  serverAlerts, // has a hard limit of 5 alerts in the list
+  dismissAlert: dismissServerAlert, // remove a single alert given it's id value
   connect,
   // functions
   setpoint,
@@ -163,7 +164,7 @@ const activeAlertsCount = computed(() => {
     return sortedDeviationAlerts.value.length + disconnectionAlerts.value.length
 })
 const handleServerAlerts = computed(() => {
-    if (!serverAlert.value) {
+    if (!serverAlerts.value) {
         showServerAlert.value = false
     } else {
         showServerAlert.value = true
@@ -432,7 +433,7 @@ onUnmounted(() => {
                 <div class="container mt-2">
                     <transition name="fade">
                         <div v-if="handleServerAlerts" class="alert alert-secondary fade show text-center" role="alert">
-                            <strong>[SERVER] </strong>{{ serverAlert }} Placeholder
+                            <strong>[SERVER] </strong>{{ serverAlerts }} Placeholder
                         </div>
                     </transition>
                     <div v-if="sortedDeviationAlerts.length > 0" class="text-center mt-2">
