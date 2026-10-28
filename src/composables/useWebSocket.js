@@ -43,8 +43,11 @@ export function useWebSocket(url) {
   const defaultThresholds = ref(null);
   // Vision Processing Techniques
   const visionProcessingTechniques = ref([]);
-  // server Alert
-  const serverAlert = ref(null);
+  // Server alerts (queue so none are lost)
+  // Alert: { id, timeStamp, conn_id|null, camera_id|null, alert_type, alert_code, alert_name, alert_description }
+  const serverAlerts = ref([]);
+  const MAX_SERVER_ALERTS = 5;
+  let alertId = 0;
 
   // Array of Known ID fields  just add any more ids that are needed to this array of the time comes
   const ID_KEYS = ['conn_id', 'camera_id', 'edge_id' , 'conn'];
@@ -242,6 +245,7 @@ export function useWebSocket(url) {
     stopHeartbeat();
     socket?.close();
     clearActiveFeed();
+    clearAlerts();
     status.value = 'DISCONNECTED';
   }
   // -------------------------
@@ -426,7 +430,7 @@ export function useWebSocket(url) {
         break;
       // Alert sent by the server
       case 'Alert':
-        serverAlert.value = data;
+      serverAlerts.value = [ ...serverAlerts.value, { id: ++alertId, timeStamp: Date.now(), ...data },].slice(-MAX_ALERTS);
         break;
       // warn if case is not met.
       default:
@@ -442,6 +446,15 @@ export function useWebSocket(url) {
     }
     imageSrc.value = '';
     activeCamera.value = null;
+  }
+  // clear the server alerts list
+  function clearAlerts() {
+    serverAlerts.value = [];
+  }
+
+  // remove an alert given its id
+  function removeAlert(id) {
+    serverAlerts.value = serverAlerts.value.filter((a) => a.id !== id);
   }
 
   // -----------------------------------------
@@ -620,7 +633,7 @@ export function useWebSocket(url) {
     activeCamera,
     defaultThresholds,
     visionProcessingTechniques,
-    serverAlert,
+    serverAlerts,
     // Connection Functions
     connect,
     disconnect,
@@ -644,5 +657,7 @@ export function useWebSocket(url) {
     forgetEdge,
     forceRetryCamera,
     listProcessingTypes,
+    clearAlerts,
+    removeAlert,
   }
 }
