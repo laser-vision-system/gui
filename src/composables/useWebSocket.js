@@ -50,6 +50,10 @@ export function useWebSocket(url) {
   // Alert: { id, timeStamp, conn_id|null, camera_id|null, alert_type, alert_code, alert_name, alert_description }
   const serverAlerts = ref([]);
   const MAX_SERVER_ALERTS = 5;
+  // how long a server alert is kept by the gui, Error are not included and stay until manually closed by the user
+  const SERVER_ALERT_LIFETIME = 5000; // in ms
+  // stores the lifetime timers for the server alerts
+  const alertLifetime = new Map();
   let alertId = 0;
 
   // Array of Known ID fields  just add any more ids that are needed to this array of the time comes
@@ -440,7 +444,14 @@ export function useWebSocket(url) {
         break;
       // Alert sent by the server
       case 'Alert':
-      serverAlerts.value = [ ...serverAlerts.value, { id: ++alertId, timeStamp: Date.now(), ...data },].slice(-MAX_ALERTS);
+        // adds id and timeStamp to the Object list entries
+        const alert = { id: ++alertSeq, timeStamp: Date.now(), ...data };
+        serverAlerts.value = [...serverAlerts.value, alert].slice(-MAX_ALERTS);
+
+        // Confirmation and Warnings have a lifetime and expire when reached.
+        if (alert.alert_type === 'Confirmation' || alert.alert_type === 'Warning') {
+          alertLifetime.set(alert.id, setTimeout(() => removeAlert(alert.id), SERVER_ALERT_LIFETIME));
+        }
         break;
       // warn if case is not met.
       default:
@@ -459,11 +470,21 @@ export function useWebSocket(url) {
   }
   // clear the server alerts list
   function clearAlerts() {
+    // Clears timers for the alert lifetimes
+    alertTimers.forEach(clearTimeout);
+    // clears the alert timer hash map
+    alertTimers.clear();
+    // clears the list of server alerts
     serverAlerts.value = [];
   }
 
   // remove an alert given its id
   function removeAlert(id) {
+    // clears the timer of a single server alert lifetime timer
+    clearTimeout(alertTimers.get(id));
+    // then deletes is value from the hashmap
+    alertTimers.delete(id);
+    // removes the value given it's id from the serverAlerts on the GUI
     serverAlerts.value = serverAlerts.value.filter((a) => a.id !== id);
   }
 
