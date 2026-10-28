@@ -511,8 +511,17 @@ onUnmounted(() => {
                                             <p><strong>ID:</strong> {{ selectedCameraInfo.camera_id }}</p>
                                             <p><strong>Name:</strong> {{ selectedCameraInfo.name }}</p>
                                             <p><strong>Calibrated:</strong> {{ selectedCameraInfo.calibration }}</p>
-                                            <p v-if="Number(selectedCameraInfo.deviation)"><strong>Deviation:</strong> {{ Math.round(selectedCameraInfo.deviation * 100) }}%</p>
-                                            <p v-else><strong>Deviation:</strong> --</p>
+                                            <div class="col-12 deviation-wrapper">
+                                                <h4>Deviation Scale</h4>
+                                                <!-- Deviation Bar -->
+                                                 <DeviationBar
+                                                :alertBelow="selectedCameraInfo.alert_below_threshold * 100"
+                                                :warnBelow="selectedCameraInfo.warn_below_threshold * 100"
+                                                :warnAbove="selectedCameraInfo.warn_above_threshold * 100"
+                                                :alertAbove="selectedCameraInfo.alert_above_threshold * 100"
+                                                :deviation="selectedCameraInfo.deviation * 100"
+                                                />
+                                            </div>
                                             <div class="table-responsive">
                                                 <table class="table table-bordered border-2 text-center hardware-info table-squash">
                                                     <thead>
@@ -534,17 +543,6 @@ onUnmounted(() => {
                                                         </tr>
                                                     </tbody>
                                                 </table>
-                                            </div>
-                                            <div class="col-12 deviation-wrapper">
-                                                <h4>Deviation Scale</h4>
-                                                <!-- Deviation Bar -->
-                                                 <DeviationBar
-                                                :alertBelow="selectedCameraInfo.alert_below_threshold * 100"
-                                                :warnBelow="selectedCameraInfo.warn_below_threshold * 100"
-                                                :warnAbove="selectedCameraInfo.warn_above_threshold * 100"
-                                                :alertAbove="selectedCameraInfo.alert_above_threshold * 100"
-                                                :deviation="selectedCameraInfo.deviation * 100"
-                                                />
                                             </div>
                                             <div class="button-group">
                                                 <button class="btn submit-btn" :disabled="!selectedCameraId" @click="updateSetpoint">
@@ -745,7 +743,7 @@ onUnmounted(() => {
 
 .deviation-wrapper {
     padding-top: 1rem;
-    padding-bottom: 2rem;
+    padding-bottom: 1rem;
     width: 100%;
 }
 
