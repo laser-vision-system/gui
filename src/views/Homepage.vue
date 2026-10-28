@@ -42,8 +42,8 @@ const {
   disconnectedEdgeList: wsDisconnectedEdgeList,
   cameraList: wsCameraList,
   imageSrc,
-  serverAlerts, // has a hard limit of 5 alerts in the list
-  dismissAlert: dismissServerAlert, // remove a single alert given it's id value
+  serverAlerts, // has a hard limit of 5 alerts in the list to change edit the useWebSocket.js
+  removeAlert: removeServerAlert, // remove a single alert given it's id value
   connect,
   // functions
   setpoint,
@@ -74,8 +74,6 @@ const selectedEdgeId = ref(null)
 const selectedCameraId = ref(null)
 const alertsExpanded = ref(true) // alert system variable
 const dismissedAlertIds = ref([])
-const showServerAlert = ref(false)
-let alertTimeout = null
 const activeFeeds = ref({})
 
 // --------------------
@@ -163,16 +161,7 @@ const disconnectionAlerts = computed(() => {
 const activeAlertsCount = computed(() => {
     return sortedDeviationAlerts.value.length + disconnectionAlerts.value.length
 })
-const handleServerAlerts = computed(() => {
-    if (!serverAlerts.value) {
-        showServerAlert.value = false
-    } else {
-        showServerAlert.value = true
-        alertTimeout = setTimeout(() => {
-            showServerAlert.value = false
-        }, 5000)
-    }
-})
+
 // grab active microCom list from websocket or sample data
 const loadActiveEdgesList = computed(() => {
     const source = isLive.value && wsEdgeList.value.length > 0 ? wsEdgeList.value : sampleMicroComputerList.microComputers // WILL CHANGE TO NULL
@@ -249,14 +238,29 @@ const selectedCameraInfo = computed(() => {
 const isSetpointActive = computed(() => {
     return selectedCameraInfo.value.calibration
 })
-// alert system
-const toggleAlerts = computed(() => {
-    alertsExpanded.value = !alertsExpanded.value
-})
+
+// sort the server alerts so that the news alert shows on top
+const visibleServerAlerts = computed(() => [...(serverAlerts.value ?? [])].reverse());
 
 // --------------------
 //        Methods
 // --------------------
+
+// alert system
+function toggleAlerts() {
+  alertsExpanded.value = !alertsExpanded.value;
+}
+
+// server alert css for the respective server alert types
+function serverAlertStyle(alertType) {
+  switch (alertType) {
+    case 'Confirmation': return 'alert-success'
+    case 'Warning': return 'alert-warning'
+    case 'Error': return 'alert-danger'
+    default: return 'alert-secondary'
+  }
+}
+
 function dismissAlert(id) {
     dismissedAlertIds.value.push(id)
 }
@@ -303,7 +307,7 @@ function liveFeedBtn(connId, cameraId) {
 function forceRetryCameraBtn(cameraId, cameraName) {
     selectedCameraId.value = cameraId
     confirmationMessage.value = `Force retry the broken camera: ${cameraName}?`
-    showForgetCameraConfirm.value = true
+    showForceRetryCameraConfirm.value = true
 }
 // sends force retry camera command to server (broken cameras only)
 function handleForceRetryCamera() {
@@ -351,7 +355,7 @@ function handleForgetEdge() {
         forgetEdge(selectedEdgeId.value)
     }
     // resets states
-    showForgetCameraConfirm.value = false
+    showForgetEdgeConfirm.value = false
     selectedEdgeId.value = null
 }
 // camera card traffic light system
@@ -431,11 +435,16 @@ onUnmounted(() => {
                     </button>
                 </h3>
                 <div class="container mt-2">
-                    <transition name="fade">
-                        <div v-if="handleServerAlerts" class="alert alert-secondary fade show text-center" role="alert">
-                            <strong>[SERVER] </strong>{{ serverAlerts }} Placeholder
+                    <transition-group name="server-alert" tag="div">
+                        <div v-for="alert in visibleServerAlerts" :key="alert.id"
+                            :class="['alert alert-dismissible text-center mb-1', serverAlertClass(alert.alert_type)]"
+                            role="alert">
+                                <strong>[Server {{ String(alert.alert_type).toUpperCase() }}]</strong>
+                                <span class="fw-semibold">{{ alert.alert_name }}</span>
+                                <span v-if="alert.alert_description">: {{ alert.alert_description }}</span>
+                                <button type="button" class="btn-close" aria-label="Close" @click="removeServerAlert(alert.id)"></button>
                         </div>
-                    </transition>
+                    </transition-group>
                     <div v-if="sortedDeviationAlerts.length > 0" class="text-center mt-2">
                         <div v-show="alertsExpanded">
                             <div v-for="alert in sortedDeviationAlerts" :key="alert.camera_id"
@@ -748,5 +757,4 @@ onUnmounted(() => {
     padding-bottom: 2rem;
     width: 100%;
 }
-
 </style>
