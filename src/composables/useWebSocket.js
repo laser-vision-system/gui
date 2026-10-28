@@ -426,10 +426,11 @@ export function useWebSocket(url) {
       // GUI Image Analysis (reading the deviation)
       // The ImageAnalysis struct sends conn_id: String, camera_id: CameraId and pub deviation: Deviation
 
-      case 'ImageAnalysis':
+      case 'ImageAnalysis': {
         const { conn_id, camera_id, deviation } = data;
         deviations.value[`${conn_id},${camera_id}`] = deviation;
         break;
+      }
       // Pong message from the server
       case 'Pong':
         lastPongTimestamp.value = Date.now();
@@ -443,16 +444,25 @@ export function useWebSocket(url) {
         visionProcessingTechniques.value = data?.processing_types ?? [];
         break;
       // Alert sent by the server
-      case 'Alert':
+      case 'Alert': {
         // adds id and timeStamp to the Object list entries
-        const alert = { id: ++alertSeq, timeStamp: Date.now(), ...data };
-        serverAlerts.value = [...serverAlerts.value, alert].slice(-MAX_ALERTS);
+        const alert = { id: ++alertId, timeStamp: Date.now(), ...data };
+        newAlertList = [...serverAlerts.value, alert];
+
+        // remove the oldest alerts that are over the max limit and clear their timers
+        newAlertList.slice(0, Math.max(0, newAlertList.length - MMAX_SERVER_ALERTS)).forEach((alert) => {
+          clearTimeout(alertLifetime.get(alert.id));
+          alertLifetime.delete(alert.id);
+        })
+        // set the server alerts to the new value with the correct size
+        serverAlerts.value = newAlertList.slice(-MAX_SERVER_ALERTS);
 
         // Confirmation and Warnings have a lifetime and expire when reached.
         if (alert.alert_type === 'Confirmation' || alert.alert_type === 'Warning') {
           alertLifetime.set(alert.id, setTimeout(() => removeAlert(alert.id), SERVER_ALERT_LIFETIME));
         }
         break;
+      }
       // warn if case is not met.
       default:
         console.warn('Unhandled message type from server:', type, data);
@@ -481,9 +491,9 @@ export function useWebSocket(url) {
   // remove an alert given its id
   function removeAlert(id) {
     // clears the timer of a single server alert lifetime timer
-    clearTimeout(alertTimers.get(id));
+    clearTimeout(alertLifetime.get(id));
     // then deletes is value from the hashmap
-    alertTimers.delete(id);
+    alertLifetime.delete(id);
     // removes the value given it's id from the serverAlerts on the GUI
     serverAlerts.value = serverAlerts.value.filter((a) => a.id !== id);
   }
