@@ -24,6 +24,7 @@ export function useWebSocket(url) {
   const cameraList = computed(() => Object.values(cameras.value).map((camera) => ({
     ...camera,
     deviation: deviations.value[`${camera.conn_id},${camera.camera_id}`] ?? null,
+    calibration: calibrations.value[`${camera.conn_id},${camera.camera_id}`] ?? null
   }))
   );
 
@@ -35,6 +36,8 @@ export function useWebSocket(url) {
   const imageSrc = ref('');
   // Image Analysis for active camera stores the deviation values
   const deviations = ref({});
+  // camera calibrations
+  const calibrations = ref({});
   // Control Configuration
   const controlConfig = ref(null);
   // Active Camera / selected camera
@@ -210,6 +213,7 @@ export function useWebSocket(url) {
       listEdges();
       listDisconnectedEdges();
       listCameras();
+      cameraCalibrationStatus();
       getDefaultThresholds();
       listProcessingTypes();
     }
@@ -231,6 +235,7 @@ export function useWebSocket(url) {
     socket.onclose = () => {
       stopHeartbeat();
       deviations.value = {};
+      calibrations.value = {};
       status.value = 'DISCONNECTED';
     }
   }
@@ -369,6 +374,11 @@ export function useWebSocket(url) {
             alert_above_threshold: existing?.alert_above_threshold ?? null,
           },
         }
+        break;
+      }
+      case 'CameraCalibrationStatus': {
+        const { conn_id, camera_id, calibrated } = data;
+        calibrations.value[`${conn_id},${camera_id}`] = calibrated;
         break;
       }
       // Camera Disconnect (not used in GUI as it does not care about disconnecting that is handled on the edge side.)
@@ -522,6 +532,11 @@ export function useWebSocket(url) {
     }
   }
 
+  // requests the calibration status of a given camera
+  function cameraCalibrationStatus() {
+    send('IsCameraCalibrated');
+  }
+
   // view camera config
   function viewCameraConfig(connId, cameraId) {
     send('ViewCameraConfig', {
@@ -647,6 +662,7 @@ export function useWebSocket(url) {
     viewCamera,
     stopViewingCamera,
     viewCameraConfig,
+    cameraCalibrationStatus,
     updateConfiguration,
     setCameraThresholds,
     setDefaultThreshold,
