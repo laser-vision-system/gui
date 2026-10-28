@@ -50,6 +50,10 @@ export function useWebSocket(url) {
   // Alert: { id, timeStamp, conn_id|null, camera_id|null, alert_type, alert_code, alert_name, alert_description }
   const serverAlerts = ref([]);
   const MAX_SERVER_ALERTS = 5;
+  // how long a server alert is kept by the gui, Error are not included and stay until manually closed by the user
+  const SERVER_ALERT_LIFETIME = 5000; // in ms
+  // stores the lifetime timers for the server alerts
+  const alertLifetime = new Map();
   let alertId = 0;
 
   // Array of Known ID fields  just add any more ids that are needed to this array of the time comes
@@ -422,10 +426,11 @@ export function useWebSocket(url) {
       // GUI Image Analysis (reading the deviation)
       // The ImageAnalysis struct sends conn_id: String, camera_id: CameraId and pub deviation: Deviation
 
-      case 'ImageAnalysis':
+      case 'ImageAnalysis': {
         const { conn_id, camera_id, deviation } = data;
         deviations.value[`${conn_id},${camera_id}`] = deviation;
         break;
+      }
       // Pong message from the server
       case 'Pong':
         lastPongTimestamp.value = Date.now();
@@ -439,9 +444,25 @@ export function useWebSocket(url) {
         visionProcessingTechniques.value = data?.processing_types ?? [];
         break;
       // Alert sent by the server
-      case 'Alert':
-      serverAlerts.value = [ ...serverAlerts.value, { id: ++alertId, timeStamp: Date.now(), ...data },].slice(-MAX_ALERTS);
+      case 'Alert': {
+        // adds id and timeStamp to the Object list entries
+        const alert = { id: ++alertId, timeStamp: Date.now(), ...data };
+        newAlertList = [...serverAlerts.value, alert];
+
+        // remove the oldest alerts that are over the max limit and clear their timers
+        newAlertList.slice(0, Math.max(0, newAlertList.length - MMAX_SERVER_ALERTS)).forEach((alert) => {
+          clearTimeout(alertLifetime.get(alert.id));
+          alertLifetime.delete(alert.id);
+        })
+        // set the server alerts to the new value with the correct size
+        serverAlerts.value = newAlertList.slice(-MAX_SERVER_ALERTS);
+
+        // Confirmation and Warnings have a lifetime and expire when reached.
+        if (alert.alert_type === 'Confirmation' || alert.alert_type === 'Warning') {
+          alertLifetime.set(alert.id, setTimeout(() => removeAlert(alert.id), SERVER_ALERT_LIFETIME));
+        }
         break;
+      }
       // warn if case is not met.
       default:
         console.warn('Unhandled message type from server:', type, data);
@@ -459,11 +480,21 @@ export function useWebSocket(url) {
   }
   // clear the server alerts list
   function clearAlerts() {
+    // Clears timers for the alert lifetimes
+    alertLifetime.forEach(clearTimeout);
+    // clears the alert timer hash map
+    alertLifetime.clear();
+    // clears the list of server alerts
     serverAlerts.value = [];
   }
 
   // remove an alert given its id
   function removeAlert(id) {
+    // clears the timer of a single server alert lifetime timer
+    clearTimeout(alertLifetime.get(id));
+    // then deletes is value from the hashmap
+    alertLifetime.delete(id);
+    // removes the value given it's id from the serverAlerts on the GUI
     serverAlerts.value = serverAlerts.value.filter((a) => a.id !== id);
   }
 
