@@ -471,9 +471,9 @@ export function useWebSocket(url) {
   // clear the server alerts list
   function clearAlerts() {
     // Clears timers for the alert lifetimes
-    alertTimers.forEach(clearTimeout);
+    alertLifetime.forEach(clearTimeout);
     // clears the alert timer hash map
-    alertTimers.clear();
+    alertLifetime.clear();
     // clears the list of server alerts
     serverAlerts.value = [];
   }
