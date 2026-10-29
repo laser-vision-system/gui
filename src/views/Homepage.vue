@@ -92,8 +92,12 @@ const isLive = computed(() => status.value === 'CONNECTED');
 import sampleCameraList from '../assets/data/sampleCameraList.json';
 import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json';
 import sampleDisconnectedEdgeList from '../assets/data/sampleDisconnectedEdgeList.json';
-// uncomment for deployment :)
+// uncomment for deployment
+// for testing on sample data comment out these
 sampleDisconnectedEdgeList.microComputers = null;
+sampleCameraList.cameras = null;
+sampleMicroComputerList.microComputers = null;
+// for testing on sample data comment out these
 // --------------------
 //      ref Values
 // --------------------

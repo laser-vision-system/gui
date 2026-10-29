@@ -123,6 +123,13 @@ import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.
 // list of micro computers
 import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json';
 
+// uncomment for deployment
+// for testing on sample data comment out these
+sampleCameraList.cameras = [];
+sampleMicroComputerList.microComputers = [];
+sampleCameraConfiguration.configurations = [];
+// for testing on sample data comment out these
+
 // -------------------------
 //     Selected values
 // -------------------------
@@ -291,7 +298,7 @@ onUnmounted(() => {
 // filter micro Computer list for active computers
 // may need to be changed to remove state
 const activeMicroComputers = computed(() => {
-  const source = isLive.value ? wsEdgeList.value : sampleMicroComputerList.microComputers
+  const source = isLive.value ? wsEdgeList.value : sampleMicroComputerList.microComputers;
   return source.filter((com) => com.state === 'Active')
 });
 
