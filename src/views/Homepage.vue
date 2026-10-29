@@ -408,7 +408,7 @@ function handleForgetCamera() {
 function forgetEdgeBtn(connId, edgeName) {
     selectedEdgeId.value = connId
     showForgetEdgeConfirm.value = true
-    confirmationMessage.value = `Forget the disconnected µ-computer: ${edgeName}?`
+    confirmationMessage.value = `Forget the disconnected edge device: ${edgeName}?`
 }
 
 // sends forget edge command to server
@@ -651,7 +651,7 @@ onUnmounted(() => {
                                 <table class="table border border-2 hardware-info">
                                     <tbody>
                                         <tr>
-                                            <th scope="col" class="table-dark">Disconnected µ-Computers</th>
+                                            <th scope="col" class="table-dark">Disconnected Edge Devices</th>
                                         </tr>
                                         <tr v-for="com in disconnectedMicroComs" :key="com.conn_id">
                                             <td>{{ com.name }}
