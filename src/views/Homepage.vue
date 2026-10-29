@@ -9,7 +9,7 @@
 //  Connections section:
 //    - Active edge devices
 //        - Edge configure button (links to device settings page with prefilled edge info)
-//    - Active camera devices 
+//    - Active camera devices
 //        - Camera information (ID, name, calibration status, deviation)
 //        - Camera calibration button
 //        - Camera configure button (links to device settings page with prefilled camera info)
@@ -56,6 +56,7 @@ import ConfirmationBox from '../components/ConfirmationBox.vue';
 const showForgetCameraConfirm = ref(false);
 const showForgetEdgeConfirm = ref(false);
 const showForceRetryCameraConfirm = ref(false);
+const showCalibrateCameraConfirm = ref(false);
 const confirmationMessage = ref('');
 
 // --------------------
@@ -368,6 +369,12 @@ function forceRetryCameraBtn(cameraId, cameraName) {
     showForceRetryCameraConfirm.value = true;
 }
 
+// updates confimation box values for calibrate button
+function calibrateBtn(cameraName) {
+  confirmationMessage.value = `Calibrate: ${cameraName}?`;
+  showCalibrateCameraConfirm.value = true;
+}
+
 // sends force retry camera command to server (broken cameras only)
 function handleForceRetryCamera() {
     if (selectedCameraId.value) {
@@ -622,9 +629,13 @@ onUnmounted(() => {
                                             </div>
                                             <!-- Buttons -->
                                             <div class="button-group">
-                                                <button class="btn submit-btn" :disabled="!selectedCameraId" @click="updateSetpoint">
+                                                <button class="btn submit-btn" :disabled="!selectedCameraId" @click="calibrateBtn(selectedCameraInfo.name)">
                                                     {{ isSetpointActive ? 'Recalibrate' : 'Calibrate' }}
                                                 </button>
+                                                <ConfirmationBox
+                                                :message="confirmationMessage"
+                                                v-model="showCalibrateCameraConfirm"
+                                                :onConfirmFunction="updateSetpoint" />
                                                 <button class="btn submit-btn" @click="configureCamera(selectedCameraInfo.conn_id,selectedCameraInfo.camera_id)">
                                                     Configure
                                                 </button>
@@ -694,10 +705,10 @@ onUnmounted(() => {
                                     <tbody>
                                         <tr>
                                             <th scope="col" class="table-dark">Faulty Cameras
-                                                <HintPopup 
+                                                <HintPopup
                                                     message="Includes broken & limbo cameras.
                                                         Broken: connected & initialised but fails to read a frame too many times.
-                                                        Limbo: connection detected but camera cannot be established (this is brief before it is classified as broken)." 
+                                                        Limbo: connection detected but camera cannot be established (this is brief before it is classified as broken)."
                                                     size="20"/>
                                             </th>
                                         </tr>
