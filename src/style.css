@@ -67,8 +67,8 @@
 }
 
 .navTitle {
-    font-size: 10pt;
-    font-weight: 700;
+    font-size: 14pt;
+    font-weight: 600;
     color: var(--nav-title);
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
@@ -126,25 +126,25 @@
 }
 
 .config-label {
-    font-weight: 500;
+    font-weight: 300;
     font-size: 16pt;
     color: var(--config-title);
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    /*font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;*/
     padding-left: 4.5rem;
 }
 
 .config-title {
     font-weight: 600;
-    font-size: 20pt;
+    font-size: 22pt;
     color: var(--config-title);
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    /*font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;*/
 }
 
 .config-subtitle {
-    font-weight: 600;
+    font-weight: 400;
     font-size: 18pt;
     color: var(--config-title);
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    /*font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;*/
     padding-left: 2.5rem;
 }
 
