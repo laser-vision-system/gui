@@ -360,7 +360,7 @@ export function useWebSocket(url) {
       case 'DisconnectedEdges':
         disconnectedEdges.value = normaliseDisconnectedEdgeMap(data?.edges);
         break;
-      // Camera Connect  (a new camera has come online)
+      // Camera Connect (a new camera has come online)
       case 'CameraConnected': {
         const { conn_id, camera_id, camera_name } = data;
         const key = `${conn_id},${camera_id}`;
@@ -380,6 +380,7 @@ export function useWebSocket(url) {
         }
         break;
       }
+      // calibration status of a given camera
       case 'CameraCalibrationStatus': {
         const { conn_id, camera_id, calibrated } = data;
         calibrations.value[`${conn_id},${camera_id}`] = calibrated;

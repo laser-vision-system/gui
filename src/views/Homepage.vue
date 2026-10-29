@@ -1,6 +1,33 @@
 <script setup>
+// This view is for the display of the homepage / dashboard
+// This view is connected to the server via a websocket
+// Key features include:
+//  Alerts section:
+//    - Dynamic deviation alerts
+//    - Dismissible disconnection alerts
+//    - Timed server alerts
+//  Connections section:
+//    - Active edge devices
+//        - Edge configure button (links to device settings page with prefilled edge info)
+//    - Active camera devices 
+//        - Camera information (ID, name, calibration status, deviation)
+//        - Camera calibration button
+//        - Camera configure button (links to device settings page with prefilled camera info)
+//  Disconnections section:
+//    - Disconnected edge (µ-computer) devices
+//        - Forget edge button
+//    - Disconnected camera devices
+//        - Forget camera button
+//    - Faulty camera devices
+//        - Broken cameras
+//            - Force retry camera button
+//            - Forget camera button
+//        - Limbo cameras
+
+// -----------------------
+//   Vue package Imports
+// -----------------------
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
-import { isEmpty } from '../utils/helpers'
 
 // --------------------
 //   Config Shortcut
@@ -11,16 +38,17 @@ import { useSharedDeviceData } from '../composables/useSharedDeviceData'
 const router = useRouter()
 const { setSharedMicroComputer, setSharedCamera, clearAllSharedDeviceData } = useSharedDeviceData()
 
-// --------------------
+// ---------------------
 //   Component Imports
-// --------------------
+// ---------------------
 import CameraFeed from '../components/CameraFeed.vue'
 import DeviationBar from '../components/DeviationBar.vue'
 import { usePersistentGlobalData } from '../composables/usePersistentGlobalData'
 const { globalCameraFeedBoolean } = usePersistentGlobalData()
-// -----------------------------
-//   Confirmation pop up window
-// -----------------------------
+
+// ------------------------------
+//   Confirmation pop-up window
+// ------------------------------
 // This section imports and defines the references for the confirmation window / box
 import ConfirmationBox from '../components/ConfirmationBox.vue'
 // Show Booleans
@@ -42,8 +70,8 @@ const {
   disconnectedEdgeList: wsDisconnectedEdgeList,
   cameraList: wsCameraList,
   imageSrc,
-  serverAlerts, // has a hard limit of 5 alerts in the list to change edit the useWebSocket.js
-  removeAlert: removeServerAlert, // remove a single alert given it's id value
+  serverAlerts, // has a hard limit of 5 alerts in the list; to change, edit the useWebSocket.js
+  removeAlert: removeServerAlert, // remove a single alert given its id value
   connect,
   // functions
   setpoint,
@@ -53,7 +81,6 @@ const {
   forgetCameraRequest,
   forgetEdge
 } = useWebSocket('ws://'+ location.hostname +':8080/gui_ws')
-
 //  Check if the websocket is connected
 const isLive = computed(() => status.value === 'CONNECTED')
 
@@ -68,17 +95,112 @@ sampleDisconnectedEdgeList.microComputers = null;
 // --------------------
 //      ref Values
 // --------------------
-//const setpointState = ref(false)
-const activeTab = ref('conns') // tracks active tab state (defaults to connections tab)
+// tracks active tab state (defaults to connections tab)
+const activeTab = ref('conns')
+// tracks selected edge by ID
 const selectedEdgeId = ref(null)
+// tracks selected camera by ID
 const selectedCameraId = ref(null)
-const alertsExpanded = ref(true) // alert system variable
+// tracks for collapsing or expanding alerts
+const alertsExpanded = ref(true)
+// tracks dismissed disconnection alerts by ID
 const dismissedAlertIds = ref([])
+// tracks state of active feed
 const activeFeeds = ref({})
 
 // --------------------
-//        Computed
+//    Computed Data
 // --------------------
+// grab active µ-computer list from websocket or sample data
+const loadActiveEdgesList = computed(() => {
+    const source = isLive.value && wsEdgeList.value.length > 0 ? wsEdgeList.value : sampleMicroComputerList.microComputers // WILL CHANGE TO NULL
+    return source
+})
+
+// grab disconnected µ-computer list from websocket or sample data
+const loadDisconnectedEdgesList = computed(() => {
+    const source = isLive.value && wsDisconnectedEdgeList.value.length > 0 ? wsDisconnectedEdgeList.value : sampleDisconnectedEdgeList.microComputers // WILL CHANGE TO NULL
+    return source
+})
+
+// grab camera list from websocket or sample data
+const loadCameraList = computed(() => {
+    const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : sampleCameraList.cameras // WILL CHANGE TO NULL
+    return source
+})
+
+// merge camera list with microcomputer, image analysis & selection details
+const mergedCameraData = computed(() => {
+    if (!loadActiveEdgesList.value || !loadCameraList.value) { // catches undefined (empty values)
+        return []
+    }
+
+    return loadCameraList.value.map(camera => {
+        const matchingEdgeData = loadActiveEdgesList.value.find(
+          connection => connection.conn_id === camera.conn_id)
+        const hasDeviation = camera.deviation !== null
+        && camera.deviation !== undefined && !isNaN(Number(camera.deviation))
+        return {
+        ...camera,
+        deviation: hasDeviation ? Number(camera.deviation) : '--',
+        microComName: matchingEdgeData ? matchingEdgeData.name : null,
+        microComState: matchingEdgeData ? matchingEdgeData.state : null,
+        isSelected: selectedCameraId.value === `${camera.conn_id}-${camera.camera_id}`
+        }
+    })
+})
+
+// group by microcomputer & for active cameras
+const activeMergedData = computed(() => {
+    if (!mergedCameraData.value) {
+        return []
+    }
+    else {
+        const sections = {}
+
+        mergedCameraData.value.forEach(camera => {
+            const id = camera.conn_id
+
+            // initialise sections if they don't exist yet
+            if (!sections[id]) {
+                sections[id] = {
+                    conn_id: id,
+                    microComName: camera.microComName,
+                    microComState: camera.microComState,
+                    activeCameras: [],
+                }
+            }
+
+            // evaluate for active cameras only if Pi/edge device is active
+            if (sections[id].microComState === 'Active') {
+                if (camera.state === 'Active') {
+                    sections[id].activeCameras.push(camera)
+                }
+            }
+        })
+        return sections
+    }
+})
+
+// returns camera info based on selected camera
+const selectedCameraInfo = computed(() => {
+    if (!selectedCameraId.value) return null
+    const [conn_id, camera_id] = selectedCameraId.value.split('-')
+    return activeMergedData.value[conn_id]?.activeCameras.find(c => c.camera_id == camera_id) || null
+})
+
+// used by the camera feed component for its isSelected prop
+const isSelectedFeed = computed(() => {
+  const cam = selectedCameraInfo.value
+  return cam ? isFeedActive(`${cam.conn_id}-${cam.camera_id}`) : false
+})
+
+// checks if a specific camera has a setpoint set/is calibrated
+const isSetpointActive = computed(() => {
+    return selectedCameraInfo.value.calibration
+})
+
+// appends deviation alerts to all active cameras
 const deviationAlerts = computed(() => {
     if (!activeMergedData.value) return []
 
@@ -109,6 +231,8 @@ const deviationAlerts = computed(() => {
         })
     })
 })
+
+// sorts deviation alerts in order of most to least priority (greater vs. less deviation)
 const sortedDeviationAlerts = computed(() => {
     const priority = { danger: 1, warning: 2 }
 
@@ -121,6 +245,8 @@ const sortedDeviationAlerts = computed(() => {
             return a.deviation - b.deviation
         })
 })
+
+// prepare disconnected µ-computer alerts
 const disconnectedMicroComs = computed(() => {
     if (!loadDisconnectedEdgesList.value) return []
 
@@ -131,6 +257,8 @@ const disconnectedMicroComs = computed(() => {
         alertType: 'info'
     }))
 })
+
+// prepare disconnected camera alerts
 const disconnectedCameras = computed(() => {
     if (!mergedCameraData.value) return []
 
@@ -150,6 +278,8 @@ const disconnectedCameras = computed(() => {
         }
     })
 })
+
+// combine all disconnection alerts centrally + allow for dismissal feature
 const disconnectionAlerts = computed(() => {
     if (!disconnectedMicroComs.value && !disconnectedCameras.value) return []
 
@@ -158,95 +288,19 @@ const disconnectionAlerts = computed(() => {
         ...disconnectedCameras.value.filter(alert => !dismissedAlertIds.value.includes(`${alert.conn_id}-${alert.camera_id}`))
     ]
 })
+
+// count of active alerts
 const activeAlertsCount = computed(() => {
     return sortedDeviationAlerts.value.length + disconnectionAlerts.value.length
 })
 
-// grab active microCom list from websocket or sample data
-const loadActiveEdgesList = computed(() => {
-    const source = isLive.value && wsEdgeList.value.length > 0 ? wsEdgeList.value : sampleMicroComputerList.microComputers // WILL CHANGE TO NULL
-    return source
-})
-// grab disconnected microCom list from websocket or sample data
-const loadDisconnectedEdgesList = computed(() => {
-    const source = isLive.value && wsDisconnectedEdgeList.value.length > 0 ? wsDisconnectedEdgeList.value : sampleDisconnectedEdgeList.microComputers // WILL CHANGE TO NULL
-    return source
-})
-// grab camera list from websocket or sample data
-const loadCameraList = computed(() => {
-    const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : sampleCameraList.cameras // WILL CHANGE TO NULL
-    return source
-})
-// merge camera list with microcomputer, image analysis & selection details
-const mergedCameraData = computed(() => {
-    if (!loadActiveEdgesList.value || !loadCameraList.value) { // catches undefined (empty values)
-        return []
-    }
-
-    return loadCameraList.value.map(camera => {
-        const matchingEdgeData = loadActiveEdgesList.value.find(
-          connection => connection.conn_id === camera.conn_id)
-        const hasDeviation = camera.deviation !== null
-        && camera.deviation !== undefined && !isNaN(Number(camera.deviation))
-        return {
-        ...camera,
-        deviation: hasDeviation ? Number(camera.deviation) : '--',
-        microComName: matchingEdgeData ? matchingEdgeData.name : null,
-        microComState: matchingEdgeData ? matchingEdgeData.state : null,
-        isSelected: selectedCameraId.value === `${camera.conn_id}-${camera.camera_id}`
-        }
-    })
-})
-// group by microcomputer & for active cameras
-const activeMergedData = computed(() => {
-    if (!mergedCameraData.value) {
-        return []
-    }
-    else {
-        const sections = {}
-
-        mergedCameraData.value.forEach(camera => {
-            const id = camera.conn_id
-
-            // initialise sections if they don't exist yet
-            if (!sections[id]) {
-                sections[id] = {
-                    conn_id: id,
-                    microComName: camera.microComName,
-                    microComState: camera.microComState,
-                    activeCameras: [],
-                }
-            }
-
-            // evaluate for active cameras only if Pi is active
-            if (sections[id].microComState === 'Active') {
-                if (camera.state === 'Active') {
-                    sections[id].activeCameras.push(camera)
-                }
-            }
-        })
-        return sections
-    }
-})
-// returns camera info based on selected camera
-const selectedCameraInfo = computed(() => {
-    if (!selectedCameraId.value) return null
-    const [conn_id, camera_id] = selectedCameraId.value.split('-')
-    return activeMergedData.value[conn_id]?.activeCameras.find(c => c.camera_id == camera_id) || null
-})
-// checks if a specific camera has a setpoint set/is calibrated
-const isSetpointActive = computed(() => {
-    return selectedCameraInfo.value.calibration
-})
-
-// sort the server alerts so that the news alert shows on top
+// sort the server alerts so that the new alert shows on top
 const visibleServerAlerts = computed(() => [...(serverAlerts.value ?? [])].reverse());
 
 // --------------------
-//        Methods
+//    Alert Methods
 // --------------------
-
-// alert system
+// toggle alerts (collapsed or expanded)
 function toggleAlerts() {
   alertsExpanded.value = !alertsExpanded.value;
 }
@@ -261,9 +315,14 @@ function serverAlertStyle(alertType) {
   }
 }
 
+// dimiss disconnection alert
 function dismissAlert(id) {
     dismissedAlertIds.value.push(id)
 }
+
+// --------------------
+//    Camera Methods
+// --------------------
 // select one camera at a time by ID
 function toggleCameraSelection(cameraId) {
     if (selectedCameraId.value === cameraId) {
@@ -272,26 +331,23 @@ function toggleCameraSelection(cameraId) {
         selectedCameraId.value = cameraId
     }
 }
+
+// sends setpoint to server for specified camera
 function updateSetpoint() {
     if (!selectedCameraId.value || !selectedCameraInfo.value) return
 
     const [conn_id, camera_id] = selectedCameraId.value.split('-')
     setpoint(conn_id, camera_id)
 }
-//
+
+// returns bool for active feed (true) or no active feed (false)
 function isFeedActive(key) {
-  // returns bool for active feed (true) or no active feed (false)
   // it respects the global camera feed toggle
   // so if no active feed but global is set true then it will still show
   return activeFeeds.value[key] ?? globalCameraFeedBoolean.value;
 }
 
-// Used by the camera feed component for its isSelected prop
-const isSelectedFeed = computed(() => {
-  const cam = selectedCameraInfo.value
-  return cam ? isFeedActive(`${cam.conn_id}-${cam.camera_id}`) : false
-})
-
+// toggle live feed button (view or hide)
 function liveFeedBtn(connId, cameraId) {
   const key = `${connId}-${cameraId}`;
   const newValue = !isFeedActive(key);
@@ -303,12 +359,14 @@ function liveFeedBtn(connId, cameraId) {
       stopViewingCamera(connId, cameraId)
   }
 }
+
 // updates ConfirmationBox values for force retry button
 function forceRetryCameraBtn(cameraId, cameraName) {
     selectedCameraId.value = cameraId
     confirmationMessage.value = `Force retry the broken camera: ${cameraName}?`
     showForceRetryCameraConfirm.value = true
 }
+
 // sends force retry camera command to server (broken cameras only)
 function handleForceRetryCamera() {
     if (selectedCameraId.value) {
@@ -319,6 +377,7 @@ function handleForceRetryCamera() {
     showForceRetryCameraConfirm.value = false
     selectedCameraId.value = null
 }
+
 // updates ConfirmationBox values for forget camera buttons
 function forgetCameraBtn(cameraId, cameraName, camState) {
     selectedCameraId.value = cameraId
@@ -333,6 +392,7 @@ function forgetCameraBtn(cameraId, cameraName, camState) {
 
     showForgetCameraConfirm.value = true
 }
+
 // sends forget camera command to server
 function handleForgetCamera() {
     if (selectedCameraId.value) {
@@ -343,12 +403,14 @@ function handleForgetCamera() {
     showForgetCameraConfirm.value = false
     selectedCameraId.value = null
 }
+
 // updates ConfirmationBox values for forget edge button
 function forgetEdgeBtn(connId, edgeName) {
     selectedEdgeId.value = connId
     showForgetEdgeConfirm.value = true
     confirmationMessage.value = `Forget the disconnected µ-computer: ${edgeName}?`
 }
+
 // sends forget edge command to server
 function handleForgetEdge() {
     if (selectedEdgeId.value) {
@@ -358,7 +420,8 @@ function handleForgetEdge() {
     showForgetEdgeConfirm.value = false
     selectedEdgeId.value = null
 }
-// camera card traffic light system
+
+// camera card traffic light display system based on deviation
 function getCardColour(cam) {
     if (!cam) return 'bg-dark'
 
@@ -383,11 +446,13 @@ function getCardColour(cam) {
 // --------------------
 //    Config Shortcut
 // --------------------
+// links to device settings page for camera configuration
 function configureCamera(connID, cameraID) {
   setSharedCamera(connID, cameraID);
   router.push('/device-settings');
 }
 
+// links to device settings page for µ-computer configuration
 function configureMicroComputer(connID) {
   setSharedMicroComputer(connID);
   router.push('/device-settings');
@@ -398,7 +463,7 @@ function configureMicroComputer(connID) {
 // --------------------
 
 // watch the selected camera to see if it has changed
-// This does not watch any broken or disconnected cameras just the ones that can be selected for viewing
+// this does not watch any broken or disconnected cameras just the ones that can be selected for viewing
 watch(selectedCameraId, (newId) => {
 
   // start streaming the new one if it should be visible
@@ -417,7 +482,6 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-    // Clean up on unmount
     // if the camera is selected and the feed is on, stop viewing the feed when the view is changed, or refreshed
     if (selectedCameraId.value && isFeedActive(selectedCameraId.value)) {
         const [connId, cameraId] = selectedCameraId.value.split('-')
@@ -466,7 +530,7 @@ onUnmounted(() => {
                     </div>
                 </div>
         </div>
-        <!-- Device / Disconnected List -->
+        <!-- CONNECTIONS / DISCONNECTIONS TABS -->
         <div class="row mx-0 mt-2 mb-4 align-items-start">
             <ul class="nav nav-tabs custom-tabs border-bottom-0">
                 <li class="nav-item">
@@ -481,6 +545,7 @@ onUnmounted(() => {
                 </li>
             </ul>
             <div class="tab-content p-3 border rounded-top-0 rounded-bottom-3 rounded-end-3">
+                <!-- CONNECTIONS -->
                 <div v-if="activeTab === 'conns'" class="tab-pane active">
                     <div class="col-lg-8 col-12 ps-0">
                         <div v-if="activeMergedData">
@@ -511,6 +576,7 @@ onUnmounted(() => {
                             &nbsp
                         </div>
                     </div>
+                    <!-- CAMERA INFO PANEL -->
                     <div v-if="selectedCameraInfo" class="row mx-0 align-items-stretch mb-4 mt-4">
                         <div class="cam-info p-3 mt-2">
                             <div class="row h-100 mx-0 align-content-between">
@@ -531,6 +597,7 @@ onUnmounted(() => {
                                                 :deviation="selectedCameraInfo.deviation * 100"
                                                 />
                                             </div>
+                                            <!-- Thresholds Table -->
                                             <div class="table-responsive">
                                                 <table class="table table-bordered border-2 text-center hardware-info table-squash">
                                                     <thead>
@@ -553,6 +620,7 @@ onUnmounted(() => {
                                                     </tbody>
                                                 </table>
                                             </div>
+                                            <!-- Buttons -->
                                             <div class="button-group">
                                                 <button class="btn submit-btn" :disabled="!selectedCameraId" @click="updateSetpoint">
                                                     {{ isSetpointActive ? 'Recalibrate' : 'Calibrate' }}
@@ -568,15 +636,18 @@ onUnmounted(() => {
                                 </div>
                             </div>
                         </div>
+                        <!-- Live Feed -->
                         <div v-if="isSelectedFeed">
                             <CameraFeed :imageSrc="imageSrc" :isLive="isLive" :isSelected="isSelectedFeed"/>
                         </div>
                     </div>
                 </div>
+                <!-- DISCONNECTIONS -->
                 <div v-if="activeTab === 'disconns'" class="tab-pane active">
                     <div class="container mt-4 text-center">
                         <div class="row">
                             <div class="col-md-4">
+                                <!-- Disconnected µ-computers/edge devices -->
                                 <table class="table border border-2 hardware-info">
                                     <tbody>
                                         <tr>
@@ -597,6 +668,7 @@ onUnmounted(() => {
                                 </table>
                             </div>
                             <div class="col-md-4">
+                                <!-- Disconnected camera devices -->
                                 <table class="table border border-2 hardware-info">
                                     <tbody>
                                         <tr>
@@ -617,6 +689,7 @@ onUnmounted(() => {
                                 </table>
                             </div>
                             <div class="col-md-4">
+                                <!-- Faulty camera devices -->
                                 <table class="table border border-2 hardware-info">
                                     <tbody>
                                         <tr>
