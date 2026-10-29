@@ -93,11 +93,11 @@ import sampleCameraList from '../assets/data/sampleCameraList.json';
 import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json';
 import sampleDisconnectedEdgeList from '../assets/data/sampleDisconnectedEdgeList.json';
 // uncomment for deployment
-// for testing on sample data comment out these
+// for testing on sample data comment these out:
 sampleDisconnectedEdgeList.microComputers = null;
 sampleCameraList.cameras = null;
 sampleMicroComputerList.microComputers = null;
-// for testing on sample data comment out these
+
 // --------------------
 //      ref Values
 // --------------------
@@ -596,7 +596,6 @@ onUnmounted(() => {
                                         <div v-if="selectedCameraInfo">
                                             <p><strong>ID:</strong> {{ selectedCameraInfo.camera_id }}</p>
                                             <p><strong>Name:</strong> {{ selectedCameraInfo.name }}</p>
-                                            <p><strong>Calibrated:</strong> {{ selectedCameraInfo.calibration }}</p>
                                             <div class="col-12 deviation-wrapper">
                                                 <h4>Deviation Scale</h4>
                                                 <!-- Deviation Bar -->
@@ -634,7 +633,7 @@ onUnmounted(() => {
                                             <!-- Buttons -->
                                             <div class="button-group">
                                                 <button class="btn submit-btn" :disabled="!selectedCameraId" @click="calibrateBtn(selectedCameraInfo.name)">
-                                                    {{ isSetpointActive ? 'Recalibrate' : 'Calibrate' }}
+                                                    Calibrate
                                                 </button>
                                                 <ConfirmationBox
                                                 :message="confirmationMessage"
