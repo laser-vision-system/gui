@@ -41,6 +41,7 @@ const { setSharedMicroComputer, setSharedCamera, clearAllSharedDeviceData } = us
 // ---------------------
 //   Component Imports
 // ---------------------
+import HintPopup from '../components/HintPopup.vue';
 import CameraFeed from '../components/CameraFeed.vue'
 import DeviationBar from '../components/DeviationBar.vue'
 import { usePersistentGlobalData } from '../composables/usePersistentGlobalData'
@@ -693,7 +694,13 @@ onUnmounted(() => {
                                 <table class="table border border-2 hardware-info">
                                     <tbody>
                                         <tr>
-                                            <th scope="col" class="table-dark">Faulty Cameras</th>
+                                            <th scope="col" class="table-dark">Faulty Cameras
+                                                <HintPopup 
+                                                    message="Includes broken & limbo cameras.
+                                                        Broken: connected & initialised but fails to read a frame too many times.
+                                                        Limbo: connection detected but camera cannot be established (this is brief before it is classified as broken)." 
+                                                    size="20"/>
+                                            </th>
                                         </tr>
                                         <tr v-for="cam in mergedCameraData" :key="cam.camera_id">
                                             <td v-if="cam.state === 'Limbo'">
