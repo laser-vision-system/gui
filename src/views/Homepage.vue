@@ -81,7 +81,8 @@ const {
   stopViewingCamera,
   forceRetryCamera,
   forgetCameraRequest,
-  forgetEdge
+  forgetEdge,
+  cameraCalibrationStatus,
 } = useWebSocket('ws://'+ location.hostname +':8080/gui_ws');
 //  Check if the websocket is connected
 const isLive = computed(() => status.value === 'CONNECTED');
@@ -588,7 +589,7 @@ onUnmounted(() => {
                         </div>
                     </div>
                     <!-- CAMERA INFO PANEL -->
-                    <div v-if="selectedCameraInfo" class="row mx-0 align-items-stretch mb-4 mt-4">
+                    <div v-if="selectedCameraInfo" class="row mx-0 align-items-stretch mb-1 mt-4">
                         <div class="cam-info p-3 mt-2">
                             <div class="row h-100 mx-0 align-content-between">
                                 <div class="col-12 px-0">
