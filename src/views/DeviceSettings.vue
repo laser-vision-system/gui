@@ -123,6 +123,13 @@ import sampleCameraConfiguration from '../assets/data/sampleCameraConfiguration.
 // list of micro computers
 import sampleMicroComputerList from '../assets/data/sampleMicroComputerList.json';
 
+// uncomment for deployment
+// for testing on sample data comment out these
+sampleCameraList.cameras = [];
+sampleMicroComputerList.microComputers = [];
+sampleCameraConfiguration.configurations = [];
+// for testing on sample data comment out these
+
 // -------------------------
 //     Selected values
 // -------------------------
@@ -291,7 +298,7 @@ onUnmounted(() => {
 // filter micro Computer list for active computers
 // may need to be changed to remove state
 const activeMicroComputers = computed(() => {
-  const source = isLive.value ? wsEdgeList.value : sampleMicroComputerList.microComputers
+  const source = isLive.value ? wsEdgeList.value : sampleMicroComputerList.microComputers;
   return source.filter((com) => com.state === 'Active')
 });
 
@@ -902,7 +909,7 @@ onMounted(() => {
                                 :src="isMicroComputerSection ? arrowDown : arrowUp"
                                 alt="toggle button" width="30" height="30" class="toggle-button"
                                 @click="isMicroComputerSection = !isMicroComputerSection">
-                                µ-Computer Configuration
+                                Edge Device Configuration
                             </h2>
                             <div v-if="isMicroComputerSection">
                                 <label for="microCompSelect" class="config-subtitle">
@@ -910,13 +917,13 @@ onMounted(() => {
                                     :src="isRenameMicroComputerSection ? arrowDown : arrowUp"
                                     alt="toggle button" width="25" height="25" class="toggle-button"
                                     @click="isRenameMicroComputerSection = !isRenameMicroComputerSection">
-                                    Select µ-Computer
+                                    Select Edge Device
                                 </label>
                                 <!-- SELECT micro-CAMERA -->
                                 <div class="form-element">
                                     <select class="menu-input" id="microCompSelect" v-model="selectedMicroComputer">
-                                        <option value="" disabled selected>Please select a µ-computer</option>
-                                        <option value="all">Select All µ-computers</option>
+                                        <option value="" disabled selected>Please select an Edge Device</option>
+                                        <option value="all">Select All Edge Device</option>
                                         <option v-for="(com, index) in activeMicroComputers" :key="`${com.conn_id}`" :value="com">
                                             [ {{index + 1}} ] : {{com.name}}
                                         </option>
@@ -924,7 +931,7 @@ onMounted(() => {
                                 </div>
                                 <!-- RENAME MICRO COMPUTER -->
                                 <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all' && isRenameMicroComputerSection">
-                                    <label for="rename" class="config-label">Rename µ-Computer</label>
+                                    <label for="rename" class="config-label">Rename Edge Device</label>
                                     <div class="form-element">
                                         <input type="text" id="rename" class="text-input" v-model="newMicroComputerName">
                                         <button type="button" class="btn submit-btn" @click="showRenameMicroCompConfirm = true">Rename</button>
