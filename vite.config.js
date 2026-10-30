@@ -10,6 +10,7 @@ export default defineConfig({
     //viteSingleFile()
   ],
   server: {
+    allowedHosts: true,
     proxy: {
       '/api': {
         target: 'http://0.0.0.0:8080', // changes this to the address of the server for the live demo
