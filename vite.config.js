@@ -10,13 +10,13 @@ export default defineConfig({
     //viteSingleFile()
   ],
   server: {
-    allowedHosts: "lvs-gui.thedarkgarychatplace.cc",
     proxy: {
       '/api': {
         target: 'http://0.0.0.0:8080', // changes this to the address of the server for the live demo
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       }
-    }
+    },
+    allowedHosts: "lvs-gui.thedarkgarychatplace.cc"
   }
 })
