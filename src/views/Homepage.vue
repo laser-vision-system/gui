@@ -64,6 +64,7 @@ const confirmationMessage = ref('');
 // --------------------
 import { useWebSocket } from '../composables/useWebSocket';
 // Point this at your server's websocket endpoint
+const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
 const {
   // state
   status,
@@ -83,7 +84,7 @@ const {
   forgetCameraRequest,
   forgetEdge,
   cameraCalibrationStatus,
-} = useWebSocket('ws://'+ location.hostname +':8080/gui_ws');
+} = useWebSocket(protocol + location.hostname +':8080/gui_ws');
 //  Check if the websocket is connected
 const isLive = computed(() => status.value === 'CONNECTED');
 

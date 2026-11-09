@@ -92,6 +92,7 @@ const showSetThresholdRange = ref(false);
 // --------------------
 // Functions and values imported and defined from the GUI's WebSocket composable
 import { useWebSocket } from '../composables/useWebSocket';
+const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
 const {
   // state
   status,
@@ -108,7 +109,7 @@ const {
   listCameras, viewCamera, stopViewingCamera, setCameraName,
   viewCameraConfig, updateConfiguration,
   setCameraThresholds, setDefaultThreshold, getDefaultThresholds,
-} = useWebSocket('ws://' + location.hostname + ':8080/gui_ws');
+} = useWebSocket(protocol + location.hostname + ':8080/gui_ws');
 
 //  Check if the websocket is connected
 const isLive = computed(() => status.value === 'CONNECTED');
