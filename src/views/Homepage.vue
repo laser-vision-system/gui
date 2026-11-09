@@ -84,7 +84,7 @@ const {
   forgetCameraRequest,
   forgetEdge,
   cameraCalibrationStatus,
-} = useWebSocket(protocol + location.hostname +':8080/gui_ws');
+} = useWebSocket(protocol + '172.17.0.3:8080/gui_ws');
 //  Check if the websocket is connected
 const isLive = computed(() => status.value === 'CONNECTED');
 
