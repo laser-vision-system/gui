@@ -17,7 +17,6 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, '')
       }
     },
-    allowedHosts: ['lvs-gui.thedarkgarychatplace.cc'],
-    allowedHosts: ['lvs-server.thedarkgarychatplace.cc']
+    allowedHosts: ['lvs-gui.thedarkgarychatplace.cc', 'lvs-server.thedarkgarychatplace.cc']
   }
 })
