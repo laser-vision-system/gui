@@ -109,7 +109,7 @@ const {
   listCameras, viewCamera, stopViewingCamera, setCameraName,
   viewCameraConfig, updateConfiguration,
   setCameraThresholds, setDefaultThreshold, getDefaultThresholds,
-} = useWebSocket(protocol +  'lvs-gui.thedarkgarychatplace.cc/gui_ws');
+} = useWebSocket(protocol +  'lvs-gui.thedarkgarychatplace.cc:8080/gui_ws');
 
 //  Check if the websocket is connected
 const isLive = computed(() => status.value === 'CONNECTED');
