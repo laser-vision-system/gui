@@ -84,7 +84,7 @@ const {
   forgetCameraRequest,
   forgetEdge,
   cameraCalibrationStatus,
-} = useWebSocket(protocol +'lvs-server.thedarkgarychatplace.cc:8080/gui_ws');
+} = useWebSocket(protocol +'lvs-gui.thedarkgarychatplace.cc/gui_ws');
 //  Check if the websocket is connected
 const isLive = computed(() => status.value === 'CONNECTED');
 
