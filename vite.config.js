@@ -17,6 +17,6 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, '')
       }
     },
-    allowedHosts: ['lvs-gui.thedarkgarychatplace.cc', 'lvs-server.thedarkgarychatplace.cc']
+    allowedHosts: ['laser-vision-system.app', 'server.laser-vision-system.app']
   }
 })
