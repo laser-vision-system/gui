@@ -912,40 +912,40 @@ onMounted(() => {
     <div class="container">
         <div class="row mt-2">
             <div class="col">
-                <form @submit.prevent="">
-                    <div class="form">
-                        <div class="py-3">
-                            <h2 class="config-title">
+                <div class="form">
+                    <div class="py-3">
+                        <h2 class="config-title">
+                            <img
+                            :src="isMicroComputerSection ? arrowDown : arrowUp"
+                            alt="toggle button" width="30" height="30" class="toggle-button"
+                            @click="isMicroComputerSection = !isMicroComputerSection">
+                            Edge Device Configuration
+                        </h2>
+                        <div v-if="isMicroComputerSection">
+                            <label for="microCompSelect" class="config-subtitle">
                                 <img
-                                :src="isMicroComputerSection ? arrowDown : arrowUp"
-                                alt="toggle button" width="30" height="30" class="toggle-button"
-                                @click="isMicroComputerSection = !isMicroComputerSection">
-                                Edge Device Configuration
-                            </h2>
-                            <div v-if="isMicroComputerSection">
-                                <label for="microCompSelect" class="config-subtitle">
-                                    <img
-                                    :src="isRenameMicroComputerSection ? arrowDown : arrowUp"
-                                    alt="toggle button" width="25" height="25" class="toggle-button"
-                                    @click="isRenameMicroComputerSection = !isRenameMicroComputerSection">
-                                    Select Edge Device
-                                </label>
-                                <!-- SELECT micro-CAMERA -->
-                                <div class="form-element">
-                                    <select class="menu-input" id="microCompSelect" v-model="selectedMicroComputer">
-                                        <option value="" disabled selected>Please select an Edge Device</option>
-                                        <option value="all">Select All Edge Device</option>
-                                        <option v-for="(com, index) in activeMicroComputers" :key="`${com.conn_id}`" :value="com">
-                                            [ {{index + 1}} ] : {{com.name}}
-                                        </option>
-                                    </select>
-                                </div>
-                                <!-- RENAME MICRO COMPUTER -->
+                                :src="isRenameMicroComputerSection ? arrowDown : arrowUp"
+                                alt="toggle button" width="25" height="25" class="toggle-button"
+                                @click="isRenameMicroComputerSection = !isRenameMicroComputerSection">
+                                Select Edge Device
+                            </label>
+                            <!-- SELECT micro-CAMERA -->
+                            <div class="form-element">
+                                <select class="menu-input" id="microCompSelect" v-model="selectedMicroComputer">
+                                    <option value="" disabled selected>Please select an Edge Device</option>
+                                    <option value="all">Select All Edge Device</option>
+                                    <option v-for="(com, index) in activeMicroComputers" :key="`${com.conn_id}`" :value="com">
+                                        [ {{index + 1}} ] : {{com.name}}
+                                    </option>
+                                </select>
+                            </div>
+                            <!-- RENAME MICRO COMPUTER -->
+                            <form @submit.prevent="">
                                 <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all' && isRenameMicroComputerSection">
                                     <label for="rename" class="config-label">Rename Edge Device</label>
                                     <div class="form-element">
                                         <input type="text" id="rename" class="text-input" v-model="newMicroComputerName">
-                                        <button type="button" class="btn submit-btn" @click="showRenameMicroCompConfirm = true">Rename</button>
+                                        <button type="submit" class="btn submit-btn" @click="showRenameMicroCompConfirm = true">Rename</button>
                                         <ConfirmationBox
                                             v-model="showRenameMicroCompConfirm"
                                             :message="'Rename the selected micro-computer to ' + newMicroComputerName + '?'"
@@ -953,10 +953,11 @@ onMounted(() => {
                                     </div>
                                 </div>
                                 <p v-if="feedback.microComputerName"
-                                   :class="feedback.microComputerName.ok ? 'success' : 'error'"
-                                   role="status"> {{ feedback.microComputerName.message }}</p>
-
-                                <!-- SELECT VISION PROCESSING -->
+                                    :class="feedback.microComputerName.ok ? 'success' : 'error'"
+                                    role="status"> {{ feedback.microComputerName.message }}</p>
+                            </form>
+                            <!-- SELECT VISION PROCESSING -->
+                            <form @submit.prevent="">
                                 <div v-if="selectedMicroComputer && selectedMicroComputer !== 'all' && isRenameMicroComputerSection">
                                     <label for="vision-process" class="config-label">Select Vision Processing Method</label>
                                     <div class="form-element">
@@ -966,7 +967,7 @@ onMounted(() => {
                                                 [{{index + 1}}] : {{technique}}
                                             </option>
                                         </select>
-                                        <button type="button" class="btn submit-btn" @click="showSelectVisionProcessingConfirm = true">Select</button>
+                                        <button type="submit" class="btn submit-btn" @click="showSelectVisionProcessingConfirm = true">Select</button>
                                         <ConfirmationBox
                                         v-model="showSelectVisionProcessingConfirm"
                                         message="Please click Confirm to change the Vision Processing Method"
@@ -974,41 +975,43 @@ onMounted(() => {
                                     </div>
                                 </div>
                                 <p v-if="feedback.visionProcessing"
-                                   :class="feedback.visionProcessing.ok ? 'success' : 'error'"
-                                   role="status"> {{ feedback.visionProcessing.message }}</p>
-                            </div>
-                            <hr class="line-break">
+                                    :class="feedback.visionProcessing.ok ? 'success' : 'error'"
+                                    role="status"> {{ feedback.visionProcessing.message }}</p>
+                            </form>
                         </div>
-                        <h2 class="config-title">
+                        <hr class="line-break">
+                    </div>
+                    <h2 class="config-title">
+                        <img
+                        :src="isCameraSection ? arrowDown : arrowUp"
+                        alt="toggle button" width="30" height="30" class="toggle-button"
+                        @click="isCameraSection = !isCameraSection">
+                        Camera Configuration
+                    </h2>
+                    <div v-if="isCameraSection">
+                    <!-- SELECT CAMERA -->
+                        <label for="cameraSelect" class="config-subtitle">
                             <img
-                            :src="isCameraSection ? arrowDown : arrowUp"
-                            alt="toggle button" width="30" height="30" class="toggle-button"
-                            @click="isCameraSection = !isCameraSection">
-                            Camera Configuration
-                        </h2>
-                        <div v-if="isCameraSection">
-                        <!-- SELECT CAMERA -->
-                            <label for="cameraSelect" class="config-subtitle">
-                                <img
-                                :src="isRenameCameraSection ? arrowDown : arrowUp"
-                                alt="toggle button" width="25" height="25" class="toggle-button"
-                                @click="isRenameCameraSection = !isRenameCameraSection">
-                                Select Camera
-                            </label>
-                            <div class="form-element">
-                                <select class="menu-input" id="cameraSelect" required v-model="selectedCamera">
-                                    <option value="" disabled selected>Please select a camera</option>
-                                    <option v-for="(cam, index) in activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`" :value="cam">
-                                        [ {{getEdgeName(cam.conn_id)}} - {{index + 1}} ] : {{cam.name}}
-                                    </option>
-                                </select>
-                            </div>
-                            <!-- RENAME CAMERA -->
+                            :src="isRenameCameraSection ? arrowDown : arrowUp"
+                            alt="toggle button" width="25" height="25" class="toggle-button"
+                            @click="isRenameCameraSection = !isRenameCameraSection">
+                            Select Camera
+                        </label>
+                        <div class="form-element">
+                            <select class="menu-input" id="cameraSelect" required v-model="selectedCamera">
+                                <option value="" disabled selected>Please select a camera</option>
+                                <option v-for="(cam, index) in activeCameras" :key="`${cam.conn_id}-${cam.camera_id}`" :value="cam">
+                                    [ {{getEdgeName(cam.conn_id)}} - {{index + 1}} ] : {{cam.name}}
+                                </option>
+                            </select>
+                        </div>
+                        <!-- RENAME CAMERA -->
+                        <form @submit.prevent="">
                             <div v-if="selectedConfig && isRenameCameraSection">
                                 <label for="rename" class="config-label">Rename Camera</label>
                                 <div class="form-element">
                                     <input type="text" id="rename" class="text-input" v-model="newCameraName">
-                                    <button type="button" class="btn submit-btn" @click="showRenameCameraConfirm = true">Rename</button>
+                                    <button type="submit" class="btn submit-btn" @click="showRenameCameraConfirm = true">Rename</button>
                                     <ConfirmationBox
                                     v-model="showRenameCameraConfirm"
                                     :message="'Rename the selected camera to ' + newCameraName + '?'"
@@ -1016,10 +1019,12 @@ onMounted(() => {
                                 </div>
                             </div>
                             <p v-if="feedback.camera"
-                               :class="feedback.camera.ok ? 'success' : 'error'"
-                               role="status"> {{ feedback.camera.message }}</p>
-                            <hr class="line-break" v-if="selectedCamera">
-                            <!-- CAMERA CONTROLS -->
+                                :class="feedback.camera.ok ? 'success' : 'error'"
+                                role="status"> {{ feedback.camera.message }}</p>
+                        </form>
+                        <hr class="line-break" v-if="selectedCamera">
+                        <!-- CAMERA CONTROLS -->
+                        <form @submit.prevent="">
                             <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">
                                 <img
                                 :src="isControlsSection ? arrowDown : arrowUp"
@@ -1029,7 +1034,6 @@ onMounted(() => {
                             </h4>
                             <div v-if="isControlsSection && selectedCamera">
                                 <p v-if="!hasControls" class="config-label">Waiting for controls from the camera...</p>
-
                                 <div v-for="(control,name) in controls" :key="name">
                                     <label :for="`control-${name}`" class="config-label">{{control.label}}</label>
                                     <div class="form-element">
@@ -1062,7 +1066,7 @@ onMounted(() => {
                                 </div>
                                 <p v-for="e in cameraControlErrors" class="error">{{e}}</p>
                                 <div class="mt-1 text-center d-flex flex-row justify-content-center gap-3" v-if="selectedCamera">
-                                    <button class="btn submit-btn" @click="requestSaveControls">Save Camera Controls</button>
+                                    <button type="submit" class="btn submit-btn" @click="requestSaveControls">Save Camera Controls</button>
                                     <ConfirmationBox
                                         v-model="showSaveAllControlsConfirm"
                                         message="Would you like to save all camera controls?"
@@ -1074,22 +1078,24 @@ onMounted(() => {
                                         :onConfirmFunction="resetControlsConfig"/>
                                 </div>
                                 <p v-if="feedback.controls"
-                                   :class="feedback.controls.ok ? 'success' : 'error'"
-                                   role="status"> {{ feedback.controls.message }}</p>
+                                    :class="feedback.controls.ok ? 'success' : 'error'"
+                                    role="status"> {{ feedback.controls.message }}</p>
                             </div>
-                            <!-- DEVIATION THRESHOLDS -->
-                            <hr class="line-break" v-if="selectedCamera">
-                            <p class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">
-                                <img
-                                :src="isDeviationSection ? arrowDown : arrowUp"
-                                alt="toggle button" width="25" height="25" class="toggle-button"
-                                @click="isDeviationSection = !isDeviationSection">
-                                Deviation Thresholds
-                                <button class="btn submit-btn" @click="isDeviationMinMaxConfigure = !isDeviationMinMaxConfigure">
-                                    <p class="p-0 m-0" v-if="!isDeviationMinMaxConfigure">Configure Range</p>
-                                    <p class="p-0 m-0" v-else>Close Configuration</p>
-                                </button>
-                            </p>
+                        </form>
+                        <!-- DEVIATION THRESHOLDS -->
+                        <hr class="line-break" v-if="selectedCamera">
+                        <p class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">
+                            <img
+                            :src="isDeviationSection ? arrowDown : arrowUp"
+                            alt="toggle button" width="25" height="25" class="toggle-button"
+                            @click="isDeviationSection = !isDeviationSection">
+                            Deviation Thresholds
+                            <button class="btn submit-btn" @click="isDeviationMinMaxConfigure = !isDeviationMinMaxConfigure">
+                                <p class="p-0 m-0" v-if="!isDeviationMinMaxConfigure">Configure Range</p>
+                                <p class="p-0 m-0" v-else>Close Configuration</p>
+                            </button>
+                        </p>
+                        <form @submit.prevent="">
                             <div v-if="isDeviationMinMaxConfigure">
                                 <div class="text-center d-flex flex-row justify-content-center gap-3 deviation-range-slider">
                                     <label for="slider-range-min" class="config-label">Min</label>
@@ -1098,7 +1104,7 @@ onMounted(() => {
                                     <input type="number" id="slider-range-max" class="number-input" v-model.number="sliderRange.max" :min="sliderRange.min + 1" :max="THRESHOLD_MAX">
                                 </div>
                                 <div class="d-flex flex-row justify-content-center gap-3 py-3">
-                                    <button class="btn submit-btn" @click="requestSetSliderRange">Set Range</button>
+                                    <button type="submit" class="btn submit-btn" @click="requestSetSliderRange">Set Range</button>
                                     <ConfirmationBox
                                         v-model="showSetThresholdRange"
                                         message="Would you like to save the deviation threshold range?"
@@ -1107,11 +1113,13 @@ onMounted(() => {
                                     <button class="btn submit-btn" @click="resetDeviationSliderRange">Set Default Range</button>
                                 </div>
                             </div>
+                        </form>
+                        <form @submit.prevent="" novalidate>
                             <div v-if="isDeviationSection">
                                 <p v-for="e in deviationSliderRangeErrors" class="error">{{e}}</p>
                                 <p v-if="feedback.thresholdsRange"
-                                   :class="feedback.thresholdsRange.ok ? 'success' : 'error'"
-                                   role="status"> {{ feedback.thresholdsRange.message }}</p>
+                                    :class="feedback.thresholdsRange.ok ? 'success' : 'error'"
+                                    role="status"> {{ feedback.thresholdsRange.message }}</p>
                                 <div v-if="selectedConfig">
                                     <MultiThumbSlider
                                         v-model:alertBelow="newAlertBelow"
@@ -1140,13 +1148,13 @@ onMounted(() => {
                                         :onConfirmFunction="setServerDefaultThreshold"/>
                                 </div>
                                 <p v-if="feedback.thresholds"
-                                   :class="feedback.thresholds.ok ? 'success' : 'error'"
-                                   role="status"> {{ feedback.thresholds.message }}</p>
+                                    :class="feedback.thresholds.ok ? 'success' : 'error'"
+                                    role="status"> {{ feedback.thresholds.message }}</p>
                             </div>
-                        </div>
+                        </form>
                     </div>
-                    <hr class="line-break" v-if="selectedCamera">
-                </form>
+                </div>
+                <hr class="line-break" v-if="selectedCamera">
             </div>
             <!-- Camera feed -->
             <h4 class="pt-3 pb-2 config-subtitle" v-if="selectedCamera">
