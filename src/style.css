@@ -114,6 +114,15 @@
     color: black;
 }
 
+.submit-btn:focus,
+.submit-btn:focus-visible {
+    background-color: var(--nav-bg);
+    border-color: slateblue;
+    color: white;
+    outline: 3px solid slateblue;
+    outline-offset: 2px;
+}
+
 .line-break {
     border: none;
     height: 3px;
@@ -157,7 +166,12 @@
     background-color: var(--bs-body-bg);
     color: var(--bs-body-color);
 }
-
+.number-input:focus,
+.number-input:focus-visible {
+    border-color: slateblue;
+    color: white;
+    outline: none;
+}
 .menu-input{
     width: 100%;
     margin-left: 2.5rem;
