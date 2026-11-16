@@ -50,7 +50,7 @@ import Hints from '../components/HintPopup.vue'
 // -----------------------------
 // This section is for the importing of the short cut feature for devices on the homepage view to the device settings view
 import { useSharedDeviceData } from '../composables/useSharedDeviceData';
-const { sharedMicroComputer, sharedCamera } = useSharedDeviceData();
+const { setSharedMicroComputer, setSharedCamera, clearSharedCamera, sharedMicroComputer, sharedCamera } = useSharedDeviceData();
 
 // -----------------------------
 //   Multi Thumb range slider
@@ -776,15 +776,21 @@ function applySharedData() {
   if (!sharedComputer) return;
 
   const computer = activeMicroComputers.value.find((c) => c.conn_id === sharedComputer.conn_id);
-  if (!computer) return;
-  selectedMicroComputer.value = computer;
+  if (!computer) return; // edge list has not arrived server
 
+  let camera = null;
   if (sharedCamera.value) {
-    const camera = activeCameras.value.find((c) =>
-      c.conn_id === sharedCamera.value.conn_id && c.camera_id === sharedCamera.value.camera_id);
-    if (!camera) return;
-    selectedCamera.value = camera;
+    const source = isLive.value ? wsCameraList.value : sampleCameraList.cameras;
+    if (!source.length) return; // the camera list has not arrived yet from the server
+
+    camera = source.find((c) =>
+      c.state === 'Active'
+      && c.conn_id === sharedCamera.value.conn_id
+      && c.camera_id === sharedCamera.value.camera_id) ?? null;
   }
+
+  selectedMicroComputer.value = computer;
+  if (camera) selectedCamera.value = camera;
   sharedDataApplied = true;
 }
 
@@ -802,14 +808,19 @@ watch(selectedCamera, (cam, oldCam) => {
   selectedConfig.value = null;
   cameraControlErrors.value = [];
   deviationErrors.value = [];
+
   // if there is no camera selected
   if (!cam) {
+    clearSharedCamera();
     if (isLive.value && oldCam) {
       stopViewingCamera(oldCam.conn_id, oldCam.camera_id)
     }
     loadCameraValues()
     return
   }
+
+  // remember the selection for the dashboard and the next visit
+  setSharedCamera(cam.conn_id, cam.camera_id);
 
   // load camera name and thresholds values
   newCameraName.value = cam.name

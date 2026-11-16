@@ -36,7 +36,7 @@ import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSharedDeviceData } from '../composables/useSharedDeviceData';
 const router = useRouter();
-const { setSharedMicroComputer, setSharedCamera, clearAllSharedDeviceData } = useSharedDeviceData();
+const { setSharedMicroComputer, setSharedCamera, sharedMicroComputer, sharedCamera, clearSharedCamera } = useSharedDeviceData();
 
 // ---------------------
 //   Component Imports
@@ -107,7 +107,9 @@ const activeTab = ref('conns');
 // tracks selected edge by ID
 const selectedEdgeId = ref(null);
 // tracks selected camera by ID
-const selectedCameraId = ref(null);
+const selectedCameraId = ref(
+  sharedCamera.value ? `${sharedCamera.value.conn_id}-${sharedCamera.value.camera_id}` : null
+);
 // tracks for collapsing or expanding alerts
 const alertsExpanded = ref(true);
 // tracks dismissed disconnection alerts by ID
@@ -333,10 +335,17 @@ function dismissAlert(id) {
 // select one camera at a time by ID
 function toggleCameraSelection(cameraId) {
     if (selectedCameraId.value === cameraId) {
-        selectedCameraId.value = null;
+      selectedCameraId.value = null;
+      clearSharedCamera();
     } else {
-        selectedCameraId.value = cameraId;
+      // set the camera as the shared value
+      selectedCameraId.value = cameraId;
+      // check if the selected camera is in the merged camera data
+      const cam = mergedCameraData.value.find(c => `${c.conn_id}-${c.camera_id}` === cameraId);
+      // if the camera exists set it as the shared value
+      if (cam) setSharedCamera(cam.conn_id, cam.camera_id);
     }
+
 }
 
 // sends setpoint to server for specified camera
@@ -475,14 +484,20 @@ function configureMicroComputer(connID) {
 //        Watchers
 // --------------------
 
+
+// helper computed function to get the camera key from the selected camera value
+const selectedCameraKey = computed(() => {
+  const cam = selectedCameraInfo.value;
+  return cam ? `${cam.conn_id}-${cam.camera_id}` : null;
+});
+
 // watch the selected camera to see if it has changed
 // this does not watch any broken or disconnected cameras just the ones that can be selected for viewing
-watch(selectedCameraId, (newId) => {
+watch([selectedCameraKey, isLive], ([key, live]) => {
   // start streaming the new one if it should be visible
-  if (newId && selectedCameraInfo.value && isFeedActive(newId)) {
-      const [connId, cameraId] = newId.split('-');
-      viewCamera(connId, cameraId);
-  }
+  if (!key || !live || !isFeedActive(key)) return;
+
+  viewCamera(selectedCameraInfo.value.conn_id, selectedCameraInfo.value.camera_id);
 })
 
 // -------------------------------
@@ -490,7 +505,6 @@ watch(selectedCameraId, (newId) => {
 // -------------------------------
 onMounted(async () => {
   connect();
-  clearAllSharedDeviceData();
 })
 
 onUnmounted(() => {
@@ -513,7 +527,7 @@ onUnmounted(() => {
                 <div class="container mt-2">
                     <transition-group name="server-alert" tag="div">
                         <div v-for="alert in visibleServerAlerts" :key="alert.id"
-                            :class="['alert alert-dismissible text-center mb-1', serverAlertClass(alert.alert_type)]"
+                            :class="['alert alert-dismissible text-center mb-1', serverAlertStyle(alert.alert_type)]"
                             role="alert">
                                 <strong>[Server {{ String(alert.alert_type).toUpperCase() }}]</strong>
                                 <span class="fw-semibold">{{ alert.alert_name }}</span>
