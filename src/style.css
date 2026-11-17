@@ -11,6 +11,7 @@
     --camera-tab-text: white;
     --config-title: black;
     --cam-bg: #FFFFFF;
+    --blue-btn: #1d94c7;
     --button-hover: mediumslateblue;
     --line-break-color: lightslategray;
     --range-info: #66c7db;
@@ -46,6 +47,7 @@
     --camera-tab-text: white;
     --config-title: white;
     --cam-bg: slategray;
+    --blue-btn: #0c8dc4;
     --button-hover: slateblue;
     --line-break-color: white;
     --range-info: #3ec1db;
@@ -148,6 +150,28 @@
     border-color: slateblue;
     color: white;
     outline: 3px solid slateblue;
+    outline-offset: 2px;
+}
+
+.calibrate-btn {
+    background-color: var(--blue-btn);
+    border-color: #0175a6;
+    color: white;
+    gap: 2em; 
+}
+
+.calibrate-btn:hover {
+    background-color: #6dbede;
+    border-color: #6dbede;
+    color: black;
+}
+
+.calibrate-btn:focus,
+.calibrate-btn:focus-visible {
+    background-color: var(--blue-btn);
+    border-color: #0175a6;
+    color: white;
+    outline: 3px solid #0175a6;
     outline-offset: 2px;
 }
 

@@ -647,7 +647,7 @@ onUnmounted(() => {
                                             </div>
                                             <!-- Buttons -->
                                             <div class="button-group">
-                                                <button class="btn submit-btn" :disabled="!selectedCameraId" @click="calibrateBtn(selectedCameraInfo.name)">
+                                                <button class="btn calibrate-btn" :disabled="!selectedCameraId" @click="calibrateBtn(selectedCameraInfo.name)">
                                                     Calibrate
                                                 </button>
                                                 <ConfirmationBox
