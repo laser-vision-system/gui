@@ -223,14 +223,14 @@ const deviationAlerts = computed(() => {
                 // green threshold
                 if (analysis.deviation >= analysis.warn_below_threshold && analysis.deviation <= analysis.warn_above_threshold) {
                     alertMsg = `${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
-                    alertType = 'success'
+                    alertType = 'safe'
                 } else if ((analysis.deviation < analysis.warn_below_threshold && analysis.deviation >= analysis.alert_below_threshold) ||
                             (analysis.deviation > analysis.warn_above_threshold && analysis.deviation <= analysis.alert_above_threshold)) {
                                 alertMsg = `${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
-                                alertType = 'warning'
+                                alertType = 'warn'
                 } else if ((analysis.deviation < analysis.alert_below_threshold) || (analysis.deviation > analysis.alert_above_threshold)) {
                     alertMsg = `${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
-                    alertType = 'danger'
+                    alertType = 'alert'
                 }
                 return {
                     ...analysis,
@@ -243,10 +243,10 @@ const deviationAlerts = computed(() => {
 
 // sorts deviation alerts in order of most to least priority (greater vs. less deviation)
 const sortedDeviationAlerts = computed(() => {
-    const priority = { danger: 1, warning: 2 }
+    const priority = { alert: 1, warn: 2 }
 
     return deviationAlerts.value
-        .filter(alert => alert.alertType === 'danger' || alert.alertType === 'warning')
+        .filter(alert => alert.alertType === 'alert' || alert.alertType === 'warn')
         .sort((a, b) => {
             if (priority[a.alertType] !== priority[b.alertType]) {
                 return priority[a.alertType] - priority[b.alertType]
@@ -317,9 +317,9 @@ function toggleAlerts() {
 // server alert css for the respective server alert types
 function serverAlertStyle(alertType) {
   switch (alertType) {
-    case 'Confirmation': return 'alert-success';
-    case 'Warning': return 'alert-warning';
-    case 'Error': return 'alert-danger';
+    case 'Confirmation': return 'alert-safe';
+    case 'Warning': return 'alert-warn';
+    case 'Error': return 'alert-alert';
     default: return 'alert-secondary';
   }
 }
@@ -454,12 +454,12 @@ function getCardColour(cam) {
     const alertAbove = cam.alert_above_threshold;
 
     if (deviation >= warnBelow && deviation <= warnAbove) {
-        return 'bg-success';
+        return 'bg-safe';
     } else if ((deviation < warnBelow && deviation >= alertBelow) ||
                 (deviation > warnAbove && deviation <= alertAbove)) {
-                    return 'bg-warning text-dark';
+                    return 'bg-warn text-dark';
     } else if ((deviation < alertBelow) || (deviation > alertAbove)) {
-        return 'bg-danger';
+        return 'bg-alert';
     } else {
         return 'bg-dark';
     }
@@ -539,8 +539,8 @@ onUnmounted(() => {
                         <div v-show="alertsExpanded">
                             <div v-for="alert in sortedDeviationAlerts" :key="alert.camera_id"
                                 :class="['alert mb-1', `alert-${alert.alertType}`]" role="alert">
-                                <span v-if="alert.alertType == 'warning'"><strong>[MODERATE] </strong>{{ alert.alertMsg }}</span>
-                                <span v-else-if="alert.alertType == 'danger'"><strong>[HIGH] </strong>{{ alert.alertMsg }}</span>
+                                <span v-if="alert.alertType == 'warn'"><strong>[MODERATE] </strong>{{ alert.alertMsg }}</span>
+                                <span v-else-if="alert.alertType == 'alert'"><strong>[HIGH] </strong>{{ alert.alertMsg }}</span>
                                 <span v-else>{{ alert.alertMsg }}</span>
                             </div>
                         </div>
@@ -627,11 +627,11 @@ onUnmounted(() => {
                                                 <table class="table table-bordered border-2 text-center hardware-info table-squash">
                                                     <thead>
                                                         <tr>
-                                                            <th><span class="badge bg-danger">Alert below:</span></th>
-                                                            <th><span class="badge bg-warning text-dark">Warn below:</span></th>
-                                                            <th><span class="badge bg-success">No alert:</span></th>
-                                                            <th><span class="badge bg-warning text-dark">Warn above:</span></th>
-                                                            <th><span class="badge bg-danger">Alert above:</span></th>
+                                                            <th><span class="badge bg-alert">Alert below:</span></th>
+                                                            <th><span class="badge bg-warn">Warn below:</span></th>
+                                                            <th><span class="badge bg-safe">No alert:</span></th>
+                                                            <th><span class="badge bg-warn">Warn above:</span></th>
+                                                            <th><span class="badge bg-alert">Alert above:</span></th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>

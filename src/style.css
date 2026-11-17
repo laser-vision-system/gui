@@ -13,10 +13,11 @@
     --cam-bg: #FFFFFF;
     --button-hover: mediumslateblue;
     --line-break-color: lightslategray;
+    --range-info: #66c7db;
     /* Multi Thumb Slider colour values */
     --range-safe: #7EC151;
-    --range-warn: #FFF449;
-    --range-alert: #FF5656;
+    --range-warn: #ffe449;
+    --range-alert: #f84f4f;
     --thumb-bg-alert: #C3110C;
     --thumb-bg-warn: #F6C90E;
     /* Filter SVG settings */
@@ -37,7 +38,7 @@
     /* Bootstrap Overrides */
     --bs-body-bg: #8D99AE;
     --bs-body-color: white;
-    /*--bs-success-rgb: 106, 90, 205;*/
+    /* --bs-success-rgb: 106, 90, 205; */
     --bs-border-color: silver;
     /* CUSTOM CSS */
     --nav-bg: darkslateblue;
@@ -47,15 +48,16 @@
     --cam-bg: slategray;
     --button-hover: slateblue;
     --line-break-color: white;
-    /*Multi Thumb Slider colour values*/
-    --range-safe: #1E5128;
-    --range-warn: #F6C90E;
-    --range-alert: #C3110C;
+    --range-info: #3ec1db;
+    /* Multi Thumb Slider colour values */
+    --range-safe: #2c743a;
+    --range-warn: #f1cc35;
+    --range-alert: #cf3833;
     --thumb-bg-alert: #CD1818;
     --thumb-bg-warn: #FFCC00;
-    /*Filter SVG settings*/
+    /* Filter SVG settings */
     --filter-background: invert(99%) sepia(3%) saturate(5%) hue-rotate(9deg) brightness(102%) contrast(101%);
-    /*Deviation Bar*/
+    /* Deviation Bar */
     --deviation-bar-bg: #8D99AE;
 }
 
@@ -79,26 +81,52 @@
 
 /* Bootstrap alert-info Overrides */
 .alert-info {
-    --bs-alert-bg: var(--bs-info);
-    --bs-alert-border-color: var(--bs-info);
+    --bs-alert-bg: var(--range-info);
+    --bs-alert-border-color: var(--range-info);
     --bs-alert-color: var(--bs-dark);
     --bs-alert-link-color: var(--bs-dark);
 }
 
-/* Bootstrap alert-warning Overrides */
-.alert-warning {
-    --bs-alert-bg: var(--bs-warning);
-    --bs-alert-border-color: var(--bs-warning);
+/* Bootstrap alert (green) Overrides */
+.alert-safe {
+    --bs-alert-bg: var(--range-safe);
+    --bs-alert-border-color: var(--range-safe);
+    --bs-alert-color: var(--bs-body-color);
+    --bs-alert-link-color: var(--bs-body-color);
+}
+
+/* Bootstrap alert (yellow) Overrides */
+.alert-warn {
+    --bs-alert-bg: var(--range-warn);
+    --bs-alert-border-color: var(--range-warn);
     --bs-alert-color: var(--bs-dark);
     --bs-alert-link-color: var(--bs-dark);
 }
 
-/* Bootstrap alert-danger Overrides */
-.alert-danger {
-    --bs-alert-bg: var(--bs-danger);
-    --bs-alert-border-color: var(--bs-danger);
+/* Bootstrap alert (red) Overrides */
+.alert-alert {
+    --bs-alert-bg: var(--range-alert);
+    --bs-alert-border-color: var(--range-alert);
     --bs-alert-color: var(--bs-white);
     --bs-alert-link-color: var(--bs-white);
+}
+
+/* Bootstrap custom green Override */
+.bg-safe {
+    background-color: var(--range-safe);
+    color: var(--bs-body-color);
+}
+
+/* Bootstrap custom yellow Override */
+.bg-warn {
+    background-color: var(--range-warn);
+    color: var(--bs-dark);
+}
+
+/* Bootstrap custom red Override */
+.bg-alert {
+    background-color: var(--range-alert);
+    color: var(--bs-white);
 }
 
 .submit-btn {
