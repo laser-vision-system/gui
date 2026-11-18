@@ -36,7 +36,7 @@ import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSharedDeviceData } from '../composables/useSharedDeviceData';
 const router = useRouter();
-const { setSharedMicroComputer, setSharedCamera, clearAllSharedDeviceData } = useSharedDeviceData();
+const { setSharedMicroComputer, setSharedCamera, sharedMicroComputer, sharedCamera, clearSharedCamera } = useSharedDeviceData();
 
 // ---------------------
 //   Component Imports
@@ -108,7 +108,9 @@ const activeTab = ref('conns');
 // tracks selected edge by ID
 const selectedEdgeId = ref(null);
 // tracks selected camera by ID
-const selectedCameraId = ref(null);
+const selectedCameraId = ref(
+  sharedCamera.value ? `${sharedCamera.value.conn_id}-${sharedCamera.value.camera_id}` : null
+);
 // tracks for collapsing or expanding alerts
 const alertsExpanded = ref(true);
 // tracks dismissed disconnection alerts by ID
@@ -121,19 +123,19 @@ const activeFeeds = ref({});
 // --------------------
 // grab active µ-computer list from websocket or sample data
 const loadActiveEdgesList = computed(() => {
-    const source = isLive.value && wsEdgeList.value.length > 0 ? wsEdgeList.value : sampleMicroComputerList.microComputers // WILL CHANGE TO NULL
+    const source = isLive.value && wsEdgeList.value.length > 0 ? wsEdgeList.value : sampleMicroComputerList.microComputers
     return source
 });
 
 // grab disconnected µ-computer list from websocket or sample data
 const loadDisconnectedEdgesList = computed(() => {
-    const source = isLive.value && wsDisconnectedEdgeList.value.length > 0 ? wsDisconnectedEdgeList.value : sampleDisconnectedEdgeList.microComputers // WILL CHANGE TO NULL
+    const source = isLive.value && wsDisconnectedEdgeList.value.length > 0 ? wsDisconnectedEdgeList.value : sampleDisconnectedEdgeList.microComputers
     return source
 });
 
 // grab camera list from websocket or sample data
 const loadCameraList = computed(() => {
-    const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : sampleCameraList.cameras // WILL CHANGE TO NULL
+    const source = isLive.value && wsCameraList.value.length > 0 ? wsCameraList.value : sampleCameraList.cameras
     return source
 });
 
@@ -222,14 +224,14 @@ const deviationAlerts = computed(() => {
                 // green threshold
                 if (analysis.deviation >= analysis.warn_below_threshold && analysis.deviation <= analysis.warn_above_threshold) {
                     alertMsg = `${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
-                    alertType = 'success'
+                    alertType = 'safe'
                 } else if ((analysis.deviation < analysis.warn_below_threshold && analysis.deviation >= analysis.alert_below_threshold) ||
                             (analysis.deviation > analysis.warn_above_threshold && analysis.deviation <= analysis.alert_above_threshold)) {
                                 alertMsg = `${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
-                                alertType = 'warning'
+                                alertType = 'warn'
                 } else if ((analysis.deviation < analysis.alert_below_threshold) || (analysis.deviation > analysis.alert_above_threshold)) {
                     alertMsg = `${analysis.name} --- Deviation: ${Math.round(analysis.deviation * 100)}%`
-                    alertType = 'danger'
+                    alertType = 'alert'
                 }
                 return {
                     ...analysis,
@@ -242,10 +244,10 @@ const deviationAlerts = computed(() => {
 
 // sorts deviation alerts in order of most to least priority (greater vs. less deviation)
 const sortedDeviationAlerts = computed(() => {
-    const priority = { danger: 1, warning: 2 }
+    const priority = { alert: 1, warn: 2 }
 
     return deviationAlerts.value
-        .filter(alert => alert.alertType === 'danger' || alert.alertType === 'warning')
+        .filter(alert => alert.alertType === 'alert' || alert.alertType === 'warn')
         .sort((a, b) => {
             if (priority[a.alertType] !== priority[b.alertType]) {
                 return priority[a.alertType] - priority[b.alertType]
@@ -316,9 +318,9 @@ function toggleAlerts() {
 // server alert css for the respective server alert types
 function serverAlertStyle(alertType) {
   switch (alertType) {
-    case 'Confirmation': return 'alert-success';
-    case 'Warning': return 'alert-warning';
-    case 'Error': return 'alert-danger';
+    case 'Confirmation': return 'alert-safe';
+    case 'Warning': return 'alert-warn';
+    case 'Error': return 'alert-alert';
     default: return 'alert-secondary';
   }
 }
@@ -334,10 +336,17 @@ function dismissAlert(id) {
 // select one camera at a time by ID
 function toggleCameraSelection(cameraId) {
     if (selectedCameraId.value === cameraId) {
-        selectedCameraId.value = null;
+      selectedCameraId.value = null;
+      clearSharedCamera();
     } else {
-        selectedCameraId.value = cameraId;
+      // set the camera as the shared value
+      selectedCameraId.value = cameraId;
+      // check if the selected camera is in the merged camera data
+      const cam = mergedCameraData.value.find(c => `${c.conn_id}-${c.camera_id}` === cameraId);
+      // if the camera exists set it as the shared value
+      if (cam) setSharedCamera(cam.conn_id, cam.camera_id);
     }
+
 }
 
 // sends setpoint to server for specified camera
@@ -446,12 +455,12 @@ function getCardColour(cam) {
     const alertAbove = cam.alert_above_threshold;
 
     if (deviation >= warnBelow && deviation <= warnAbove) {
-        return 'bg-success';
+        return 'bg-safe';
     } else if ((deviation < warnBelow && deviation >= alertBelow) ||
                 (deviation > warnAbove && deviation <= alertAbove)) {
-                    return 'bg-warning text-dark';
+                    return 'bg-warn text-dark';
     } else if ((deviation < alertBelow) || (deviation > alertAbove)) {
-        return 'bg-danger';
+        return 'bg-alert';
     } else {
         return 'bg-dark';
     }
@@ -476,14 +485,20 @@ function configureMicroComputer(connID) {
 //        Watchers
 // --------------------
 
+
+// helper computed function to get the camera key from the selected camera value
+const selectedCameraKey = computed(() => {
+  const cam = selectedCameraInfo.value;
+  return cam ? `${cam.conn_id}-${cam.camera_id}` : null;
+});
+
 // watch the selected camera to see if it has changed
 // this does not watch any broken or disconnected cameras just the ones that can be selected for viewing
-watch(selectedCameraId, (newId) => {
+watch([selectedCameraKey, isLive], ([key, live]) => {
   // start streaming the new one if it should be visible
-  if (newId && selectedCameraInfo.value && isFeedActive(newId)) {
-      const [connId, cameraId] = newId.split('-');
-      viewCamera(connId, cameraId);
-  }
+  if (!key || !live || !isFeedActive(key)) return;
+
+  viewCamera(selectedCameraInfo.value.conn_id, selectedCameraInfo.value.camera_id);
 })
 
 // -------------------------------
@@ -491,7 +506,6 @@ watch(selectedCameraId, (newId) => {
 // -------------------------------
 onMounted(async () => {
   connect();
-  clearAllSharedDeviceData();
 })
 
 onUnmounted(() => {
@@ -514,7 +528,7 @@ onUnmounted(() => {
                 <div class="container mt-2">
                     <transition-group name="server-alert" tag="div">
                         <div v-for="alert in visibleServerAlerts" :key="alert.id"
-                            :class="['alert alert-dismissible text-center mb-1', serverAlertClass(alert.alert_type)]"
+                            :class="['alert alert-dismissible text-center mb-1', serverAlertStyle(alert.alert_type)]"
                             role="alert">
                                 <strong>[Server {{ String(alert.alert_type).toUpperCase() }}]</strong>
                                 <span class="fw-semibold">{{ alert.alert_name }}</span>
@@ -526,8 +540,8 @@ onUnmounted(() => {
                         <div v-show="alertsExpanded">
                             <div v-for="alert in sortedDeviationAlerts" :key="alert.camera_id"
                                 :class="['alert mb-1', `alert-${alert.alertType}`]" role="alert">
-                                <span v-if="alert.alertType == 'warning'"><strong>[MODERATE] </strong>{{ alert.alertMsg }}</span>
-                                <span v-else-if="alert.alertType == 'danger'"><strong>[HIGH] </strong>{{ alert.alertMsg }}</span>
+                                <span v-if="alert.alertType == 'warn'"><strong>[MODERATE] </strong>{{ alert.alertMsg }}</span>
+                                <span v-else-if="alert.alertType == 'alert'"><strong>[HIGH] </strong>{{ alert.alertMsg }}</span>
                                 <span v-else>{{ alert.alertMsg }}</span>
                             </div>
                         </div>
@@ -614,11 +628,11 @@ onUnmounted(() => {
                                                 <table class="table table-bordered border-2 text-center hardware-info table-squash">
                                                     <thead>
                                                         <tr>
-                                                            <th><span class="badge bg-danger">Alert below:</span></th>
-                                                            <th><span class="badge bg-warning text-dark">Warn below:</span></th>
-                                                            <th><span class="badge bg-success">No alert:</span></th>
-                                                            <th><span class="badge bg-warning text-dark">Warn above:</span></th>
-                                                            <th><span class="badge bg-danger">Alert above:</span></th>
+                                                            <th><span class="badge bg-alert">Alert below:</span></th>
+                                                            <th><span class="badge bg-warn">Warn below:</span></th>
+                                                            <th><span class="badge bg-safe">No alert:</span></th>
+                                                            <th><span class="badge bg-warn">Warn above:</span></th>
+                                                            <th><span class="badge bg-alert">Alert above:</span></th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -634,7 +648,7 @@ onUnmounted(() => {
                                             </div>
                                             <!-- Buttons -->
                                             <div class="button-group">
-                                                <button class="btn submit-btn" :disabled="!selectedCameraId" @click="calibrateBtn(selectedCameraInfo.name)">
+                                                <button class="btn calibrate-btn" :disabled="!selectedCameraId" @click="calibrateBtn(selectedCameraInfo.name)">
                                                     Calibrate
                                                 </button>
                                                 <ConfirmationBox
