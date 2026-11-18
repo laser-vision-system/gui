@@ -448,10 +448,10 @@ export function useWebSocket(url) {
       case 'Alert': {
         // adds id and timeStamp to the Object list entries
         const alert = { id: ++alertId, timeStamp: Date.now(), ...data };
-        newAlertList = [...serverAlerts.value, alert];
+        let newAlertList = [...serverAlerts.value, alert];
 
         // remove the oldest alerts that are over the max limit and clear their timers
-        newAlertList.slice(0, Math.max(0, newAlertList.length - MMAX_SERVER_ALERTS)).forEach((alert) => {
+        newAlertList.slice(0, Math.max(0, newAlertList.length - MAX_SERVER_ALERTS)).forEach((alert) => {
           clearTimeout(alertLifetime.get(alert.id));
           alertLifetime.delete(alert.id);
         })

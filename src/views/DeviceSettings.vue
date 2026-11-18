@@ -236,13 +236,13 @@ function parseControl(name, entry) {
       return {
         ...contents,
         items: (controlBody.items ?? []).map((item) => ({
-          id: item.id, name: item.item?.name ?? String(item.id)
+          id: item.id, name: item.item?.Name ?? item.item?.name ?? String(item.id)
         })),
       };
     case 'Boolean':
-      return controlBody;
+      return contents;
       default:
-        console.warn(`Unknown control kind "${contents}" for ${name}, skipping`);
+        console.warn(`Unknown control kind "${controlType}" for ${name}, skipping`);
         return null;
   }
 }
@@ -412,11 +412,11 @@ function validateDeviation() {
     result = false;
   }
   if (newWarnBelow.value <= newAlertBelow.value) { // Warn Below Validation
-    deviationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is less than or equal to the Alert Below threshold of ${newAlertBelow.value}%`);
+    deviationErrors.value.push(`Warning: Warn Below threshold of  ${newWarnBelow.value}% is less than or equal to the Alert Below threshold of ${newAlertBelow.value}%`);
     result = false;
   }
   if (newWarnBelow.value >= newWarnAbove.value) {
-    deviationErrors.value.push(`Warning: Warn Above threshold of  ${newWarnBelow.value}% is more than or equal to the Warn Above threshold of ${newWarnAbove.value}%`);
+    deviationErrors.value.push(`Warning: Warn Below threshold of  ${newWarnBelow.value}% is more than or equal to the Warn Above threshold of ${newWarnAbove.value}%`);
     result = false;
   }
   if (newWarnAbove.value <= newWarnBelow.value) { // Warn Above Validation
@@ -424,7 +424,7 @@ function validateDeviation() {
     result = false;
   }
   if (newWarnAbove.value >= newAlertAbove.value) {
-    deviationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is more than or equal to the Alert Above threshold of ${newWarnBelow.value}%`);
+    deviationErrors.value.push(`Warning: Warn Above threshold of ${newWarnAbove.value}% is more than or equal to the Alert Above threshold of ${newAlertAbove.value}%`);
     result = false;
   }
   if (newAlertAbove.value <= newWarnAbove.value) { // Alert Above Validation
@@ -579,18 +579,11 @@ function buildControlsPayload() {
 
   for (const [name, control] of Object.entries(controls)) {
     const originalBody = original?.[name]?.[control.controlType];
-    if (!originalBody) continue; // camera doesn't have a control
+    if (!originalBody || !isControlEnabled(name)) continue; // camera doesn't have a control or is not allowed to be edited
     // build the payload for a control
     payload[name] = {
       [control.controlType]: { ...originalBody, value: checkBlank(control.value, control.original) },
     };
-  }
-  // NOT IN CURRENT SPRINT BUT MAY NEED TO BE FIXED DEPENDING ON HOW THE CONTROLS ARE SET THROUGH
-  if (original?.AutoExposure) {
-    const current = original.AutoExposure.Menu?.value?.ConValueMenu
-    payload.AutoExposure = {
-      Menu: {...original.AutoExposure.Menu, value: { ConValueMenu: checkBlank(newAutoExposure.value, current) },},
-    }
   }
   return payload;
 }
@@ -661,11 +654,14 @@ function toggleCameraFeed() {
   }
 }
 
-// Load current values from the matched config. must be used after select config is set
-function loadCameraValues() {
+function clearCameraControls() {
   // clear the previous camera's controls
   Object.keys(controls).forEach((key) => delete controls[key]);
+}
 
+// Load current values from the matched config. must be used after select config is set
+function loadCameraValues() {
+  clearCameraControls();
   const config = selectedConfig.value?.configuration;
   if (!config) return;
 
@@ -830,14 +826,16 @@ watch(selectedCamera, (cam, oldCam) => {
   newAlertAbove.value = cam.alert_above_threshold * 100;
 
   if (isLive.value) {
+    // reset camera controls
+    clearCameraControls();
     // request to view the camera feed
-    viewCamera(cam.conn_id, cam.camera_id)
+    viewCamera(cam.conn_id, cam.camera_id);
     // request to view the camera control values
-    viewCameraConfig(cam.conn_id, cam.camera_id)
+    viewCameraConfig(cam.conn_id, cam.camera_id);
     // the selectedConfig gets filled in by the controlConfig watcher below once the server replies
   } else  {
-    selectedConfig.value = findConfig(cam.conn_id, cam.camera_id)
-    loadCameraValues()
+    selectedConfig.value = findConfig(cam.conn_id, cam.camera_id);
+    loadCameraValues();
   }
 })
 
@@ -1061,7 +1059,7 @@ onMounted(() => {
                                                 v-model="control.value" :disabled="!isControlEnabled(name)">
                                         </div>
                                         <!-- reset to default button -->
-                                        <button type="button" class="btn submit-btn" @click="setDefaultControl(name)">Reset</button>
+                                        <button type="button" :disabled="!isControlEnabled(name)" class="btn submit-btn" @click="setDefaultControl(name)">Reset</button>
                                     </div>
                                 </div>
                                 <p v-for="e in cameraControlErrors" class="error">{{e}}</p>
