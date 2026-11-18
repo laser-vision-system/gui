@@ -157,7 +157,7 @@
     background-color: var(--blue-btn);
     border-color: #0175a6;
     color: white;
-    gap: 2em; 
+    gap: 2em;
 }
 
 .calibrate-btn:hover {
@@ -211,7 +211,7 @@
 
 .number-input{
     flex: 0 0 4em;
-    width: 4em;
+    width: 5em;
     padding: 0.25em;
     border-radius: 0.5em;
     border: 3px solid var(--nav-bg);
