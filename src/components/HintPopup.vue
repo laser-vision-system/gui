@@ -9,7 +9,7 @@
 let hintCount = 0;
 </script>
 <script setup>
-import { ref, watch, onBeforeUnmount } from 'vue'
+import { ref, watch, onBeforeUnmount, nextTick } from 'vue'
 import hintIcon from '../assets/images/book-question-mark-24-filled.svg'
 // --------------------
 //        Props
@@ -30,8 +30,13 @@ const props = defineProps({
 // --------------------
 // Constant references to values
 const showPopup = ref(false);
-const root = ref(null);
+const root = ref(null); // The warper around the icon button
+const popup = ref(null); // the teleported hint box
+const popupStyle = ref({top: '0px', left: '0px'})
 const boxID = `hint-box-${++hintCount}`;
+
+const GAP = 8; // space between icon and popup
+const MARGIN = 8; // min space between popup and viewport
 
 // --------------------
 //      Functions
@@ -42,31 +47,65 @@ function togglePopup() {
   showPopup.value = !showPopup.value;
 }
 
+// function to update the popups position in relation to the icon.
+function updatePosition() {
+  if (!root.value || !popup.value) return;
+
+  const iconRect = root.value.getBoundingClientRect();
+  const popupRect = popup.value.getBoundingClientRect();
+
+  // horizontal calc for the popup
+  let x;
+  if (props.align === 'left') x = iconRect.left;
+  else if (props.align === 'right') x = iconRect.right - popupRect.width;
+  else x = iconRect.left + iconRect.width / 2 - popupRect.width / 2;
+
+  // restrain the popup in the viewport
+  x = Math.max(MARGIN, Math.min(x, window.innerWidth - popupRect.width - MARGIN));
+
+  let y = iconRect.bottom + GAP;
+
+  // update the style values
+  popupStyle.value = { top: `${y}px`, left: `${x}px` };
+
+}
+
 // Close the pop up when the user clicks outside the box.
 function closeOnClick(event) {
-  if (root.value && !root.value.contains(event.target)) {
-    showPopup.value = false;
-  }
+  const target = event.target;
+  const insideIcon = root.value && root.value.contains(target);
+  const insidePopup = popup.value && popup.value.contains(target);
+  if (!insideIcon && !insidePopup) showPopup.value = false;
 }
 
 function closeOnEscp(event) {
   if (event.key === 'Escape') showPopup.value = false;
 }
 
+// init event listeners
+function addListeners() {
+  document.addEventListener('click', closeOnClick);
+  document.addEventListener('keydown', closeOnEscp);
+  window.addEventListener('resize', updatePosition);
+  window.addEventListener('scroll', updatePosition, true);
+}
+
 // clean up and remove listeners when the pop up is closed
 function removeListeners() {
   document.removeEventListener('click', closeOnClick);
   document.removeEventListener('keydown', closeOnEscp);
-
+  window.removeEventListener('resize', updatePosition);
+  window.removeEventListener('scroll', updatePosition, true);
 }
 
 // --------------------
 //      Watchers
 // --------------------
-watch(showPopup, (isOpen) => {
+watch(showPopup, async (isOpen) => {
   if (isOpen) {
-    document.addEventListener('click', closeOnClick);
-    document.addEventListener('keydown', closeOnEscp);
+    addListeners();
+    await nextTick();
+    updatePosition();
   } else {
     removeListeners();
   }
@@ -84,12 +123,15 @@ onBeforeUnmount(removeListeners);
         <img :src="hintIcon" alt="" class="hint-image"
             :style="{ width: size + 'px', height: size + 'px' }" />
     </button>
-    <transition name="hint-fade">
-        <div v-if="showPopup" class="hint-box"
-            :id="boxID" :class="`hint-box--${align}`" role="tooltip">
-            <p class="hint-message">{{message}}</p>
-        </div>
-    </transition>
+    <Teleport to="body">
+        <Transition name="hint-fade">
+            <div v-if="showPopup" ref="popup" class="hint-box"
+                :id="boxID" :style="popupStyle" role="tooltip">
+                <p class="hint-message">{{message}}</p>
+            </div>
+        </Transition>
+    </Teleport>
+
 </div>
 </template>
 <style scoped>
@@ -100,9 +142,8 @@ onBeforeUnmount(removeListeners);
 }
 
 .hint-box{
-    position: absolute;
-    top: calc(100% + 8px);
-    z-index: 100;
+    position: fixed;
+    z-index: 2000;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -116,10 +157,7 @@ onBeforeUnmount(removeListeners);
     border: 3px solid var(--button-hover);
     box-shadow: 0 5px 20px var(--nav-bg);
 }
-/* Alignment variants */
-.hint-box--center { left: 50%; transform: translateX(-50%); }
-.hint-box--left   { left: 0; }
-.hint-box--right  { right: 0; }
+
 
 .hint-message{
     margin: 0;
