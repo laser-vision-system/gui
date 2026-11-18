@@ -1184,4 +1184,13 @@ option:hover{
    margin-left: 0rem;
    margin-right: 5rem ;
 }
+.form-check-input{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-items: center;
+    justify-content: center;
+    gap: 1em;
+    margin-left: 3rem;
+}
 </style>
