@@ -146,7 +146,7 @@ function toPercentage(value) {
     --marker-width: 0.25rem;
     --marker-height: 2rem;
     width: 100%;
-    padding: 4rem 2rem 1rem;
+    padding: 3.1rem 0.75rem 1rem;
     background-color: var(--deviation-bar-bg);
     box-sizing: border-box;
     border-radius: 0.75rem;
@@ -227,7 +227,7 @@ function toPercentage(value) {
 .scale-notch {
   position: absolute;
   transform: translateX(-50%);
-  font-size: 10pt;
+  font-size: 0.75em;
   color: var(--bs-body-color);
   z-index: 1;
 }
