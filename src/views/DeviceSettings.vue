@@ -1196,4 +1196,7 @@ option:hover{
     flex: 1 1 auto;
     padding-left: 0;
 }
+.menu-input {
+    margin-left: 4rem;
+}
 </style>
