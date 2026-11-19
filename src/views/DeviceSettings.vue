@@ -1055,9 +1055,12 @@ onMounted(() => {
                                                 </option>
                                         </select>
                                         <!-- Boonlean: switch -->
-                                        <div v-else-if="control.controlType === 'Boolean'" class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" role="switch" :id="`control-${name}`"
-                                                v-model="control.value" :disabled="!isControlEnabled(name)">
+                                        <div v-else-if="control.controlType === 'Boolean'" class="form-check">
+                                            <label class="switch">
+                                                <input class="switch-input" type="checkbox" role="switch" :id="`control-${name}`"
+                                                    v-model="control.value" :disabled="!isControlEnabled(name)">
+                                                <span class="slider round"></span>
+                                            </label>
                                         </div>
                                         <!-- reset to default button -->
                                         <button type="button" :disabled="!isControlEnabled(name)" class="btn submit-btn" @click="setDefaultControl(name)">Reset</button>
@@ -1185,13 +1188,16 @@ option:hover{
    margin-left: 0rem;
    margin-right: 5rem ;
 }
-.form-check-input{
+.form-check{
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-items: center;
     justify-content: center;
     gap: 1em;
-    margin-left: 3rem;
+    flex: 1 1 auto;
+    padding-left: 0;
+}
+.menu-input {
+    margin-left: 4rem;
 }
 </style>
